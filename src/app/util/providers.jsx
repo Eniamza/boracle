@@ -1,14 +1,9 @@
 // app/providers.jsx
 "use client";
 
-import { SessionProvider } from "next-auth/react";
-import { ThemeProvider } from "@/components/theme-provider";
-import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/dashboard/app-sidebar";
-import { SidebarTrigger } from "@/components/ui/sidebar";
-import { Separator } from "@/components/ui/separator";
 import { ModeToggle } from "@/components/light-toggle";
-
+import { Toaster } from "sonner";
 export function Providers({ children }) {
   return (
     <SessionProvider>
@@ -36,6 +31,7 @@ export function Providers({ children }) {
             </main>
           </SidebarInset>
         </SidebarProvider>
+        <Toaster />
       </ThemeProvider>
     </SessionProvider>
   );
