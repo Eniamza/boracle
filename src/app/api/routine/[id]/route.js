@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request, { params }) {
   try {
-    const { id } = params;
+    const { id } = await params;
 
     if (!id) {
       return NextResponse.json(
@@ -35,7 +35,7 @@ export async function GET(request, { params }) {
       routine: {
         id: routine.routineid,
         routineStr: routine.routinestr,
-        email: routine.email
+        email: "Anonymous"
       }
     });
 

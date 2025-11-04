@@ -40,25 +40,6 @@ const sidebarGroups = [
         ]
     },
     {
-        label: "Community",
-        items: [
-            {
-                title: 'Faculty Reviews',
-                href: '/dashboard/faculty-review',
-                description: 'Rate your faculty and provide feedback. Scrolling through useless reviews is a thing of the past!',
-                icon: Star,
-                enabled: true
-            },
-            {
-                title: 'Course Materials',
-                href: '/dashboard/materials',
-                description: 'Access and share course materials with your peers',
-                icon: BookOpen,
-                enabled: true
-            }
-        ]
-    },
-    {
         label: "Your Arena",
         items: [
             {
