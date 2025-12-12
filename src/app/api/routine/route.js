@@ -2,6 +2,7 @@
 import { auth } from "@/auth";
 import { sql } from "@/lib/pgdb";
 import { NextRequest, NextResponse } from "next/server";
+import globalInfo from "@/constants/globalInfo";
 
 export async function GET(request) {
   try {
@@ -18,18 +19,22 @@ export async function GET(request) {
 
     // Fetch all routines for the current user
     const result = await sql`
-      SELECT routineID, routineStr, email
+      SELECT routineID, routineStr, email, createdAt, semester
       FROM savedroutine 
       WHERE email = ${session.user.email}
-      ORDER BY routineID DESC
+      ORDER BY createdAt DESC
     `;
+
+    console.log("Fetched routines:", result);
 
     return NextResponse.json({
       success: true,
       routines: result.map(routine => ({
         id: routine.routineid,
         routineStr: routine.routinestr,
-        email: routine.email
+        email: routine.email,
+        createdAt: routine.createdat,
+        semester: routine.semester
       }))
     });
 
@@ -64,10 +69,11 @@ export async function POST(request) {
       );
     }
 
+    console.log(globalInfo)
     // Save to database
     const result = await sql`
-      INSERT INTO savedroutine (routineStr, email)
-      VALUES (${routineStr}, ${session.user.email})
+      INSERT INTO savedroutine (routineStr, email, semester)
+      VALUES (${routineStr}, ${session.user.email}, ${globalInfo.semester})
       RETURNING routineID
     `;
 

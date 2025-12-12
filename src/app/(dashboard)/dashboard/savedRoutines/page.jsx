@@ -3,50 +3,19 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Calendar, Clock, Trash2, Eye, Download, RefreshCw, AlertCircle, X } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import RoutineTableGrid from '@/components/routine/RoutineTableGrid';
-
-// Simple Modal wrapper for routine display
-const RoutineTableModal = ({ selectedCourses, onClose }) => {
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
-      <div className="bg-gray-900 rounded-lg max-w-[95vw] max-h-[95vh] w-full overflow-hidden flex flex-col">
-        <div className="flex items-center justify-between p-4 border-b border-gray-700">
-          <h2 className="text-xl font-semibold text-white">Saved Routine</h2>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-        <div className="flex-1 overflow-auto p-4">
-          <RoutineTableGrid 
-            selectedCourses={selectedCourses} 
-            showRemoveButtons={false}
-            className="h-full"
-          />
-        </div>
-      </div>
-    </div>
-  );
-};
+import { toast } from 'sonner';
 
 const SavedRoutinesPage = () => {
   const { data: session } = useSession();
   const [routines, setRoutines] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+  // Removed local toast state, use sonner toast only
   const [viewingRoutine, setViewingRoutine] = useState(null);
   const [routineCourses, setRoutineCourses] = useState([]);
   const [loadingRoutine, setLoadingRoutine] = useState(false);
 
-  // Show toast notification
-  const showToast = (message, type = 'success') => {
-    setToast({ show: true, message, type });
-    setTimeout(() => {
-      setToast({ show: false, message: '', type: 'success' });
-    }, 3000);
-  };
+  // Use sonner toast for notifications
 
   // Fetch saved routines
   const fetchRoutines = async () => {
@@ -69,13 +38,14 @@ const SavedRoutinesPage = () => {
       
       if (data.success) {
         setRoutines(data.routines || []);
+        console.log('Fetched routines:', data.routines);
       } else {
         throw new Error('Failed to fetch routines');
       }
     } catch (err) {
       console.error('Error fetching routines:', err);
       setError('Failed to load saved routines');
-      showToast('Failed to load saved routines', 'error');
+  toast.error('Failed to load saved routines');
     } finally {
       setLoading(false);
     }
@@ -90,13 +60,13 @@ const SavedRoutinesPage = () => {
 
       if (response.ok) {
         setRoutines(prev => prev.filter(routine => routine.id !== routineId));
-        showToast('Routine deleted successfully', 'success');
+    toast.success('Routine deleted successfully');
       } else {
         throw new Error('Failed to delete routine');
       }
     } catch (err) {
       console.error('Error deleting routine:', err);
-      showToast('Failed to delete routine', 'error');
+  toast.error('Failed to delete routine');
     }
   };
 
@@ -131,11 +101,11 @@ const SavedRoutinesPage = () => {
       setRoutineCourses(matchedCourses);
       
       if (matchedCourses.length === 0) {
-        showToast('No matching courses found for this routine', 'error');
+        toast.error('No matching courses found for this routine');
       }
     } catch (err) {
       console.error('Error viewing routine:', err);
-      showToast('Failed to load routine details', 'error');
+  toast.error('Failed to load routine details');
       setViewingRoutine(null);
     } finally {
       setLoadingRoutine(false);
@@ -181,11 +151,7 @@ const SavedRoutinesPage = () => {
   return (
     <div className="min-h-screen  text-white p-8">
       <h1 className="text-3xl font-bold mb-8 text-center">Saved Routines</h1>
-      {toast.show && (
-        <div className={`fixed top-6 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-lg shadow-lg z-50 text-white ${toast.type === 'success' ? 'bg-green-600' : 'bg-red-600'}`}>
-          {toast.message}
-        </div>
-      )}
+      {/* sonner toast handles notifications globally */}
       {loading ? (
         <div className="flex flex-col items-center justify-center py-24">
           <RefreshCw className="w-8 h-8 animate-spin text-blue-400 mb-4" />
@@ -218,8 +184,18 @@ const SavedRoutinesPage = () => {
                   <div className="p-2 bg-blue-600/20 rounded-lg">
                     <Calendar className="w-5 h-5 text-blue-400" />
                   </div>
-                  <div>
+                  <div className="flex flex-col">
                     <h3 className="font-semibold text-lg">Routine #{routine.id}</h3>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <p className="text-xs text-gray-500">
+                        Last updated: {routine.createdAt ? new Date(Number(routine.createdAt) * 1000).toLocaleString() : 'N/A'}
+                      </p>
+                      {routine.semester && (
+                        <span className="inline-block bg-blue-800/80 text-blue-100 text-[10px] font-semibold px-2 py-0.5 rounded ml-1 align-middle">
+                          {routine.semester}
+                        </span>
+                      )}
+                    </div>
                     <p className="text-sm text-gray-400">
                       {parseRoutineString(routine.routineStr)} courses
                     </p>
@@ -236,6 +212,22 @@ const SavedRoutinesPage = () => {
                 >
                   <Eye className="w-4 h-4" />
                   {loadingRoutine && viewingRoutine?.id === routine.id ? 'Loading...' : 'View'}
+                </button>
+                <button
+                  title="Copy Routine ID"
+                  onClick={async () => {
+                    try {
+                      await navigator.clipboard.writeText(routine.id.toString());
+                      toast.success('Routine ID copied!');
+                    } catch (err) {
+                      toast.error('Failed to copy ID');
+                    }
+                  }}
+                  className="px-3 py-2 hover:bg-gray-800 rounded-lg flex items-center justify-center gap-2 text-sm transition-colors"
+                  style={{ lineHeight: 0 }}
+                >
+                  {/* Lucide Copy icon */}
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-gray-400 hover:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2" /><rect x="3" y="3" width="13" height="13" rx="2" /></svg>
                 </button>
                 <button
                   onClick={() => deleteRoutine(routine.id)}
