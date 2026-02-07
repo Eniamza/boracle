@@ -1,6 +1,7 @@
-// app/api/dashboard/route.js (App Router)
+// app/api/dashboard/userStatCount/route.js (App Router)
 import { auth } from "@/auth";
-import { sql } from "@/lib/pgdb";
+import { db, eq, sql } from "@/lib/db";
+import { reviews, courseMaterials, courseSwap, votes } from "@/lib/db/schema";
 import { NextResponse } from "next/server";
 
 export async function GET(request) {
@@ -9,27 +10,27 @@ export async function GET(request) {
     const session = await auth();
     console.log("Dashboard API accessed by:", session?.user?.email);
     if (!session || !session.user?.email) {
-
-          return NextResponse.json(
-      { error: "Unauthorized" },
-      { status: 401 }
-    );
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
     }
 
-    const userEmail = 'alice.wong@g.bracu.ac.bd';
+    const userEmail = session.user.email;
 
     // Fetch all counts in parallel
     const [reviewCount, materialCount, swapCount, voteCount] = await Promise.all([
-      // Count  reviews
-      sql`SELECT COUNT(*) as count FROM reviews WHERE uEmail = ${userEmail}`,
+      // Count reviews
+      db.select({ count: sql`count(*)` }).from(reviews).where(eq(reviews.uEmail, userEmail)),
       
       // Count materials
-      sql`SELECT COUNT(*) as count FROM courseMaterials WHERE uEmail = ${userEmail}`,
+      db.select({ count: sql`count(*)` }).from(courseMaterials).where(eq(courseMaterials.uEmail, userEmail)),
       
       // Count swaps
-      sql`SELECT COUNT(*) as count FROM courseSwap WHERE uEmail = ${userEmail}`,
+      db.select({ count: sql`count(*)` }).from(courseSwap).where(eq(courseSwap.uEmail, userEmail)),
+      
       // Count votes
-      sql`SELECT COUNT(*) as count FROM votes WHERE uEmail = ${userEmail}`
+      db.select({ count: sql`count(*)` }).from(votes).where(eq(votes.uEmail, userEmail))
     ]);
 
     return Response.json({

@@ -1,3 +1,24 @@
+/**
+ * @deprecated This file is deprecated. Please use '@/lib/db' with Drizzle ORM instead.
+ * 
+ * Migration guide:
+ * - Import from '@/lib/db' instead of '@/lib/pgdb'
+ * - Use Drizzle ORM query builders instead of raw SQL
+ * - See src/lib/db/schema.js for table definitions
+ * - See src/lib/db/index.js for database connection and utilities
+ * 
+ * Example migration:
+ * 
+ * Before (raw SQL):
+ *   import { sql } from '@/lib/pgdb';
+ *   const users = await sql`SELECT * FROM userinfo WHERE email = ${email}`;
+ * 
+ * After (Drizzle ORM):
+ *   import { db, eq } from '@/lib/db';
+ *   import { userinfo } from '@/lib/db/schema';
+ *   const users = await db.select().from(userinfo).where(eq(userinfo.email, email));
+ */
+
 // lib/pgdb.js
 import { Pool } from 'pg';
 import 'dotenv/config'

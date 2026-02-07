@@ -1,6 +1,7 @@
-// app/api/dashboard/route.js (App Router)
+// app/api/faculty/[id]/route.js (App Router)
 import { auth } from "@/auth";
-import { sql } from "@/lib/pgdb";
+import { db, eq } from "@/lib/db";
+import { faculty, initial } from "@/lib/db/schema";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request, { params }) {
@@ -9,36 +10,38 @@ export async function GET(request, { params }) {
     const session = await auth();
     console.log("Dashboard API accessed by:", session?.user?.email);
     if (!session || !session.user?.email) {
-
-          return NextResponse.json(
-      { error: "Unauthorized" },
-      { status: 401 }
-    );
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
     }
 
-    // fetch faculty information based on id passed in the [id] route. extract params as in Next 15+
+    // Fetch faculty information based on id passed in the [id] route
     const { id } = await params;
 
-    let faculty = await sql`SELECT * FROM faculty WHERE facultyID = ${id}`;
-    let initials = await sql`SELECT facultyInitial FROM initial WHERE facultyID = ${id}`;
-    let facultyInitials = []
+    const facultyResult = await db
+      .select()
+      .from(faculty)
+      .where(eq(faculty.facultyId, id));
 
-    if (faculty.length === 0) {
+    if (facultyResult.length === 0) {
       return NextResponse.json({ error: "Faculty not found" }, { status: 404 });
     }
 
-        initials.forEach(element => {
-        console.log("Initial:", element);
-        facultyInitials.push(element.facultyinitial);
-    });
+    const initials = await db
+      .select({ facultyInitial: initial.facultyInitial })
+      .from(initial)
+      .where(eq(initial.facultyId, id));
 
+    let facultyInitials = initials.map(element => element.facultyInitial);
     console.log("Initials:", facultyInitials);
 
+    const facultyData = { ...facultyResult[0] };
     if (facultyInitials.length > 0) {
-      faculty[0].initials = facultyInitials;
+      facultyData.initials = facultyInitials;
     }
 
-    return NextResponse.json(faculty[0]);
+    return NextResponse.json(facultyData);
   } catch (error) {
     console.error("Dashboard API error:", error);
     return Response.json({ error: "Internal server error" }, { status: 500 });

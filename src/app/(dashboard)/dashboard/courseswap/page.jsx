@@ -204,8 +204,8 @@ const CourseSwapPage = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredSwaps.map((swap) => (
               <SwapCard 
-                key={swap.swapid} 
-                swap={{...swap, email: swap.uemail}} 
+                key={swap.swapId} 
+                swap={{...swap, email: swap.uEmail}} 
                 courses={courses}
                 onDelete={handleDeleteSwap}
                 onMarkComplete={handleMarkComplete}

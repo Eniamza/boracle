@@ -1,6 +1,7 @@
-// app/api/dashboard/route.js (App Router)
+// app/api/dashboard/recentActivity/route.js (App Router)
 import { auth } from "@/auth";
-import { sql } from "@/lib/pgdb";
+import { db, eq, desc } from "@/lib/db";
+import { reviews, courseMaterials } from "@/lib/db/schema";
 import { NextResponse } from "next/server";
 
 export async function GET(request) {
@@ -9,19 +10,26 @@ export async function GET(request) {
     const session = await auth();
     console.log("Dashboard API accessed by:", session?.user?.email);
     if (!session || !session.user?.email) {
-
-          return NextResponse.json(
-      { error: "Unauthorized" },
-      { status: 401 }
-    );
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
     }
 
-    const userEmail = 'alice.wong@g.bracu.ac.bd';
+    const userEmail = session.user.email;
 
     // Fetch recent activities and post status from the tables reviews and courseMaterials
     const [recentReviews, recentMaterials] = await Promise.all([
-      sql`SELECT * FROM reviews WHERE uEmail = ${userEmail} ORDER BY createdAt DESC LIMIT 5`,
-      sql`SELECT * FROM courseMaterials WHERE uEmail = ${userEmail} ORDER BY createdAt DESC LIMIT 5`
+      db.select()
+        .from(reviews)
+        .where(eq(reviews.uEmail, userEmail))
+        .orderBy(desc(reviews.createdAt))
+        .limit(5),
+      db.select()
+        .from(courseMaterials)
+        .where(eq(courseMaterials.uEmail, userEmail))
+        .orderBy(desc(courseMaterials.createdAt))
+        .limit(5)
     ]);
 
     return Response.json({

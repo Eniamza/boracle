@@ -1,6 +1,7 @@
 // app/api/routine/route.js (App Router)
 import { auth } from "@/auth";
-import { sql } from "@/lib/pgdb";
+import { db, eq, desc, getCurrentEpoch } from "@/lib/db";
+import { savedRoutine } from "@/lib/db/schema";
 import { NextRequest, NextResponse } from "next/server";
 import globalInfo from "@/constants/globalInfo";
 
@@ -18,22 +19,27 @@ export async function GET(request) {
     }
 
     // Fetch all routines for the current user
-    const result = await sql`
-      SELECT routineID, routineStr, email, createdAt, semester
-      FROM savedroutine 
-      WHERE email = ${session.user.email}
-      ORDER BY createdAt DESC
-    `;
+    const result = await db
+      .select({
+        routineId: savedRoutine.routineId,
+        routineStr: savedRoutine.routineStr,
+        email: savedRoutine.email,
+        createdAt: savedRoutine.createdAt,
+        semester: savedRoutine.semester,
+      })
+      .from(savedRoutine)
+      .where(eq(savedRoutine.email, session.user.email))
+      .orderBy(desc(savedRoutine.createdAt));
 
     console.log("Fetched routines:", result);
 
     return NextResponse.json({
       success: true,
       routines: result.map(routine => ({
-        id: routine.routineid,
-        routineStr: routine.routinestr,
+        id: routine.routineId,
+        routineStr: routine.routineStr,
         email: routine.email,
-        createdAt: routine.createdat,
+        createdAt: routine.createdAt,
         semester: routine.semester
       }))
     });
@@ -71,15 +77,19 @@ export async function POST(request) {
 
     console.log(globalInfo)
     // Save to database
-    const result = await sql`
-      INSERT INTO savedroutine (routineStr, email, semester)
-      VALUES (${routineStr}, ${session.user.email}, ${globalInfo.semester})
-      RETURNING routineID
-    `;
+    const result = await db
+      .insert(savedRoutine)
+      .values({
+        routineStr: routineStr,
+        email: session.user.email,
+        semester: globalInfo.semester,
+        createdAt: getCurrentEpoch(),
+      })
+      .returning({ routineId: savedRoutine.routineId });
 
     return NextResponse.json({ 
       success: true, 
-      routineId: result[0].routineid 
+      routineId: result[0].routineId 
     });
 
   } catch (error) {

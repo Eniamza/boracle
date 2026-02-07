@@ -1,6 +1,7 @@
 // app/api/routine/[id]/route.js (App Router)
 import { auth } from "@/auth";
-import { sql } from "@/lib/pgdb";
+import { db, eq } from "@/lib/db";
+import { savedRoutine } from "@/lib/db/schema";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request, { params }) {
@@ -15,11 +16,14 @@ export async function GET(request, { params }) {
     }
 
     // Fetch routine from database by ID only
-    const result = await sql`
-      SELECT routineID, routineStr, email
-      FROM savedroutine 
-      WHERE routineID = ${id}
-    `;
+    const result = await db
+      .select({
+        routineId: savedRoutine.routineId,
+        routineStr: savedRoutine.routineStr,
+        email: savedRoutine.email,
+      })
+      .from(savedRoutine)
+      .where(eq(savedRoutine.routineId, id));
 
     if (result.length === 0) {
       return NextResponse.json(
@@ -33,8 +37,8 @@ export async function GET(request, { params }) {
     return NextResponse.json({
       success: true,
       routine: {
-        id: routine.routineid,
-        routineStr: routine.routinestr,
+        id: routine.routineId,
+        routineStr: routine.routineStr,
         email: "Anonymous"
       }
     });
@@ -71,9 +75,10 @@ export async function DELETE(request, { params }) {
     }
 
     // First check if routine exists and belongs to user
-    const existingRoutine = await sql`
-      SELECT email FROM savedroutine WHERE routineID = ${id}
-    `;
+    const existingRoutine = await db
+      .select({ email: savedRoutine.email })
+      .from(savedRoutine)
+      .where(eq(savedRoutine.routineId, id));
 
     if (existingRoutine.length === 0) {
       return NextResponse.json(
@@ -90,16 +95,15 @@ export async function DELETE(request, { params }) {
     }
 
     // Delete the routine
-    const result = await sql`
-      DELETE FROM savedroutine 
-      WHERE routineID = ${id}
-      RETURNING routineID
-    `;
+    const result = await db
+      .delete(savedRoutine)
+      .where(eq(savedRoutine.routineId, id))
+      .returning({ routineId: savedRoutine.routineId });
 
     return NextResponse.json({
       success: true,
       message: "Routine deleted successfully",
-      deletedRoutineId: result[0].routineid
+      deletedRoutineId: result[0].routineId
     });
 
   } catch (error) {

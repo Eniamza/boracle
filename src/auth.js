@@ -1,6 +1,7 @@
 import NextAuth from "next-auth"
 import Google from "next-auth/providers/google"
-import { sql } from '@/lib/pgdb';
+import { db, eq, getCurrentEpoch } from '@/lib/db';
+import { userinfo } from '@/lib/db/schema';
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   // Remove the MongoDB adapter since we're using JWT strategy
@@ -33,17 +34,23 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         console.log("JWT callback - initial sign-in:", { email: profile.email });
         
         try {
-          
           // Check if user profile already exists by email
-          let userProfile = await sql`SELECT * FROM userinfo WHERE email = ${profile.email}`;
+          let userProfile = await db
+            .select()
+            .from(userinfo)
+            .where(eq(userinfo.email, profile.email));
 
           if (userProfile.length === 0) {
             // Create new user profile if none exists
-            userProfile = await sql`
-              INSERT INTO userinfo (userName, email, userRole)
-              VALUES (${profile.name}, ${profile.email}, 'student')
-              RETURNING *;
-            `;
+            userProfile = await db
+              .insert(userinfo)
+              .values({
+                userName: profile.name,
+                email: profile.email,
+                userRole: 'student',
+                createdAt: getCurrentEpoch(),
+              })
+              .returning();
             console.log("Created new UserInfo:", userProfile);
             console.log(`Created new UserInfo for: ${profile.email}`);
           }
@@ -51,8 +58,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           token.id = profile.sub;
           token.email = profile.email;
           token.name = profile.name;
-          token.userrole = userProfile[0].userrole; // Keep consistent with database column name
-          token.createdat = userProfile[0].createdat;
+          token.userrole = userProfile[0].userRole; // Keep consistent with database column name
+          token.createdat = userProfile[0].createdAt;
           
         } catch (error) {
           console.error("Error in JWT callback:", error);
@@ -68,21 +75,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.user.email = token.email;
         session.user.name = token.name;
         session.user.userrole = token.userrole || 'student'; // Keep consistent with database
-
       }
       
       // For existing sessions, refresh data from database
       if (!session.user.userrole) {
         try {
-          
           // Find user profile by email
-          const userProfile = await sql`SELECT * FROM userinfo WHERE email = ${session.user.email}`;
+          const userProfile = await db
+            .select()
+            .from(userinfo)
+            .where(eq(userinfo.email, session.user.email));
           console.log("Found user profile:", userProfile[0]);
 
           if (userProfile.length > 0) {
             // Update session with latest data
-            session.user.userrole = userProfile[0].userrole || "student";
-
+            session.user.userrole = userProfile[0].userRole || "student";
           }
         } catch (error) {
           console.error("Error refreshing session data:", error);
