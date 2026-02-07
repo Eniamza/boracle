@@ -16,7 +16,7 @@ import {
   CheckCircle,
   XCircle
 } from "lucide-react";
-import { useSession } from 'next-auth/react';
+import { SessionProvider, useSession } from 'next-auth/react';
 import { toast } from 'sonner';
 import {
   AlertDialog,
@@ -30,7 +30,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 
-const AdminSwapsPage = () => {
+const AdminSwapsPageContent = () => {
   const { data: session, status } = useSession();
   const [swaps, setSwaps] = useState([]);
   const [filteredSwaps, setFilteredSwaps] = useState([]);
@@ -102,15 +102,15 @@ const AdminSwapsPage = () => {
 
     const query = searchQuery.toLowerCase();
     const filtered = swaps.filter(swap => {
-      const offeringCourse = getCourseInfo(swap.getsectionid);
-      const userEmail = swap.uemail?.toLowerCase() || '';
+      const offeringCourse = getCourseInfo(swap.getSectionId);
+      const userEmail = swap.uEmail?.toLowerCase() || '';
       const courseCode = offeringCourse?.courseCode?.toLowerCase() || '';
       const sectionName = offeringCourse?.sectionName?.toLowerCase() || '';
       
       return userEmail.includes(query) || 
              courseCode.includes(query) || 
              sectionName.includes(query) ||
-             swap.swapid?.includes(query);
+             swap.swapId?.includes(query);
     });
     setFilteredSwaps(filtered);
   };
@@ -141,7 +141,7 @@ const AdminSwapsPage = () => {
 
     setDeleting(true);
     try {
-      const response = await fetch(`/api/admin/swap/${swapToDelete.swapid}`, {
+      const response = await fetch(`/api/admin/swap/${swapToDelete.swapId}`, {
         method: 'DELETE',
       });
 
@@ -150,8 +150,8 @@ const AdminSwapsPage = () => {
       if (response.ok) {
         toast.success('Swap deleted successfully');
         // Remove the deleted swap from the local state
-        setSwaps(swaps.filter(s => s.swapid !== swapToDelete.swapid));
-        setFilteredSwaps(filteredSwaps.filter(s => s.swapid !== swapToDelete.swapid));
+        setSwaps(swaps.filter(s => s.swapId !== swapToDelete.swapId));
+        setFilteredSwaps(filteredSwaps.filter(s => s.swapId !== swapToDelete.swapId));
       } else {
         toast.error(data.error || 'Failed to delete swap');
       }
@@ -254,11 +254,11 @@ const AdminSwapsPage = () => {
         ) : (
           <div className="grid gap-4">
             {filteredSwaps.map((swap) => {
-              const offeringCourse = getCourseInfo(swap.getsectionid);
+              const offeringCourse = getCourseInfo(swap.getSectionId);
               const askingCourses = swap.askingSections?.map(id => getCourseInfo(id)).filter(Boolean) || [];
               
               return (
-                <Card key={swap.swapid} className="bg-white/50 dark:bg-gray-900/50 backdrop-blur border-0 shadow-xl">
+                <Card key={swap.swapId} className="bg-white/50 dark:bg-gray-900/50 backdrop-blur border-0 shadow-xl">
                   <CardContent className="p-6">
                     <div className="flex flex-col lg:flex-row justify-between gap-4">
                       {/* Swap Info Section */}
@@ -266,8 +266,8 @@ const AdminSwapsPage = () => {
                         <div className="flex items-start justify-between mb-4">
                           <div>
                             <div className="flex items-center gap-2 mb-2">
-                              <Badge variant={swap.isdone ? "success" : "secondary"}>
-                                {swap.isdone ? (
+                              <Badge variant={swap.isDone ? "success" : "secondary"}>
+                                {swap.isDone ? (
                                   <>
                                     <CheckCircle className="h-3 w-3 mr-1" />
                                     Completed
@@ -280,20 +280,20 @@ const AdminSwapsPage = () => {
                                 )}
                               </Badge>
                               <span className="text-xs text-gray-500 dark:text-gray-400">
-                                ID: {swap.swapid.substring(0, 8)}...
+                                ID: {swap.swapId?.substring(0, 8)}...
                               </span>
                             </div>
                             
                             <div className="flex items-center gap-2 mb-3">
                               <Mail className="h-4 w-4 text-gray-400" />
                               <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                {swap.uemail}
+                                {swap.uEmail}
                               </span>
                             </div>
 
                             <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
                               <Calendar className="h-3 w-3" />
-                              Created: {formatDate(swap.createdat)}
+                              Created: {formatDate(swap.createdAt)}
                             </div>
                           </div>
 
@@ -326,7 +326,7 @@ const AdminSwapsPage = () => {
                                 </p>
                               </div>
                             ) : (
-                              <p className="text-gray-500">Section ID: {swap.getsectionid}</p>
+                              <p className="text-gray-500">Section ID: {swap.getSectionId}</p>
                             )}
                           </div>
 
@@ -380,14 +380,14 @@ const AdminSwapsPage = () => {
                 {swapToDelete && (
                   <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-md mt-3">
                     <div className="text-sm font-semibold text-gray-900 dark:text-white">
-                      Swap ID: {swapToDelete.swapid.substring(0, 16)}...
+                      Swap ID: {swapToDelete.swapId?.substring(0, 16)}...
                     </div>
                     <div className="text-sm text-gray-600 dark:text-gray-400">
-                      User: {swapToDelete.uemail}
+                      User: {swapToDelete.uEmail}
                     </div>
-                    {getCourseInfo(swapToDelete.getsectionid) && (
+                    {getCourseInfo(swapToDelete.getSectionId) && (
                       <div className="text-sm text-gray-600 dark:text-gray-400">
-                        Offering: {getCourseInfo(swapToDelete.getsectionid)?.courseCode}
+                        Offering: {getCourseInfo(swapToDelete.getSectionId)?.courseCode}
                       </div>
                     )}
                   </div>
@@ -418,6 +418,14 @@ const AdminSwapsPage = () => {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+  );
+};
+
+const AdminSwapsPage = () => {
+  return (
+    <SessionProvider>
+      <AdminSwapsPageContent />
+    </SessionProvider>
   );
 };
 
