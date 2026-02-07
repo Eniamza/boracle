@@ -1,5 +1,5 @@
 const globalInfo = {
-    semester: "SPRING26"
+    semester: "SPRING2026"
 }
 
 export default globalInfo;

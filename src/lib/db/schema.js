@@ -56,6 +56,7 @@ export const courseSwap = pgTable('courseswap', {
   uEmail: text('uemail').notNull().references(() => userinfo.email, { onDelete: 'cascade', onUpdate: 'cascade' }),
   getSectionId: integer('getsectionid').notNull(),
   createdAt: bigint('createdat', { mode: 'number' }),
+  semester: text('semester'),
 });
 
 // AskSectionID table (many-to-many relationship for course swap)

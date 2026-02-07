@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { db, eq, getCurrentEpoch } from "@/lib/db";
 import { courseSwap, askSectionId } from "@/lib/db/schema";
 import { NextRequest, NextResponse } from "next/server";
+import globalInfo from "@/constants/globalInfo";
 
 export async function GET(request) {
   try {
@@ -61,13 +62,14 @@ export async function POST(request) {
     const uEmail = session.user.email;
     const { givingSection, askingSection } = await request.json();
 
-    // Save to database
+    // Save to database with current semester
     const createSwap = await db
       .insert(courseSwap)
       .values({
         getSectionId: givingSection,
         uEmail: uEmail,
         createdAt: getCurrentEpoch(),
+        semester: globalInfo.semester,
       })
       .returning({ swapId: courseSwap.swapId });
 
