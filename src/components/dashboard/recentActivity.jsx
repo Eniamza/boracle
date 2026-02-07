@@ -182,7 +182,7 @@ export default function RecentActivity() {
                         <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
                           <div className="flex items-center gap-1">
                             <Calendar className="h-3 w-3" />
-                            {formatDate(material.createdat)}
+                            {formatDate(material.createdAt)}
                           </div>
                           <div className="flex items-center gap-1">
                             <Clock className="h-3 w-3" />
@@ -282,7 +282,7 @@ export default function RecentActivity() {
                         <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
                           <div className="flex items-center gap-1">
                             <Calendar className="h-3 w-3" />
-                            {formatDate(review.createdat)}
+                            {formatDate(review.createdAt)}
                           </div>
                           <div className="flex items-center gap-1">
                             <Clock className="h-3 w-3" />
@@ -307,4 +307,3 @@ export default function RecentActivity() {
     </div>
   );
 }
-

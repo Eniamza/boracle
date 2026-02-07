@@ -33,8 +33,8 @@ const SwapCard = ({ swap, courses = [], onDelete, onMarkComplete }) => {
     return date.toLocaleDateString();
   };
 
-  const giveCourse = getCourseBySection(swap.getsectionid);
-  const isOwner = session?.user?.email === swap.uemail;
+  const giveCourse = getCourseBySection(swap.getSectionId);
+  const isOwner = session?.user?.email === swap.uEmail;
   
   // Different card styles for owner vs others
   const getCardStyle = () => {
@@ -48,7 +48,7 @@ const SwapCard = ({ swap, courses = [], onDelete, onMarkComplete }) => {
     <Card className={`relative transition-all hover:shadow-xl ${getCardStyle()} overflow-hidden`}>
       {/* Status Badge */}
       <div className="absolute top-3 right-3 z-10">
-        {swap.isdone ? (
+        {swap.isDone ? (
           <Badge className="bg-green-500 text-white border-0">
             <CheckCircle className="w-3 h-3 mr-1" />
             Completed
@@ -80,11 +80,11 @@ const SwapCard = ({ swap, courses = [], onDelete, onMarkComplete }) => {
             </div>
             <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
               <p className="font-bold text-lg text-gray-900 dark:text-white">
-                {giveCourse ? formatCourse(giveCourse) : `Section ${swap.getsectionid}`}
+                {giveCourse ? formatCourse(giveCourse) : `Section ${swap.getSectionId}`}
               </p>
               {giveCourse && (
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                  {giveCourse.faculties || 'Faculty: TBA'} • {giveCourse.capacity - giveCourse.consumedSeat}/{giveCourse.capacity} Seats Available
+                  {giveCourse.faculties || 'Faculty: TBA'} • {giveCourse.consumedSeat}/{giveCourse.capacity} Seats Consumed
                 </p>
               )}
             </div>
@@ -129,22 +129,22 @@ const SwapCard = ({ swap, courses = [], onDelete, onMarkComplete }) => {
             <div className="flex items-center gap-2 text-sm">
               <User className="w-4 h-4 text-gray-500" />
               <span className="font-medium text-gray-900 dark:text-white">
-                {swap.uemail || 'Unknown user'}
+                {swap.uEmail || 'Unknown user'}
               </span>
             </div>
             <div className="flex items-center gap-2 text-xs text-gray-500">
               <Calendar className="w-3 h-3" />
-              {formatDate(swap.createdat)}
+              {formatDate(swap.createdAt)}
             </div>
           </div>
           
           {/* Action Buttons */}
           {isOwner && (
             <div className="flex gap-2">
-              {!swap.isdone && (
+              {!swap.isDone && (
                 <Button 
                   size="sm"
-                  onClick={() => onMarkComplete?.(swap.swapid)}
+                  onClick={() => onMarkComplete?.(swap.swapId)}
                   className="bg-green-500 hover:bg-green-600 text-white"
                 >
                   <CheckCircle className="w-4 h-4" />
@@ -152,7 +152,7 @@ const SwapCard = ({ swap, courses = [], onDelete, onMarkComplete }) => {
               )}
               <Button 
                 size="sm"
-                onClick={() => onDelete?.(swap.swapid)}
+                onClick={() => onDelete?.(swap.swapId)}
                 className="bg-red-500 hover:bg-red-600 text-white"
               >
                 <Trash2 className="w-4 h-4" />

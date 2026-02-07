@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Check, ChevronsUpDown, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const MultiCourseSelector = ({ label, courses = [], values = [], onChange, placeholder }) => {
+const MultiCourseSelector = ({ label, courses = [], values = [], onChange, placeholder, excludeSectionId }) => {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const dropdownRef = useRef(null);
@@ -14,12 +14,17 @@ const MultiCourseSelector = ({ label, courses = [], values = [], onChange, place
     return `${course.courseCode}-[${course.sectionName}]`;
   };
 
+  // Filter out the excluded section (the one being offered)
+  const availableCourses = excludeSectionId 
+    ? courses.filter(c => c.sectionId?.toString() !== excludeSectionId)
+    : courses;
+
   const filterCourses = (searchTerm) => {
-    if (!courses || courses.length === 0) return [];
-    if (!searchTerm) return courses.slice(0, 50);
+    if (!availableCourses || availableCourses.length === 0) return [];
+    if (!searchTerm) return availableCourses.slice(0, 50);
     
     const search = searchTerm.toLowerCase();
-    return courses.filter(course => 
+    return availableCourses.filter(course => 
       course.courseCode?.toLowerCase().includes(search) ||
       course.sectionName?.toLowerCase().includes(search) ||
       formatCourse(course).toLowerCase().includes(search)

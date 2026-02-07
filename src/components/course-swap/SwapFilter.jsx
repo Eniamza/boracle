@@ -20,7 +20,7 @@ const SwapFilter = ({ courses = [], swaps = [], onFilterChange }) => {
   const getAvailableCourses = () => {
     const sectionIds = new Set();
     swaps.forEach(swap => {
-      if (swap.getsectionid) sectionIds.add(swap.getsectionid);
+      if (swap.getSectionId) sectionIds.add(swap.getSectionId);
       if (swap.askingSections) {
         swap.askingSections.forEach(id => sectionIds.add(id));
       }

@@ -27,6 +27,12 @@ const CreateSwapModal = ({ courses, onSwapCreated }) => {
       return;
     }
 
+    // Prevent offering and asking for the same section
+    if (askingSections.includes(givingSection)) {
+      toast.error('You cannot ask for the same section you are offering.');
+      return;
+    }
+
     setSubmitting(true);
     try {
       const response = await fetch('/api/swap', {
@@ -89,6 +95,7 @@ const CreateSwapModal = ({ courses, onSwapCreated }) => {
             values={askingSections}
             onChange={setAskingSections}
             placeholder="Select sections you want..."
+            excludeSectionId={givingSection}
           />
         </div>
 

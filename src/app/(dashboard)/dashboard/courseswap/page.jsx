@@ -66,7 +66,7 @@ const CourseSwapPage = () => {
     // Apply "My Swaps Only" filter first
     if (showMySwapsOnly && session?.user?.email) {
       filtered = filtered.filter(swap => {
-        const isMySwap = swap.uemail?.toLowerCase() === session.user.email?.toLowerCase();
+        const isMySwap = swap.uEmail?.toLowerCase() === session.user.email?.toLowerCase();
         return isMySwap;
       });
     }
@@ -75,7 +75,7 @@ const CourseSwapPage = () => {
     if (selectedFilters.length > 0) {
       filtered = filtered.filter(swap => {
         const relatedSections = [
-          swap.getsectionid,
+          swap.getSectionId,
           ...(swap.askingSections || [])
         ];
         return relatedSections.some(sectionId => 
