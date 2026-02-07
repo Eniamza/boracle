@@ -122,7 +122,7 @@ const FacultyImportPage = () => {
       reader.onload = async (e) => {
         const fileContent = e.target.result;
 
-        const response = await fetch('/api/admin/faculty/import', {
+        const response = await fetch('/api/admin/import/faculty', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
