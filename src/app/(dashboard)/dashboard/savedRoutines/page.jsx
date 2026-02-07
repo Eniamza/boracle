@@ -4,6 +4,7 @@ import { Calendar, Clock, Trash2, Eye, Download, RefreshCw, AlertCircle, X } fro
 import { useSession } from 'next-auth/react';
 import RoutineTableGrid from '@/components/routine/RoutineTableGrid';
 import { toast } from 'sonner';
+import * as htmlToImage from 'html-to-image';
 
 const SavedRoutinesPage = () => {
   const { data: session } = useSession();
@@ -114,19 +115,66 @@ const SavedRoutinesPage = () => {
 
   // Simple Modal wrapper for routine display
   const RoutineTableModal = ({ selectedCourses, onClose }) => {
+    const routineRef = useRef(null);
+
+    const exportToPNG = async () => {
+      if (!selectedCourses || selectedCourses.length === 0) {
+        toast.error('No courses to export');
+        return;
+      }
+
+      if (!routineRef?.current) {
+        toast.error('Routine table not found');
+        return;
+      }
+
+      try {
+        const dataUrl = await htmlToImage.toPng(routineRef.current, {
+          quality: 0.95,
+          pixelRatio: 2,
+          backgroundColor: '#111827',
+          style: {
+            transform: 'scale(1)',
+            transformOrigin: 'top left',
+          }
+        });
+        
+        const link = document.createElement('a');
+        link.download = `routine-${new Date().toISOString().split('T')[0]}.png`;
+        link.href = dataUrl;
+        link.click();
+        
+        toast.success('Routine exported successfully!');
+      } catch (error) {
+        console.error('Error exporting to PNG:', error);
+        toast.error('Failed to export routine as PNG. Please try again.');
+      }
+    };
+
     return (
       <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
         <div className="bg-gray-900 rounded-lg max-w-[95vw] max-h-[95vh] w-full overflow-hidden flex flex-col">
           <div className="flex items-center justify-between p-4 border-b border-gray-700">
             <h2 className="text-xl font-semibold text-white">Saved Routine</h2>
-            <button
-              onClick={onClose}
-              className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={exportToPNG}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg flex items-center gap-2 transition-colors text-white"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                Save as PNG
+              </button>
+              <button
+                onClick={onClose}
+                className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
           </div>
-          <div className="flex-1 overflow-auto p-4">
+          <div className="flex-1 overflow-auto p-4" ref={routineRef}>
             <RoutineTableGrid 
               selectedCourses={selectedCourses} 
               showRemoveButtons={false}

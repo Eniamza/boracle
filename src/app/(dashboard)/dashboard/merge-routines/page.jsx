@@ -10,7 +10,6 @@ import {
   Trash2, 
   Loader2,
   Users,
-  Download,
   Eye,
   Copy,
   Check,
@@ -18,7 +17,7 @@ import {
 } from "lucide-react";
 import { toast } from 'sonner';
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import html2canvas from 'html2canvas';
+import * as htmlToImage from 'html-to-image';
 
 const MergeRoutinesPage = () => {
   const [routineInputs, setRoutineInputs] = useState([
@@ -172,25 +171,38 @@ const MergeRoutinesPage = () => {
     setLoading(false);
   };
 
-  // Export routine as image
+  // Export routine as image using html-to-image
   const exportAsImage = async () => {
-    if (!mergedRoutineRef.current) return;
+    if (!mergedRoutineRef.current) {
+      toast.error('Routine table not found');
+      return;
+    }
+
+    if (mergedCourses.length === 0) {
+      toast.error('No courses to export');
+      return;
+    }
 
     try {
-      const canvas = await html2canvas(mergedRoutineRef.current, {
+      const dataUrl = await htmlToImage.toPng(mergedRoutineRef.current, {
+        quality: 0.95,
+        pixelRatio: 2,
         backgroundColor: '#111827',
-        scale: 2
+        style: {
+          transform: 'scale(1)',
+          transformOrigin: 'top left',
+        }
       });
       
       const link = document.createElement('a');
-      link.download = `merged-routine-${Date.now()}.png`;
-      link.href = canvas.toDataURL();
+      link.download = `merged-routine-${new Date().toISOString().split('T')[0]}.png`;
+      link.href = dataUrl;
       link.click();
       
-      toast.success('Routine exported as image');
+      toast.success('Routine exported successfully!');
     } catch (error) {
       console.error('Error exporting routine:', error);
-      toast.error('Failed to export routine');
+      toast.error('Failed to export routine as PNG. Please try again.');
     }
   };
 
@@ -218,9 +230,9 @@ const MergeRoutinesPage = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Alert className="mb-4">
+                <Alert className="mb-4 dark:bg-blue-900">
                   <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>
+                  <AlertDescription className="text-gray-700 dark:text-gray-300">
                     Get routine IDs from your saved routines or ask friends to share theirs
                   </AlertDescription>
                 </Alert>
@@ -313,33 +325,35 @@ const MergeRoutinesPage = () => {
                     </div>
                   ))}
 
-                  <Button
-                    onClick={addRoutineInput}
-                    variant="outline"
-                    className="w-full"
-                    disabled={routineInputs.length >= 10}
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Another Friend
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={addRoutineInput}
+                      variant="outline"
+                      className="flex-1 dark:bg-blue-600 dark:hover:bg-blue-700"
+                      disabled={routineInputs.length >= 10}
+                    >
+                      <Plus className="h-4 w-4 shrink-0" />
+                      <span>Add Another Friend</span>
+                    </Button>
 
-                  <Button
-                    onClick={mergeRoutines}
-                    className="w-full"
-                    disabled={loading}
-                  >
-                    {loading ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Merging Routines...
-                      </>
-                    ) : (
-                      <>
-                        <Eye className="h-4 w-4 mr-2" />
-                        Merge & View
-                      </>
-                    )}
-                  </Button>
+                    <Button
+                      onClick={mergeRoutines}
+                      className="flex-1"
+                      disabled={loading}
+                    >
+                      {loading ? (
+                        <>
+                          <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
+                          <span>Merging...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Eye className="h-4 w-4 shrink-0" />
+                          <span>Merge & View</span>
+                        </>
+                      )}
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -357,14 +371,15 @@ const MergeRoutinesPage = () => {
                     </CardDescription>
                   </div>
                   {mergedCourses.length > 0 && (
-                    <Button
+                    <button
                       onClick={exportAsImage}
-                      variant="outline"
-                      size="sm"
+                      className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg flex items-center gap-2 transition-colors text-white"
                     >
-                      <Download className="h-4 w-4 mr-2" />
-                      Export as Image
-                    </Button>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                      </svg>
+                      Save as PNG
+                    </button>
                   )}
                 </div>
               </CardHeader>
