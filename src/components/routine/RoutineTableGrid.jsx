@@ -187,7 +187,19 @@ const RoutineTableGrid = ({
             <div className="space-y-2 text-sm">
               <div className="font-bold text-lg">{hoveredCourse.courseCode}-{hoveredCourse.sectionName}</div>
               <div><span className="text-gray-400">Credits:</span> {hoveredCourse.courseCredit}</div>
-              <div><span className="text-gray-400">Faculty:</span> {hoveredCourse.faculties || 'TBA'}</div>
+              
+              {/* Faculty Information */}
+              <div className="bg-gray-700/50 rounded p-2 space-y-1">
+                <div className="font-medium text-blue-400">Faculty Information</div>
+                <div><span className="text-gray-400">Name:</span> {hoveredCourse.employeeName || hoveredCourse.faculties || 'TBA'}</div>
+                {hoveredCourse.employeeEmail && (
+                  <div><span className="text-gray-400">Email:</span> {hoveredCourse.employeeEmail}</div>
+                )}
+                {!hoveredCourse.employeeEmail && hoveredCourse.faculties && (
+                  <div><span className="text-gray-400">Initial:</span> {hoveredCourse.faculties}</div>
+                )}
+              </div>
+              
               <div><span className="text-gray-400">Type:</span> {hoveredCourse.sectionType}</div>
               <div><span className="text-gray-400">Capacity:</span> {hoveredCourse.capacity} (Filled: {hoveredCourse.consumedSeat})</div>
               <div><span className="text-gray-400">Prerequisites:</span> {hoveredCourse.prerequisiteCourses || 'None'}</div>

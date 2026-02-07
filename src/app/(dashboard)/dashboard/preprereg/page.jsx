@@ -28,9 +28,42 @@ const PreRegistrationPage = () => {
   });
   const [facultySearch, setFacultySearch] = useState('');
   const [displayCount, setDisplayCount] = useState(50);
+  const [facultyMap, setFacultyMap] = useState({});
+  const [hoveredFaculty, setHoveredFaculty] = useState(null);
+  const [facultyTooltipPosition, setFacultyTooltipPosition] = useState({ x: 0, y: 0 });
   const observerRef = useRef();
   const lastCourseRef = useRef();
   const routineRef = useRef(null);
+
+  // Helper to get faculty details for a course
+  const getFacultyDetails = useCallback((faculties) => {
+    if (!faculties) return { facultyName: null, facultyEmail: null, imgUrl: null };
+    
+    // Get the first initial from the faculties string
+    const firstInitial = faculties.split(',')[0]?.trim().toUpperCase();
+    const facultyInfo = facultyMap[firstInitial];
+    
+    if (facultyInfo) {
+      return {
+        facultyName: facultyInfo.facultyName,
+        facultyEmail: facultyInfo.email,
+        imgUrl: facultyInfo.imgUrl,
+      };
+    }
+    return { facultyName: null, facultyEmail: null, imgUrl: null };
+  }, [facultyMap]);
+
+  // Enrich selected courses with faculty details
+  const enrichedSelectedCourses = useMemo(() => {
+    return selectedCourses.map(course => {
+      const { facultyName, facultyEmail } = getFacultyDetails(course.faculties);
+      return {
+        ...course,
+        employeeName: facultyName,
+        employeeEmail: facultyEmail,
+      };
+    });
+  }, [selectedCourses, getFacultyDetails]);
 
   // Calculate total credits
   const totalCredits = useMemo(() => {
@@ -56,9 +89,21 @@ const PreRegistrationPage = () => {
           if (sectionA > sectionB) return 1;
           return 0;
         });
+        
+        // Set courses immediately so UI loads
         setCourses(data);
         setFilteredCourses(data);
         setLoading(false);
+        
+        // Fetch all faculty data in the background (single query, non-blocking)
+        fetch('/api/faculty/lookup')
+          .then(res => res.json())
+          .then(facultyData => {
+            if (facultyData.success) {
+              setFacultyMap(facultyData.facultyMap);
+            }
+          })
+          .catch(err => console.error('Error fetching faculty data:', err));
       } catch (error) {
         console.error('Error fetching courses:', error);
         setLoading(false);
@@ -350,7 +395,27 @@ const PreRegistrationPage = () => {
                       <td className="py-3 px-2 text-sm font-medium">
                       {course.courseCode}-[{course.sectionName}]
                       </td>
-                      <td className="py-3 px-2 text-sm">{course.faculties || 'TBA'}</td>
+                      <td className="py-3 px-2 text-sm relative">
+                        <span 
+                          className="cursor-pointer hover:text-blue-400 transition-colors"
+                          onMouseEnter={(e) => {
+                            if (course.faculties) {
+                              const rect = e.currentTarget.getBoundingClientRect();
+                              setHoveredFaculty({
+                                initial: course.faculties,
+                                ...getFacultyDetails(course.faculties)
+                              });
+                              setFacultyTooltipPosition({
+                                x: rect.left,
+                                y: rect.bottom + 8
+                              });
+                            }
+                          }}
+                          onMouseLeave={() => setHoveredFaculty(null)}
+                        >
+                          {course.faculties || 'TBA'}
+                        </span>
+                      </td>
                       <td className="py-3 px-2 text-sm text-gray-400 whitespace-pre-line">
                         {(course.prerequisiteCourses || 'None').replace(/OR/g, '/').replace(/AND/g, '+').replace(/\//g, '/\n')}
                       </td>
@@ -496,7 +561,7 @@ const PreRegistrationPage = () => {
                   <Save className="w-4 h-4" />
                   {savingRoutine ? 'Saving...' : 'Save Routine'}
                 </button>
-                <ExportRoutinePNG selectedCourses={selectedCourses} routineRef={routineRef} />
+                <ExportRoutinePNG selectedCourses={enrichedSelectedCourses} routineRef={routineRef} />
                 <button
                   onClick={() => setShowRoutineModal(false)}
                   className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
@@ -508,10 +573,56 @@ const PreRegistrationPage = () => {
             
             <div className="flex-1 overflow-auto" ref={routineRef}>
               <RoutineTableGrid 
-                selectedCourses={selectedCourses} 
+                selectedCourses={enrichedSelectedCourses} 
                 onRemoveCourse={addToRoutine} 
                 showRemoveButtons={true}
               />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Faculty Hover Tooltip */}
+      {hoveredFaculty && (
+        <div 
+          className="fixed z-50 bg-gray-800 border border-gray-600 rounded-lg p-4 shadow-xl w-80 pointer-events-none"
+          style={{ 
+            left: `${Math.min(facultyTooltipPosition.x, window.innerWidth - 340)}px`, 
+            top: `${facultyTooltipPosition.y}px`
+          }}
+        >
+          <div className="flex gap-4">
+            {/* Faculty Image */}
+            <div className="shrink-0">
+              {hoveredFaculty.imgUrl ? (
+                <img 
+                  src={hoveredFaculty.imgUrl} 
+                  alt={hoveredFaculty.facultyName || 'Faculty'} 
+                  className="w-16 h-16 rounded-full object-cover border-2 border-blue-500"
+                />
+              ) : (
+                <div className="w-16 h-16 rounded-full bg-blue-400 flex items-center justify-center border-2 border-blue-500">
+                  <svg className="w-10 h-10 text-blue-100" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                  </svg>
+                </div>
+              )}
+            </div>
+            
+            {/* Faculty Details */}
+            <div className="flex-1 space-y-1 text-sm">
+              <div>
+                <span className="text-gray-400">Initial:</span>{' '}
+                <span className="font-medium text-blue-400">{hoveredFaculty.initial || 'Not Found'}</span>
+              </div>
+              <div>
+                <span className="text-gray-400">Name:</span>{' '}
+                <span className="font-medium">{hoveredFaculty.facultyName || 'Not Found'}</span>
+              </div>
+              <div>
+                <span className="text-gray-400">Email:</span>{' '}
+                <span className="font-medium text-xs">{hoveredFaculty.facultyEmail || 'Not Found'}</span>
+              </div>
             </div>
           </div>
         </div>
