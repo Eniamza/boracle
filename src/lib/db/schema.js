@@ -1,5 +1,6 @@
 // src/lib/db/schema.js - Drizzle ORM Schema Definitions
-import { pgTable, pgEnum, text, uuid, boolean, bigint, integer, primaryKey, index } from 'drizzle-orm/pg-core';
+import { pgTable, pgEnum, text, uuid, boolean, bigint, integer, primaryKey, index, check } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
 
 // ============ ENUMS ============
 
@@ -57,7 +58,9 @@ export const courseSwap = pgTable('courseswap', {
   getSectionId: integer('getsectionid').notNull(),
   createdAt: bigint('createdat', { mode: 'number' }),
   semester: text('semester'),
-});
+}, (table) => ({
+  semesterFormatCheck: check('semester_uppercase_check', sql`${table.semester} ~ '^(SPRING|SUMMER|FALL)[0-9]{4}$'`),
+}));
 
 // AskSectionID table (many-to-many relationship for course swap)
 export const askSectionId = pgTable('asksectionid', {
@@ -117,7 +120,7 @@ export const votes = pgTable('votes', {
 export const moderatesReview = pgTable('moderatesreview', {
   reviewId: uuid('reviewid').notNull().references(() => reviews.reviewId, { onDelete: 'cascade', onUpdate: 'cascade' }),
   moderatorEmail: text('moderatoremail').notNull().references(() => userinfo.email, { onDelete: 'cascade', onUpdate: 'cascade' }),
-  moderatedAt: bigint('moderatedat', { mode: 'number' }),
+  moderatedAt: bigint('moderatedat', { mode: 'number' }).notNull(),
   comment: text('comment').notNull(),
   decisionState: decisionEnum('decisionstate').notNull(),
 }, (table) => ({
@@ -128,7 +131,7 @@ export const moderatesReview = pgTable('moderatesreview', {
 export const moderatesCourseMaterials = pgTable('moderatescoursematerials', {
   materialId: uuid('materialid').notNull().references(() => courseMaterials.materialId, { onDelete: 'cascade', onUpdate: 'cascade' }),
   moderatorEmail: text('moderatoremail').notNull().references(() => userinfo.email, { onDelete: 'cascade', onUpdate: 'cascade' }),
-  moderatedAt: bigint('moderatedat', { mode: 'number' }),
+  moderatedAt: bigint('moderatedat', { mode: 'number' }).notNull(),
   comment: text('comment').notNull(),
   decisionState: modDecisionEnum('decisionstate').notNull(),
 }, (table) => ({
