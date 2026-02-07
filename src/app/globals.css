@@ -124,3 +124,27 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Custom scrollbar for faculty dropdown */
+.faculty-dropdown-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #1e40af #0f172a;
+}
+
+.faculty-dropdown-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+
+.faculty-dropdown-scroll::-webkit-scrollbar-track {
+  background: #0f172a;
+  border-radius: 4px;
+}
+
+.faculty-dropdown-scroll::-webkit-scrollbar-thumb {
+  background: #1e40af;
+  border-radius: 4px;
+}
+
+.faculty-dropdown-scroll::-webkit-scrollbar-thumb:hover {
+  background: #2563eb;
+}

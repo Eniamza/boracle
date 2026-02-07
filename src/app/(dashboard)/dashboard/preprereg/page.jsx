@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Search, Filter, Plus, Calendar, Clock, X, Users, BookOpen, Download, Save, AlertCircle } from 'lucide-react';
+import { Search, Filter, Plus, Calendar, Clock, X, Users, BookOpen, Download, Save, AlertCircle, ChevronDown } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import RoutineTableGrid from '@/components/routine/RoutineTableGrid';
 import ExportRoutinePNG from '@/components/routine/ExportRoutinePNG';
@@ -27,6 +27,8 @@ const PreRegistrationPage = () => {
     avoidFaculties: []
   });
   const [facultySearch, setFacultySearch] = useState('');
+  const [facultyDropdownOpen, setFacultyDropdownOpen] = useState(false);
+  const [highlightedIndex, setHighlightedIndex] = useState(0);
   const [displayCount, setDisplayCount] = useState(50);
   const [facultyMap, setFacultyMap] = useState({});
   const [hoveredFaculty, setHoveredFaculty] = useState(null);
@@ -34,6 +36,8 @@ const PreRegistrationPage = () => {
   const observerRef = useRef();
   const lastCourseRef = useRef();
   const routineRef = useRef(null);
+  const facultyDropdownRef = useRef(null);
+  const facultyListRef = useRef(null);
 
   // Helper to get faculty details for a course
   const getFacultyDetails = useCallback((faculties) => {
@@ -64,6 +68,23 @@ const PreRegistrationPage = () => {
       };
     });
   }, [selectedCourses, getFacultyDetails]);
+
+  // Extract unique faculty initials from CDN courses data
+  const cdnFacultyList = useMemo(() => {
+    const facultySet = new Set();
+    courses.forEach(course => {
+      if (course.faculties) {
+        // Split by comma in case there are multiple faculties
+        course.faculties.split(',').forEach(f => {
+          const initial = f.trim().toUpperCase();
+          if (initial && initial !== 'TBA') {
+            facultySet.add(initial);
+          }
+        });
+      }
+    });
+    return Array.from(facultySet).sort();
+  }, [courses]);
 
   // Calculate total credits
   const totalCredits = useMemo(() => {
@@ -192,6 +213,32 @@ const PreRegistrationPage = () => {
       observer.disconnect();
     };
   }, [loading, displayCount, filteredCourses.length, displayedCourses]);
+
+  // Close faculty dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (facultyDropdownRef.current && !facultyDropdownRef.current.contains(event.target)) {
+        setFacultyDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Reset highlighted index when search changes
+  useEffect(() => {
+    setHighlightedIndex(0);
+  }, [facultySearch]);
+
+  // Auto-scroll dropdown when navigating with keyboard
+  useEffect(() => {
+    if (facultyDropdownOpen && facultyListRef.current) {
+      const highlightedElement = facultyListRef.current.querySelector(`[data-index="${highlightedIndex}"]`);
+      if (highlightedElement) {
+        highlightedElement.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      }
+    }
+  }, [highlightedIndex, facultyDropdownOpen]);
 
   // Format time
   const formatTime = (time) => {
@@ -472,56 +519,197 @@ const PreRegistrationPage = () => {
 
       {/* Filter Modal */}
       {showFilterModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-gray-900 rounded-lg p-6 max-w-md w-full">
-            <h2 className="text-xl font-bold mb-4">Filters</h2>
+        <div className="fixed inset-0 bg-black/75 flex items-center justify-center z-50 p-4">
+          <div className="bg-[#0f172a] border border-blue-800/50 rounded-lg max-w-md w-full shadow-xl shadow-blue-900/20">
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b border-blue-800/50">
+              <div>
+                <h2 className="text-xl font-semibold text-white">Filters</h2>
+                <p className="text-sm text-blue-300/70">Customize your course view</p>
+              </div>
+              <button
+                onClick={() => setShowFilterModal(false)}
+                className="p-2 hover:bg-blue-800/30 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5 text-blue-300" />
+              </button>
+            </div>
             
-            <div className="space-y-4">
-              {/* Hide Filled Sections */}
-              <label className="flex items-center gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={filters.hideFilled}
-                  onChange={(e) => setFilters(prev => ({ ...prev, hideFilled: e.target.checked }))}
-                  className="w-5 h-5 rounded border-gray-600 bg-gray-800 text-blue-600 focus:ring-blue-500"
-                />
-                <span>Hide Filled Sections</span>
+            {/* Content */}
+            <div className="p-4 space-y-5">
+              {/* Hide Filled Sections - Material Design Checkbox */}
+              <label className="flex items-center gap-3 cursor-pointer p-3 bg-[#1e3a5f] rounded-lg hover:bg-[#234b7a] transition-colors">
+                <div className="relative">
+                  <input
+                    type="checkbox"
+                    checked={filters.hideFilled}
+                    onChange={(e) => setFilters(prev => ({ ...prev, hideFilled: e.target.checked }))}
+                    className="sr-only peer"
+                  />
+                  <div className="w-5 h-5 border-2 border-blue-400 rounded bg-transparent peer-checked:bg-blue-500 peer-checked:border-blue-500 transition-all duration-200 flex items-center justify-center">
+                    {filters.hideFilled && (
+                      <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                  </div>
+                  <div className="absolute inset-0 -m-2 rounded-full peer-focus-visible:ring-2 peer-focus-visible:ring-blue-400 peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-[#1e3a5f]"></div>
+                </div>
+                <div>
+                  <span className="font-medium text-white">Hide Filled Sections</span>
+                  <p className="text-xs text-blue-300/70">Only show sections with available seats</p>
+                </div>
               </label>
               
-              {/* Avoid Faculties */}
-              <div>
-                <label className="block text-sm font-medium mb-2">Avoid Faculties</label>
-                <input
-                  type="text"
-                  placeholder="Type faculty initial and press Enter"
-                  value={facultySearch}
-                  onChange={(e) => setFacultySearch(e.target.value)}
-                  onKeyDown={addFacultyToAvoid}
-                  className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-100 placeholder-gray-500 focus:outline-none focus:border-blue-500"
-                />
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {filters.avoidFaculties.map(faculty => (
-                    <span
-                      key={faculty}
-                      className="px-3 py-1 bg-red-600/20 border border-red-600 rounded-full text-sm flex items-center gap-2"
-                    >
-                      {faculty}
-                      <button
-                        onClick={() => removeFaculty(faculty)}
-                        className="hover:text-red-400"
+              {/* Avoid Faculties - Dropdown */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-blue-200">Avoid Faculties</label>
+                
+                {/* Selected Faculties Tags - above input */}
+                {filters.avoidFaculties.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {filters.avoidFaculties.map(faculty => (
+                      <span
+                        key={faculty}
+                        className="px-3 py-1.5 bg-red-500/20 border border-red-500/50 rounded-full text-sm flex items-center gap-2 text-red-300"
                       >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </span>
-                  ))}
+                        {faculty}
+                        <button
+                          onClick={() => removeFaculty(faculty)}
+                          className="hover:text-red-200 transition-colors"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+                
+                <div className="relative" ref={facultyDropdownRef}>
+                  {/* Input with dropdown trigger */}
+                  <div className="w-full bg-gray-800 border border-gray-700 rounded-lg text-gray-100 flex items-center">
+                    <input
+                      type="text"
+                      placeholder="Search faculties..."
+                      value={facultySearch}
+                      onChange={(e) => {
+                        setFacultySearch(e.target.value);
+                        setFacultyDropdownOpen(true);
+                      }}
+                      onFocus={() => setFacultyDropdownOpen(true)}
+                      onKeyDown={(e) => {
+                        const filteredList = cdnFacultyList.filter(initial => 
+                          initial.toLowerCase().includes(facultySearch.toLowerCase())
+                        );
+                        
+                        if (e.key === 'ArrowDown') {
+                          e.preventDefault();
+                          setHighlightedIndex(prev => Math.min(prev + 1, filteredList.length - 1));
+                        } else if (e.key === 'ArrowUp') {
+                          e.preventDefault();
+                          setHighlightedIndex(prev => Math.max(prev - 1, 0));
+                        } else if (e.key === 'Enter' && filteredList.length > 0) {
+                          e.preventDefault();
+                          const selected = filteredList[highlightedIndex];
+                          if (selected) {
+                            const isSelected = filters.avoidFaculties.includes(selected);
+                            if (isSelected) {
+                              removeFaculty(selected);
+                            } else {
+                              setFilters(prev => ({
+                                ...prev,
+                                avoidFaculties: [...prev.avoidFaculties, selected]
+                              }));
+                            }
+                            setFacultySearch('');
+                          }
+                        } else if (e.key === 'Escape') {
+                          setFacultyDropdownOpen(false);
+                        }
+                      }}
+                      className="flex-1 px-4 py-2.5 bg-transparent text-gray-100 placeholder-gray-500 focus:outline-none text-sm"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setFacultyDropdownOpen(!facultyDropdownOpen)}
+                      className="px-3 py-2.5 hover:bg-gray-700 transition-colors rounded-r-lg"
+                    >
+                      <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${facultyDropdownOpen ? 'rotate-180' : ''}`} />
+                    </button>
+                  </div>
+                  
+                  {/* Dropdown - positioned to overflow modal */}
+                  {facultyDropdownOpen && (
+                    <div 
+                      className="absolute z-[9999] mt-1 w-full rounded-lg border border-blue-700/50 bg-[#0f172a] shadow-2xl"
+                      style={{ maxHeight: '320px' }}
+                    >
+                      <div 
+                        ref={facultyListRef}
+                        className="overflow-y-auto max-h-[320px] faculty-dropdown-scroll"
+                      >
+                        {cdnFacultyList
+                          .filter(initial => 
+                            initial.toLowerCase().includes(facultySearch.toLowerCase())
+                          )
+                          .slice(0, 100)
+                          .map((initial, index) => {
+                            const isSelected = filters.avoidFaculties.includes(initial);
+                            const isHighlighted = index === highlightedIndex;
+                            return (
+                              <div
+                                key={initial}
+                                data-index={index}
+                                className={`flex items-center px-3 py-2.5 cursor-pointer transition-colors ${
+                                  isHighlighted ? 'bg-blue-600' : isSelected ? 'bg-blue-800/40' : 'hover:bg-[#1e3a5f]'
+                                }`}
+                                onClick={() => {
+                                  if (isSelected) {
+                                    removeFaculty(initial);
+                                  } else {
+                                    setFilters(prev => ({
+                                      ...prev,
+                                      avoidFaculties: [...prev.avoidFaculties, initial]
+                                    }));
+                                  }
+                                  setFacultySearch('');
+                                }}
+                                onMouseEnter={() => setHighlightedIndex(index)}
+                              >
+                                <div className="flex-1 min-w-0">
+                                  <div className="font-medium text-sm text-white">{initial}</div>
+                                </div>
+                                {isSelected && (
+                                  <div className="ml-2 text-blue-400">
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        {cdnFacultyList.length === 0 && (
+                          <div className="py-4 text-center text-sm text-blue-300/70">Loading faculties...</div>
+                        )}
+                        {cdnFacultyList.length > 0 && 
+                         cdnFacultyList.filter(initial => 
+                           initial.toLowerCase().includes(facultySearch.toLowerCase())
+                         ).length === 0 && (
+                          <div className="py-4 text-center text-sm text-blue-300/70">No faculty found</div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
             
-            <div className="flex gap-2 mt-6">
+            {/* Footer */}
+            <div className="flex gap-2 p-4 border-t border-blue-800/50 bg-[#0c1629]">
               <button
                 onClick={() => setShowFilterModal(false)}
-                className="flex-1 px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
+                className="flex-1 px-4 py-2.5 bg-[#1e3a5f] hover:bg-[#234b7a] border border-blue-700/50 rounded-lg transition-colors font-medium text-blue-100"
               >
                 Close
               </button>
@@ -530,7 +718,7 @@ const PreRegistrationPage = () => {
                   setFilters({ hideFilled: false, avoidFaculties: [] });
                   setShowFilterModal(false);
                 }}
-                className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
+                className="flex-1 px-4 py-2.5 bg-red-700 hover:bg-red-800 rounded-lg transition-colors font-medium"
               >
                 Reset Filters
               </button>
