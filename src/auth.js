@@ -74,23 +74,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.user.id = token.id;
         session.user.email = token.email;
         session.user.name = token.name;
-      }
-      
-      // Always refresh role from database to ensure up-to-date permissions
-      try {
-        const userProfile = await db
-          .select()
-          .from(userinfo)
-          .where(eq(userinfo.email, session.user.email));
-
-        if (userProfile.length > 0) {
-          session.user.userrole = userProfile[0].userRole || "student";
-          console.log("Session role refreshed from DB:", session.user.userrole);
-        } else {
-          session.user.userrole = token.userrole || 'student';
-        }
-      } catch (error) {
-        console.error("Error refreshing session data:", error);
         session.user.userrole = token.userrole || 'student';
       }
       
