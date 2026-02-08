@@ -804,7 +804,7 @@ const PreRegistrationPage = () => {
           <div className="flex gap-4">
             {/* Faculty Image */}
             <div className="shrink-0">
-              {hoveredFaculty.imgUrl && !facultyImageError ? (
+              {hoveredFaculty.imgUrl && hoveredFaculty.imgUrl !== 'N/A' && !facultyImageError ? (
                 <img 
                   src={hoveredFaculty.imgUrl} 
                   alt={hoveredFaculty.facultyName || 'Faculty'} 
