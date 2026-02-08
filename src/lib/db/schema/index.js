@@ -23,3 +23,4 @@ export { targets } from './targets.js';
 export { votes } from './votes.js';
 export { moderatesReview } from './moderatesReview.js';
 export { moderatesCourseMaterials } from './moderatesCourseMaterials.js';
+export { services } from './services.js';
