@@ -14,6 +14,7 @@ export { userinfo } from './userinfo.js';
 export { faculty } from './faculty.js';
 export { initial } from './initial.js';
 export { savedRoutine } from './savedRoutine.js';
+export { savedMergedRoutine } from './savedMergedRoutine.js';
 export { courseSwap } from './courseSwap.js';
 export { askSectionId } from './askSectionId.js';
 export { reviews } from './reviews.js';
