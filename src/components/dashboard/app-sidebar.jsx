@@ -62,7 +62,7 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon" className="border-r border-gray-200 dark:border-gray-800">
       <SidebarHeader className="p-4 border-b border-gray-200 dark:border-gray-800 group-data-[collapsible=icon]:px-3">
-        <div className="flex items-center gap-3 group-data-[collapsible=icon]:justify-center">
+        <a href="/" className="flex items-center gap-3 group-data-[collapsible=icon]:justify-center hover:opacity-80 transition-opacity">
           <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shrink-0">
             <span className="text-white font-bold text-sm">O</span>
           </div>
@@ -70,7 +70,7 @@ export function AppSidebar() {
             <h2 className="font-semibold text-gray-900 dark:text-white text-sm">O.R.A.C.L.E</h2>
             <p className="text-xs text-gray-500 dark:text-gray-400">Student Portal</p>
           </div>
-        </div>
+        </a>
       </SidebarHeader>
 
       <SidebarContent className="bg-white dark:bg-gray-950 px-2 py-4 group-data-[collapsible=icon]:px-2">

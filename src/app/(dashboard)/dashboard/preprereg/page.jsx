@@ -33,6 +33,7 @@ const PreRegistrationPage = () => {
   const [facultyMap, setFacultyMap] = useState({});
   const [hoveredFaculty, setHoveredFaculty] = useState(null);
   const [facultyTooltipPosition, setFacultyTooltipPosition] = useState({ x: 0, y: 0 });
+  const [facultyImageError, setFacultyImageError] = useState(false);
   const observerRef = useRef();
   const lastCourseRef = useRef();
   const routineRef = useRef(null);
@@ -448,6 +449,7 @@ const PreRegistrationPage = () => {
                           onMouseEnter={(e) => {
                             if (course.faculties) {
                               const rect = e.currentTarget.getBoundingClientRect();
+                              setFacultyImageError(false); // Reset image error state for new faculty
                               setHoveredFaculty({
                                 initial: course.faculties,
                                 ...getFacultyDetails(course.faculties)
@@ -782,11 +784,12 @@ const PreRegistrationPage = () => {
           <div className="flex gap-4">
             {/* Faculty Image */}
             <div className="shrink-0">
-              {hoveredFaculty.imgUrl ? (
+              {hoveredFaculty.imgUrl && !facultyImageError ? (
                 <img 
                   src={hoveredFaculty.imgUrl} 
                   alt={hoveredFaculty.facultyName || 'Faculty'} 
                   className="w-16 h-16 rounded-full object-cover border-2 border-blue-500"
+                  onError={() => setFacultyImageError(true)}
                 />
               ) : (
                 <div className="w-16 h-16 rounded-full bg-blue-400 flex items-center justify-center border-2 border-blue-500">
