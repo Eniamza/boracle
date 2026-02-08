@@ -83,13 +83,13 @@ const RoutineTableGrid = ({
   
   return (
     <div className={`w-full ${className}`}>
-      <div ref={routineRef} className="bg-gray-900 p-4">
-        <table className="w-full border-collapse">
+      <div ref={routineRef} className="bg-gray-50 dark:bg-gray-900 p-4">
+        <table className="w-full border-collapse border border-gray-300 dark:border-gray-700">
           <thead>
-            <tr className="border-b border-gray-700">
-              <th className="text-left py-4 px-4 text-base font-medium text-gray-400 w-44">Time/Day</th>
+            <tr className="border-b border-gray-300 dark:border-gray-700">
+              <th className="text-left py-4 px-4 text-base font-medium text-gray-600 dark:text-gray-400 w-44 border-r border-gray-300 dark:border-gray-700">Time/Day</th>
               {days.map(day => (
-                <th key={day} className="text-center py-4 px-3 text-base font-medium text-gray-400">
+                <th key={day} className="text-center py-4 px-3 text-base font-medium text-gray-600 dark:text-gray-400 border-r border-gray-300 dark:border-gray-700 last:border-r-0">
                   {day}
                 </th>
               ))}
@@ -97,8 +97,8 @@ const RoutineTableGrid = ({
           </thead>
           <tbody>
             {timeSlots.map(timeSlot => (
-              <tr key={timeSlot} className="border-b border-gray-800">
-                <td className="py-4 px-4 text-base font-medium text-gray-400 whitespace-nowrap">
+              <tr key={timeSlot} className="border-b border-gray-300 dark:border-gray-700">
+                <td className="py-4 px-4 text-base font-medium text-gray-600 dark:text-gray-400 whitespace-nowrap border-r border-gray-300 dark:border-gray-700">
                   {timeSlot}
                 </td>
                 {days.map(day => {
@@ -106,7 +106,7 @@ const RoutineTableGrid = ({
                   const conflict = hasConflict(day, timeSlot);
                   
                   return (
-                    <td key={`${day}-${timeSlot}`} className="p-2 border-l border-gray-800 relative">
+                    <td key={`${day}-${timeSlot}`} className="p-2 border-r border-gray-300 dark:border-gray-700 last:border-r-0 relative">
                       {courses.length > 0 && (
                         <div className={`min-h-[80px] ${conflict ? 'space-y-1' : ''}`}>
                           {courses.map(course => {
@@ -125,10 +125,10 @@ const RoutineTableGrid = ({
                                 key={course.sectionId}
                                 className={`p-3 rounded text-sm ${
                                   conflict 
-                                    ? 'bg-red-900/50 border border-red-600' 
+                                    ? 'bg-red-100 dark:bg-red-900/50 border border-red-400 dark:border-red-600 text-red-900 dark:text-red-100' 
                                     : isLab 
-                                      ? 'bg-purple-900/50 border border-purple-600'
-                                      : 'bg-blue-900/50 border border-blue-600'
+                                      ? 'bg-purple-100 dark:bg-purple-900/50 border border-purple-400 dark:border-purple-600 text-purple-900 dark:text-purple-100'
+                                      : 'bg-blue-100 dark:bg-blue-900/50 border border-blue-400 dark:border-blue-600 text-blue-900 dark:text-blue-100'
                                 } hover:opacity-80 transition-opacity ${onRemoveCourse ? 'cursor-pointer' : ''} group relative`}
                                 onClick={() => onRemoveCourse?.(course)}
                                 onMouseEnter={(e) => {
@@ -152,13 +152,13 @@ const RoutineTableGrid = ({
                                   {course.courseCode}{isLab && 'L'}-{course.sectionName}-{course.roomName || course.roomNumber || 'TBA'}
                                 </div>
                                 {course.faculties && (
-                                  <div className="text-gray-500 truncate text-sm mt-1">
+                                  <div className="text-gray-600 dark:text-gray-400 truncate text-sm mt-1">
                                     {course.faculties}
                                   </div>
                                 )}
                                 {showRemoveButtons && onRemoveCourse && (
                                   <button className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <X className="w-3 h-3 text-red-400" />
+                                    <X className="w-3 h-3 text-red-500 dark:text-red-400" />
                                   </button>
                                 )}
                               </div>
@@ -177,39 +177,39 @@ const RoutineTableGrid = ({
         {/* Single global tooltip */}
         {hoveredCourse && (
           <div 
-            className="fixed z-50 bg-gray-800 border border-gray-600 rounded-lg p-4 shadow-xl w-96 pointer-events-none"
+            className="fixed z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg p-4 shadow-xl w-96 pointer-events-none"
             style={{ 
               left: `${Math.max(10, Math.min(tooltipPosition.x, window.innerWidth - 394))}px`, 
               top: `${tooltipPosition.y}px`,
               transform: 'translateY(-50%)'
             }}
           >
-            <div className="space-y-2 text-sm">
+            <div className="space-y-2 text-sm text-gray-900 dark:text-gray-100">
               <div className="font-bold text-lg">{hoveredCourse.courseCode}-{hoveredCourse.sectionName}</div>
-              <div><span className="text-gray-400">Credits:</span> {hoveredCourse.courseCredit}</div>
+              <div><span className="text-gray-500 dark:text-gray-400">Credits:</span> {hoveredCourse.courseCredit}</div>
               
               {/* Faculty Information */}
-              <div className="bg-gray-700/50 rounded p-2 space-y-1">
-                <div className="font-medium text-blue-400">Faculty Information</div>
-                <div><span className="text-gray-400">Name:</span> {hoveredCourse.employeeName || hoveredCourse.faculties || 'TBA'}</div>
+              <div className="bg-gray-100 dark:bg-gray-700/50 rounded p-2 space-y-1">
+                <div className="font-medium text-blue-600 dark:text-blue-400">Faculty Information</div>
+                <div><span className="text-gray-500 dark:text-gray-400">Name:</span> {hoveredCourse.employeeName || hoveredCourse.faculties || 'TBA'}</div>
                 {hoveredCourse.employeeEmail && (
-                  <div><span className="text-gray-400">Email:</span> {hoveredCourse.employeeEmail}</div>
+                  <div><span className="text-gray-500 dark:text-gray-400">Email:</span> {hoveredCourse.employeeEmail}</div>
                 )}
                 {!hoveredCourse.employeeEmail && hoveredCourse.faculties && (
-                  <div><span className="text-gray-400">Initial:</span> {hoveredCourse.faculties}</div>
+                  <div><span className="text-gray-500 dark:text-gray-400">Initial:</span> {hoveredCourse.faculties}</div>
                 )}
               </div>
               
-              <div><span className="text-gray-400">Type:</span> {hoveredCourse.sectionType}</div>
-              <div><span className="text-gray-400">Capacity:</span> {hoveredCourse.capacity} (Filled: {hoveredCourse.consumedSeat})</div>
-              <div><span className="text-gray-400">Prerequisites:</span> {hoveredCourse.prerequisiteCourses || 'None'}</div>
-              <div><span className="text-gray-400">Room:</span> {hoveredCourse.roomName || 'TBA'}</div>
+              <div><span className="text-gray-500 dark:text-gray-400">Type:</span> {hoveredCourse.sectionType}</div>
+              <div><span className="text-gray-500 dark:text-gray-400">Capacity:</span> {hoveredCourse.capacity} (Filled: {hoveredCourse.consumedSeat})</div>
+              <div><span className="text-gray-500 dark:text-gray-400">Prerequisites:</span> {hoveredCourse.prerequisiteCourses || 'None'}</div>
+              <div><span className="text-gray-500 dark:text-gray-400">Room:</span> {hoveredCourse.roomName || 'TBA'}</div>
               {hoveredCourse.labCourseCode && (
-                <div><span className="text-gray-400">Lab:</span> {hoveredCourse.labCourseCode} - {hoveredCourse.labRoomName}</div>
+                <div><span className="text-gray-500 dark:text-gray-400">Lab:</span> {hoveredCourse.labCourseCode} - {hoveredCourse.labRoomName}</div>
               )}
-              <div><span className="text-gray-400">Mid Exam:</span> {hoveredCourse.sectionSchedule?.midExamDetail || 'TBA'}</div>
-              <div><span className="text-gray-400">Final Exam:</span> {hoveredCourse.sectionSchedule?.finalExamDetail || 'TBA'}</div>
-              <div><span className="text-gray-400">Class Period:</span> {hoveredCourse.sectionSchedule?.classStartDate} to {hoveredCourse.sectionSchedule?.classEndDate}</div>
+              <div><span className="text-gray-500 dark:text-gray-400">Mid Exam:</span> {hoveredCourse.sectionSchedule?.midExamDetail || 'TBA'}</div>
+              <div><span className="text-gray-500 dark:text-gray-400">Final Exam:</span> {hoveredCourse.sectionSchedule?.finalExamDetail || 'TBA'}</div>
+              <div><span className="text-gray-500 dark:text-gray-400">Class Period:</span> {hoveredCourse.sectionSchedule?.classStartDate} to {hoveredCourse.sectionSchedule?.classEndDate}</div>
             </div>
           </div>
         )}
@@ -228,16 +228,16 @@ const RoutineTableGrid = ({
       {selectedCourses.length > 0 && (
         <div className="mt-4 flex gap-4 text-sm">
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-blue-900/50 border border-blue-600 rounded"></div>
-            <span className="text-gray-400">Class</span>
+            <div className="w-4 h-4 bg-blue-100 dark:bg-blue-900/50 border border-blue-400 dark:border-blue-600 rounded"></div>
+            <span className="text-gray-600 dark:text-gray-400">Class</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-purple-900/50 border border-purple-600 rounded"></div>
-            <span className="text-gray-400">Lab</span>
+            <div className="w-4 h-4 bg-purple-100 dark:bg-purple-900/50 border border-purple-400 dark:border-purple-600 rounded"></div>
+            <span className="text-gray-600 dark:text-gray-400">Lab</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-red-900/50 border border-red-600 rounded"></div>
-            <span className="text-gray-400">Conflict</span>
+            <div className="w-4 h-4 bg-red-100 dark:bg-red-900/50 border border-red-400 dark:border-red-600 rounded"></div>
+            <span className="text-gray-600 dark:text-gray-400">Conflict</span>
           </div>
         </div>
       )}

@@ -380,25 +380,25 @@ const PreRegistrationPage = () => {
       )}
 
       {/* Header */}
-      <div className="sticky top-16 z-40 bg-gray-900 backdrop-blur-sm border-b border-gray-800 -mx-6 -mt-6 px-6 pt-6 pb-4">
+      <div className="sticky top-16 z-40 bg-white dark:bg-gray-900 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800 -mx-6 -mt-6 px-6 pt-6 pb-4">
         <div className="container mx-auto">
           {/* <h1 className="text-2xl font-bold text-white-500 mb-4 text-center">Build Routines with Confidence</h1> */}
           
           {/* Search Bar */}
           <div className="flex gap-2">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-400 w-5 h-5" />
               <input
                 type="text"
                 placeholder="Enter Course Code or Faculty Initial... e.g - CSE or FLA"
-                className="w-full pl-10 pr-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-gray-100 placeholder-gray-500 focus:outline-none focus:border-blue-500"
+                className="w-full pl-10 pr-4 py-3 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-gray-100 placeholder-gray-500 focus:outline-none focus:border-blue-500"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
             <button
               onClick={() => setShowFilterModal(true)}
-              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 hover:text-white rounded-lg flex items-center gap-2 transition-colors"
+              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center gap-2 transition-colors"
             >
               <Filter className="w-5 h-5" />
               Filters
@@ -406,12 +406,12 @@ const PreRegistrationPage = () => {
             {(filters.hideFilled || filters.avoidFaculties.length > 0) && (
               <button
                 onClick={() => setFilters({ hideFilled: false, avoidFaculties: [] })}
-                className="px-3 py-3 bg-red-700 hover:bg-red-800 rounded-lg flex items-center gap-1 transition-colors"
+                className="px-3 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg flex items-center gap-1 transition-colors"
                 title="Reset Filters"
               >
                 <div className="relative">
                   <Filter className="w-5 h-5" />
-                  <X className="w-3 h-3 absolute -top-1 -right-1 bg-red-700 rounded-full" />
+                  <X className="w-3 h-3 absolute -top-1 -right-1 bg-red-600 rounded-full" />
                 </div>
               </button>
             )}
@@ -423,12 +423,12 @@ const PreRegistrationPage = () => {
               {selectedCourses.map(course => (
                 <span
                   key={course.sectionId}
-                  className="px-3 py-1.5 bg-blue-500/20 border border-blue-500/50 rounded-full text-sm flex items-center gap-2 text-blue-300"
+                  className="px-3 py-1.5 bg-blue-100 dark:bg-blue-500/20 border border-blue-300 dark:border-blue-500/50 rounded-full text-sm flex items-center gap-2 text-blue-700 dark:text-blue-300"
                 >
                   {course.courseCode}-[{course.sectionName}]-{course.faculties || 'TBA'}
                   <button
                     onClick={() => addToRoutine(course)}
-                    className="hover:text-blue-200 transition-colors"
+                    className="hover:text-blue-500 dark:hover:text-blue-200 transition-colors"
                   >
                     <X className="w-3 h-3" />
                   </button>
@@ -442,22 +442,22 @@ const PreRegistrationPage = () => {
       {/* Course Table */}
       <div className="container mx-auto mt-6">
         {loading ? (
-          <div className="text-center py-8">Loading courses...</div>
+          <div className="text-center py-8 text-gray-600 dark:text-gray-300">Loading courses...</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-gray-800">
-                  <th className="text-left py-3 px-2 text-sm font-medium text-gray-400">Course Code</th>
-                  <th className="text-left py-3 px-2 text-sm font-medium text-gray-400">Fac. Init.</th>
-                  <th className="text-left py-3 px-2 text-sm font-medium text-gray-400">Prereq</th>
-                  <th className="text-center py-3 px-2 text-sm font-medium text-gray-400">Seat Cap.</th>
-                  <th className="text-center py-3 px-2 text-sm font-medium text-gray-400">Booked</th>
-                  <th className="text-center py-3 px-2 text-sm font-medium text-gray-400">Available</th>
-                  <th className="text-left py-3 px-2 text-sm font-medium text-gray-400">Class Schedule</th>
-                  <th className="text-left py-3 px-2 text-sm font-medium text-gray-400">Lab Schedule</th>
-                  <th className="text-left py-3 px-2 text-sm font-medium text-gray-400">Exam Day</th>
-                  <th className="text-center py-3 px-2 text-sm font-medium text-gray-400">Action</th>
+                <tr className="border-b border-gray-200 dark:border-gray-800">
+                  <th className="text-left py-3 px-2 text-sm font-medium text-gray-600 dark:text-gray-400">Course Code</th>
+                  <th className="text-left py-3 px-2 text-sm font-medium text-gray-600 dark:text-gray-400">Fac. Init.</th>
+                  <th className="text-left py-3 px-2 text-sm font-medium text-gray-600 dark:text-gray-400">Prereq</th>
+                  <th className="text-center py-3 px-2 text-sm font-medium text-gray-600 dark:text-gray-400">Seat Cap.</th>
+                  <th className="text-center py-3 px-2 text-sm font-medium text-gray-600 dark:text-gray-400">Booked</th>
+                  <th className="text-center py-3 px-2 text-sm font-medium text-gray-600 dark:text-gray-400">Available</th>
+                  <th className="text-left py-3 px-2 text-sm font-medium text-gray-600 dark:text-gray-400">Class Schedule</th>
+                  <th className="text-left py-3 px-2 text-sm font-medium text-gray-600 dark:text-gray-400">Lab Schedule</th>
+                  <th className="text-left py-3 px-2 text-sm font-medium text-gray-600 dark:text-gray-400">Exam Day</th>
+                  <th className="text-center py-3 px-2 text-sm font-medium text-gray-600 dark:text-gray-400">Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -470,14 +470,14 @@ const PreRegistrationPage = () => {
                     <tr 
                       key={course.sectionId}
                       ref={isLast && displayCount < filteredCourses.length ? lastCourseRef : null}
-                      className={`border-b border-gray-800 hover:bg-gray-800/50 transition-colors ${isSelected ? 'bg-green-900/20' : ''}`}
+                      className={`border-b border-gray-200 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-800/50 transition-colors ${isSelected ? 'bg-green-50 dark:bg-green-900/20' : ''}`}
                     >
-                      <td className="py-3 px-2 text-sm font-medium">
+                      <td className="py-3 px-2 text-sm font-medium text-gray-900 dark:text-gray-100">
                       {course.courseCode}-[{course.sectionName}]
                       </td>
-                      <td className="py-3 px-2 text-sm relative">
+                      <td className="py-3 px-2 text-sm relative text-gray-900 dark:text-gray-100">
                         <span 
-                          className="cursor-pointer hover:text-blue-400 transition-colors"
+                          className="cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                           onMouseEnter={(e) => {
                             if (course.faculties) {
                               const rect = e.currentTarget.getBoundingClientRect();
@@ -497,23 +497,23 @@ const PreRegistrationPage = () => {
                           {course.faculties || 'TBA'}
                         </span>
                       </td>
-                      <td className="py-3 px-2 text-sm text-gray-400 whitespace-pre-line">
+                      <td className="py-3 px-2 text-sm text-gray-600 dark:text-gray-400 whitespace-pre-line">
                         {(course.prerequisiteCourses || 'None').replace(/OR/g, '/').replace(/AND/g, '+').replace(/\//g, '/\n')}
                       </td>
-                      <td className="py-3 px-2 text-sm text-center">{course.capacity}</td>
-                      <td className="py-3 px-2 text-sm text-center">{course.consumedSeat}</td>
+                      <td className="py-3 px-2 text-sm text-center text-gray-900 dark:text-gray-100">{course.capacity}</td>
+                      <td className="py-3 px-2 text-sm text-center text-gray-900 dark:text-gray-100">{course.consumedSeat}</td>
                       <td className="py-3 px-2 text-sm text-center">
-                      <span className={`font-medium ${availableSeats > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                      <span className={`font-medium ${availableSeats > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                         {availableSeats}
                       </span>
                       </td>
-                      <td className="py-3 px-2 text-xs whitespace-pre-line">
+                      <td className="py-3 px-2 text-xs whitespace-pre-line text-gray-700 dark:text-gray-300">
                       {formatSchedule(course.sectionSchedule?.classSchedules)}
                       </td>
-                      <td className="py-3 px-2 text-xs whitespace-pre-line">
+                      <td className="py-3 px-2 text-xs whitespace-pre-line text-gray-700 dark:text-gray-300">
                       {course.labSchedules?.length > 0 ? formatSchedule(course.labSchedules) : 'N/A'}
                       </td>
-                      <td className="py-3 px-2 text-xs">
+                      <td className="py-3 px-2 text-xs text-gray-700 dark:text-gray-300">
                       {course.sectionSchedule?.finalExamDetail || 'TBA'}
                       </td>
                       <td className="py-3 px-2 text-center">
@@ -521,8 +521,8 @@ const PreRegistrationPage = () => {
                         onClick={() => addToRoutine(course)}
                         className={`p-2 rounded-lg transition-colors ${
                         isSelected 
-                          ? 'bg-red-600 hover:bg-red-700' 
-                          : 'border-white border hover:bg-green-700 hover:border-green-400'
+                          ? 'bg-red-600 hover:bg-red-700 text-white' 
+                          : 'border border-gray-400 dark:border-white text-gray-700 dark:text-white hover:bg-green-600 hover:border-green-600 hover:text-white'
                         }`}
                       >
                         {isSelected ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
@@ -536,12 +536,12 @@ const PreRegistrationPage = () => {
             
             {displayCount < filteredCourses.length && (
               <div className="text-center py-4">
-                <div className="text-gray-400 mb-4">
+                <div className="text-gray-600 dark:text-gray-400 mb-4">
                   Showing {displayCount} of {filteredCourses.length} courses
                 </div>
                 <button
                   onClick={() => setDisplayCount(prev => Math.min(prev + 50, filteredCourses.length))}
-                  className="px-6 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+                  className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
                 >
                   Load More ({Math.min(50, filteredCourses.length - displayCount)} remaining)
                 </button>
@@ -554,31 +554,31 @@ const PreRegistrationPage = () => {
       {/* Filter Modal */}
       {showFilterModal && (
         <div 
-          className="fixed inset-0 bg-black/75 flex items-center justify-center z-50 p-4"
+          className="fixed inset-0 bg-black/50 dark:bg-black/75 flex items-center justify-center z-50 p-4"
           onClick={() => setShowFilterModal(false)}
         >
           <div 
-            className="bg-[#0f172a] border border-blue-800/50 rounded-lg max-w-md w-full shadow-xl shadow-blue-900/20"
+            className="bg-white dark:bg-[#0f172a] border border-gray-200 dark:border-blue-800/50 rounded-lg max-w-md w-full shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-blue-800/50">
+            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-blue-800/50">
               <div>
-                <h2 className="text-xl font-semibold text-white">Filters</h2>
-                <p className="text-sm text-blue-300/70">Customize your course view</p>
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Filters</h2>
+                <p className="text-sm text-gray-500 dark:text-blue-300/70">Customize your course view</p>
               </div>
               <button
                 onClick={() => setShowFilterModal(false)}
-                className="p-2 hover:bg-blue-800/30 rounded-lg transition-colors"
+                className="p-2 hover:bg-gray-100 dark:hover:bg-blue-800/30 rounded-lg transition-colors"
               >
-                <X className="w-5 h-5 text-blue-300" />
+                <X className="w-5 h-5 text-gray-500 dark:text-blue-300" />
               </button>
             </div>
             
             {/* Content */}
             <div className="p-4 space-y-5">
               {/* Hide Filled Sections - Material Design Checkbox */}
-              <label className="flex items-center gap-3 cursor-pointer p-3 bg-[#1e3a5f] rounded-lg hover:bg-[#234b7a] transition-colors">
+              <label className="flex items-center gap-3 cursor-pointer p-3 bg-gray-100 dark:bg-[#1e3a5f] rounded-lg hover:bg-gray-200 dark:hover:bg-[#234b7a] transition-colors">
                 <div className="relative">
                   <input
                     type="checkbox"
@@ -586,24 +586,24 @@ const PreRegistrationPage = () => {
                     onChange={(e) => setFilters(prev => ({ ...prev, hideFilled: e.target.checked }))}
                     className="sr-only peer"
                   />
-                  <div className="w-5 h-5 border-2 border-blue-400 rounded bg-transparent peer-checked:bg-blue-500 peer-checked:border-blue-500 transition-all duration-200 flex items-center justify-center">
+                  <div className="w-5 h-5 border-2 border-blue-500 dark:border-blue-400 rounded bg-transparent peer-checked:bg-blue-500 peer-checked:border-blue-500 transition-all duration-200 flex items-center justify-center">
                     {filters.hideFilled && (
                       <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                       </svg>
                     )}
                   </div>
-                  <div className="absolute inset-0 -m-2 rounded-full peer-focus-visible:ring-2 peer-focus-visible:ring-blue-400 peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-[#1e3a5f]"></div>
+                  <div className="absolute inset-0 -m-2 rounded-full peer-focus-visible:ring-2 peer-focus-visible:ring-blue-400 peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-gray-100 dark:peer-focus-visible:ring-offset-[#1e3a5f]"></div>
                 </div>
                 <div>
-                  <span className="font-medium text-white">Hide Filled Sections</span>
-                  <p className="text-xs text-blue-300/70">Only show sections with available seats</p>
+                  <span className="font-medium text-gray-900 dark:text-white">Hide Filled Sections</span>
+                  <p className="text-xs text-gray-500 dark:text-blue-300/70">Only show sections with available seats</p>
                 </div>
               </label>
               
               {/* Avoid Faculties - Dropdown */}
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-blue-200">Avoid Faculties</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-blue-200">Avoid Faculties</label>
                 
                 {/* Selected Faculties Tags - above input */}
                 {filters.avoidFaculties.length > 0 && (
@@ -611,12 +611,12 @@ const PreRegistrationPage = () => {
                     {filters.avoidFaculties.map(faculty => (
                       <span
                         key={faculty}
-                        className="px-3 py-1.5 bg-red-500/20 border border-red-500/50 rounded-full text-sm flex items-center gap-2 text-red-300"
+                        className="px-3 py-1.5 bg-red-100 dark:bg-red-500/20 border border-red-300 dark:border-red-500/50 rounded-full text-sm flex items-center gap-2 text-red-700 dark:text-red-300"
                       >
                         {faculty}
                         <button
                           onClick={() => removeFaculty(faculty)}
-                          className="hover:text-red-200 transition-colors"
+                          className="hover:text-red-500 dark:hover:text-red-200 transition-colors"
                         >
                           <X className="w-3 h-3" />
                         </button>
@@ -627,7 +627,7 @@ const PreRegistrationPage = () => {
                 
                 <div className="relative" ref={facultyDropdownRef}>
                   {/* Input with dropdown trigger */}
-                  <div className="w-full bg-gray-800 border border-gray-700 rounded-lg text-gray-100 flex items-center">
+                  <div className="w-full bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-gray-100 flex items-center">
                     <input
                       type="text"
                       placeholder="Search faculties..."
@@ -667,21 +667,21 @@ const PreRegistrationPage = () => {
                           setFacultyDropdownOpen(false);
                         }
                       }}
-                      className="flex-1 px-4 py-2.5 bg-transparent text-gray-100 placeholder-gray-500 focus:outline-none text-sm"
+                      className="flex-1 px-4 py-2.5 bg-transparent text-gray-900 dark:text-gray-100 placeholder-gray-500 focus:outline-none text-sm"
                     />
                     <button
                       type="button"
                       onClick={() => setFacultyDropdownOpen(!facultyDropdownOpen)}
-                      className="px-3 py-2.5 hover:bg-gray-700 transition-colors rounded-r-lg"
+                      className="px-3 py-2.5 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors rounded-r-lg"
                     >
-                      <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${facultyDropdownOpen ? 'rotate-180' : ''}`} />
+                      <ChevronDown className={`h-4 w-4 text-gray-500 dark:text-gray-400 transition-transform ${facultyDropdownOpen ? 'rotate-180' : ''}`} />
                     </button>
                   </div>
                   
                   {/* Dropdown - positioned to overflow modal */}
                   {facultyDropdownOpen && (
                     <div 
-                      className="absolute z-[9999] mt-1 w-full rounded-lg border border-blue-700/50 bg-[#0f172a] shadow-2xl"
+                      className="absolute z-[9999] mt-1 w-full rounded-lg border border-gray-200 dark:border-blue-700/50 bg-white dark:bg-[#0f172a] shadow-xl"
                       style={{ maxHeight: '320px' }}
                     >
                       <div 
@@ -701,7 +701,7 @@ const PreRegistrationPage = () => {
                                 key={initial}
                                 data-index={index}
                                 className={`flex items-center px-3 py-2.5 cursor-pointer transition-colors ${
-                                  isHighlighted ? 'bg-blue-600' : isSelected ? 'bg-blue-800/40' : 'hover:bg-[#1e3a5f]'
+                                  isHighlighted ? 'bg-blue-600 text-white' : isSelected ? 'bg-blue-100 dark:bg-blue-800/40' : 'hover:bg-gray-100 dark:hover:bg-[#1e3a5f]'
                                 }`}
                                 onClick={() => {
                                   if (isSelected) {
@@ -717,10 +717,10 @@ const PreRegistrationPage = () => {
                                 onMouseEnter={() => setHighlightedIndex(index)}
                               >
                                 <div className="flex-1 min-w-0">
-                                  <div className="font-medium text-sm text-white">{initial}</div>
+                                  <div className={`font-medium text-sm ${isHighlighted ? 'text-white' : 'text-gray-900 dark:text-white'}`}>{initial}</div>
                                 </div>
                                 {isSelected && (
-                                  <div className="ml-2 text-blue-400">
+                                  <div className={`ml-2 ${isHighlighted ? 'text-white' : 'text-blue-600 dark:text-blue-400'}`}>
                                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                                       <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                                     </svg>
@@ -730,13 +730,13 @@ const PreRegistrationPage = () => {
                             );
                           })}
                         {cdnFacultyList.length === 0 && (
-                          <div className="py-4 text-center text-sm text-blue-300/70">Loading faculties...</div>
+                          <div className="py-4 text-center text-sm text-gray-500 dark:text-blue-300/70">Loading faculties...</div>
                         )}
                         {cdnFacultyList.length > 0 && 
                          cdnFacultyList.filter(initial => 
                            initial.toLowerCase().includes(facultySearch.toLowerCase())
                          ).length === 0 && (
-                          <div className="py-4 text-center text-sm text-blue-300/70">No faculty found</div>
+                          <div className="py-4 text-center text-sm text-gray-500 dark:text-blue-300/70">No faculty found</div>
                         )}
                       </div>
                     </div>
@@ -746,13 +746,13 @@ const PreRegistrationPage = () => {
             </div>
             
             {/* Footer */}
-            <div className="flex gap-2 p-4 border-t border-blue-800/50 bg-[#0c1629]">
+            <div className="flex gap-2 p-4 border-t border-gray-200 dark:border-blue-800/50 bg-gray-50 dark:bg-[#0c1629]">
               <button
                 onClick={() => {
                   setFilters({ hideFilled: false, avoidFaculties: [] });
                   setShowFilterModal(false);
                 }}
-                className="flex-1 px-4 py-2.5 bg-red-700 hover:bg-red-800 rounded-lg transition-colors font-medium"
+                className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 rounded-lg transition-colors font-medium text-white"
               >
                 Reset Filters
               </button>
@@ -770,12 +770,12 @@ const PreRegistrationPage = () => {
       {/* Routine Modal */}
       {showRoutineModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-gray-900 rounded-lg p-6 w-full max-w-[95vw] max-h-[95vh] overflow-hidden flex flex-col">
+          <div className="bg-white dark:bg-gray-900 rounded-lg p-6 w-full max-w-[95vw] max-h-[95vh] overflow-hidden flex flex-col shadow-xl">
             <div className="flex justify-between items-center mb-4">
               <div>
-                <h2 className="text-xl font-bold">My Routine</h2>
-                <p className="text-sm text-gray-400">
-                  Total Credits: <span className={`font-bold ${totalCredits > 15 ? 'text-red-400' : 'text-green-400'}`}>
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white">My Routine</h2>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Total Credits: <span className={`font-bold ${totalCredits > 15 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
                     {totalCredits}/15
                   </span>
                 </p>
@@ -784,7 +784,7 @@ const PreRegistrationPage = () => {
                 <button
                   onClick={saveRoutine}
                   disabled={savingRoutine || !session}
-                  className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 rounded-lg flex items-center gap-2 transition-colors"
+                  className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 dark:disabled:bg-gray-600 text-white rounded-lg flex items-center gap-2 transition-colors"
                 >
                   <Save className="w-4 h-4" />
                   {savingRoutine ? 'Saving...' : 'Save Routine'}
@@ -792,9 +792,9 @@ const PreRegistrationPage = () => {
                 <ExportRoutinePNG selectedCourses={enrichedSelectedCourses} routineRef={routineRef} />
                 <button
                   onClick={() => setShowRoutineModal(false)}
-                  className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
                 >
-                  <X className="w-5 h-5" />
+                  <X className="w-5 h-5 text-gray-600 dark:text-gray-300" />
                 </button>
               </div>
             </div>
@@ -813,7 +813,7 @@ const PreRegistrationPage = () => {
       {/* Faculty Hover Tooltip */}
       {hoveredFaculty && (
         <div 
-          className="fixed z-50 bg-gray-800 border border-gray-600 rounded-lg p-4 shadow-xl w-80 pointer-events-none"
+          className="fixed z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg p-4 shadow-xl w-80 pointer-events-none"
           style={{ 
             left: `${Math.min(facultyTooltipPosition.x, window.innerWidth - 340)}px`, 
             top: `${facultyTooltipPosition.y}px`
@@ -830,8 +830,8 @@ const PreRegistrationPage = () => {
                   onError={() => setFacultyImageError(true)}
                 />
               ) : (
-                <div className="w-16 h-16 rounded-full bg-blue-400 flex items-center justify-center border-2 border-blue-500">
-                  <svg className="w-10 h-10 text-blue-100" fill="currentColor" viewBox="0 0 24 24">
+                <div className="w-16 h-16 rounded-full bg-blue-500 dark:bg-blue-400 flex items-center justify-center border-2 border-blue-600 dark:border-blue-500">
+                  <svg className="w-10 h-10 text-white dark:text-blue-100" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
                   </svg>
                 </div>
@@ -841,16 +841,16 @@ const PreRegistrationPage = () => {
             {/* Faculty Details */}
             <div className="flex-1 space-y-1 text-sm">
               <div>
-                <span className="text-gray-400">Initial:</span>{' '}
-                <span className="font-medium text-blue-400">{hoveredFaculty.initial || 'Not Found'}</span>
+                <span className="text-gray-500 dark:text-gray-400">Initial:</span>{' '}
+                <span className="font-medium text-blue-600 dark:text-blue-400">{hoveredFaculty.initial || 'Not Found'}</span>
               </div>
               <div>
-                <span className="text-gray-400">Name:</span>{' '}
-                <span className="font-medium">{hoveredFaculty.facultyName || 'Not Found'}</span>
+                <span className="text-gray-500 dark:text-gray-400">Name:</span>{' '}
+                <span className="font-medium text-gray-900 dark:text-white">{hoveredFaculty.facultyName || 'Not Found'}</span>
               </div>
               <div>
-                <span className="text-gray-400">Email:</span>{' '}
-                <span className="font-medium text-xs">{hoveredFaculty.facultyEmail || 'Not Found'}</span>
+                <span className="text-gray-500 dark:text-gray-400">Email:</span>{' '}
+                <span className="font-medium text-xs text-gray-700 dark:text-gray-300">{hoveredFaculty.facultyEmail || 'Not Found'}</span>
               </div>
             </div>
           </div>
