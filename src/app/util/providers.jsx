@@ -31,7 +31,7 @@ export function Providers({ children }) {
                 <ModeToggle />
               </div>
             </header>
-            <main className="flex-1 overflow-auto p-6 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900 min-h-[calc(100vh-4rem)]">
+            <main className="flex-1 p-6 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900 min-h-[calc(100vh-4rem)]">
               {children}
             </main>
           </SidebarInset>

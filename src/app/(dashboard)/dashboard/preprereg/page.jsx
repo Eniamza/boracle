@@ -380,8 +380,8 @@ const PreRegistrationPage = () => {
       )}
 
       {/* Header */}
-      <div className="sticky top-0 z-40  backdrop-blur border-b border-gray-800">
-        <div className="container mx-auto px-4 py-4">
+      <div className="sticky top-16 z-40 bg-gray-900 backdrop-blur-sm border-b border-gray-800 -mx-6 -mt-6 px-6 pt-6 pb-4">
+        <div className="container mx-auto">
           {/* <h1 className="text-2xl font-bold text-white-500 mb-4 text-center">Build Routines with Confidence</h1> */}
           
           {/* Search Bar */}
@@ -404,11 +404,31 @@ const PreRegistrationPage = () => {
               Filters
             </button>
           </div>
+          
+          {/* Selected Courses Tags */}
+          {selectedCourses.length > 0 && (
+            <div className="flex flex-wrap gap-2 mt-3">
+              {selectedCourses.map(course => (
+                <span
+                  key={course.sectionId}
+                  className="px-3 py-1.5 bg-blue-500/20 border border-blue-500/50 rounded-full text-sm flex items-center gap-2 text-blue-300"
+                >
+                  {course.courseCode}-[{course.sectionName}]-{course.faculties || 'TBA'}
+                  <button
+                    onClick={() => addToRoutine(course)}
+                    className="hover:text-blue-200 transition-colors"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
       {/* Course Table */}
-      <div className="container mx-auto px-4 py-6">
+      <div className="container mx-auto mt-6">
         {loading ? (
           <div className="text-center py-8">Loading courses...</div>
         ) : (
@@ -822,16 +842,17 @@ const PreRegistrationPage = () => {
       {/* Floating Routine Button */}
       <button
         onClick={() => setShowRoutineModal(true)}
-        className="fixed bottom-6 right-6 p-4 bg-blue-600 hover:bg-blue-700 rounded-full shadow-lg transition-all hover:scale-110 z-40"
+        className="fixed bottom-6 right-6 px-5 py-3 bg-blue-600 hover:bg-blue-700 rounded-full shadow-lg transition-all hover:scale-105 z-40 flex items-center gap-3"
       >
         <div className="relative">
-          <Calendar className="w-6 h-6" />
+          <Calendar className="w-5 h-5" />
           {selectedCourses.length > 0 && (
-            <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+            <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center text-[10px]">
               {selectedCourses.length}
             </span>
           )}
         </div>
+        <span className="text-sm font-medium">Click to View Your Routine</span>
       </button>
     </div>
   );
