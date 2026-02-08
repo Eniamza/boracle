@@ -397,7 +397,7 @@ const PreRegistrationPage = () => {
             </div>
             <button
               onClick={() => setShowFilterModal(true)}
-              className="px-6 py-3 bg-white text-gray-900 hover:bg-blue-700 hover:text-white rounded-lg flex items-center gap-2 transition-colors"
+              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 hover:text-white rounded-lg flex items-center gap-2 transition-colors"
             >
               <Filter className="w-5 h-5" />
               Filters

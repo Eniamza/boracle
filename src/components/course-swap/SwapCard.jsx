@@ -107,7 +107,7 @@ const SwapCard = ({ swap, courses = [], onDelete, onMarkComplete }) => {
                       <Badge 
                         key={sectionId} 
                         variant="outline" 
-                        className="bg-white dark:bg-gray-900 border-purple-300 dark:border-purple-700 text-purple-700 dark:text-purple-400"
+                        className="bg-white dark:bg-gray-900 border-purple-300 dark:border-blue-700 text-blue-700 dark:text-blue-400"
                       >
                         {askCourse ? formatCourse(askCourse) : `Section ${sectionId}`}
                       </Badge>
@@ -145,7 +145,7 @@ const SwapCard = ({ swap, courses = [], onDelete, onMarkComplete }) => {
                 <Button 
                   size="sm"
                   onClick={() => onMarkComplete?.(swap.swapId)}
-                  className="bg-green-500 hover:bg-green-600 text-white"
+                  className="dark:bg-blue-600 dark:hover:bg-blue-700 dark:text-white bg-green-500 hover:bg-green-600 text-white"
                 >
                   <CheckCircle className="w-4 h-4" />
                 </Button>
@@ -153,7 +153,7 @@ const SwapCard = ({ swap, courses = [], onDelete, onMarkComplete }) => {
               <Button 
                 size="sm"
                 onClick={() => onDelete?.(swap.swapId)}
-                className="bg-red-500 hover:bg-red-600 text-white"
+                className="bg-red-500 hover:bg-red-600 dark:bg-red-500 dark:hover:bg-red-600 text-white dark:text-white"
               >
                 <Trash2 className="w-4 h-4" />
               </Button>

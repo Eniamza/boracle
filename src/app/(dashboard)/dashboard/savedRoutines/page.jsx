@@ -256,7 +256,7 @@ const SavedRoutinesPage = () => {
                 <button
                   onClick={() => viewRoutine(routine)}
                   disabled={loadingRoutine}
-                  className="flex-1 px-3 py-2 bg-white text-gray-900 hover:bg-gray-300 disabled:bg-gray-600 rounded-lg flex items-center justify-center gap-2 text-sm transition-colors"
+                  className="flex-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center justify-center gap-2 text-sm transition-colors"
                 >
                   <Eye className="w-4 h-4" />
                   {loadingRoutine && viewingRoutine?.id === routine.id ? 'Loading...' : 'View'}
@@ -291,7 +291,7 @@ const SavedRoutinesPage = () => {
 
       {/* Stats */}
       {routines.length > 0 && (
-        <div className="mt-8 bg-gray-900 border border-gray-800 rounded-lg p-6">
+        <div className="mt-8 bg-gray-900 border border-gray-800 rounded-lg p-6 w-4/6 mx-auto">
           <h3 className="text-lg font-semibold mb-4 text-center">Statistics</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="text-center">
