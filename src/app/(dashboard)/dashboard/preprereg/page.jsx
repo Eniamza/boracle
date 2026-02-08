@@ -403,6 +403,18 @@ const PreRegistrationPage = () => {
               <Filter className="w-5 h-5" />
               Filters
             </button>
+            {(filters.hideFilled || filters.avoidFaculties.length > 0) && (
+              <button
+                onClick={() => setFilters({ hideFilled: false, avoidFaculties: [] })}
+                className="px-3 py-3 bg-red-700 hover:bg-red-800 rounded-lg flex items-center gap-1 transition-colors"
+                title="Reset Filters"
+              >
+                <div className="relative">
+                  <Filter className="w-5 h-5" />
+                  <X className="w-3 h-3 absolute -top-1 -right-1 bg-red-700 rounded-full" />
+                </div>
+              </button>
+            )}
           </div>
           
           {/* Selected Courses Tags */}
@@ -541,8 +553,14 @@ const PreRegistrationPage = () => {
 
       {/* Filter Modal */}
       {showFilterModal && (
-        <div className="fixed inset-0 bg-black/75 flex items-center justify-center z-50 p-4">
-          <div className="bg-[#0f172a] border border-blue-800/50 rounded-lg max-w-md w-full shadow-xl shadow-blue-900/20">
+        <div 
+          className="fixed inset-0 bg-black/75 flex items-center justify-center z-50 p-4"
+          onClick={() => setShowFilterModal(false)}
+        >
+          <div 
+            className="bg-[#0f172a] border border-blue-800/50 rounded-lg max-w-md w-full shadow-xl shadow-blue-900/20"
+            onClick={(e) => e.stopPropagation()}
+          >
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-blue-800/50">
               <div>
@@ -730,12 +748,6 @@ const PreRegistrationPage = () => {
             {/* Footer */}
             <div className="flex gap-2 p-4 border-t border-blue-800/50 bg-[#0c1629]">
               <button
-                onClick={() => setShowFilterModal(false)}
-                className="flex-1 px-4 py-2.5 bg-[#1e3a5f] hover:bg-[#234b7a] border border-blue-700/50 rounded-lg transition-colors font-medium text-blue-100"
-              >
-                Close
-              </button>
-              <button
                 onClick={() => {
                   setFilters({ hideFilled: false, avoidFaculties: [] });
                   setShowFilterModal(false);
@@ -743,6 +755,12 @@ const PreRegistrationPage = () => {
                 className="flex-1 px-4 py-2.5 bg-red-700 hover:bg-red-800 rounded-lg transition-colors font-medium"
               >
                 Reset Filters
+              </button>
+              <button
+                onClick={() => setShowFilterModal(false)}
+                className="flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors font-medium text-white"
+              >
+                Apply
               </button>
             </div>
           </div>
