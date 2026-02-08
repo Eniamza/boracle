@@ -13,18 +13,22 @@ import {
   Eye,
   Copy,
   Check,
-  AlertCircle
+  AlertCircle,
+  Save
 } from "lucide-react";
 import { toast } from 'sonner';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import * as htmlToImage from 'html-to-image';
+import { useSession } from 'next-auth/react';
 
 const MergeRoutinesPage = () => {
+  const { data: session } = useSession();
   const [routineInputs, setRoutineInputs] = useState([
     { id: 1, routineId: '', friendName: '', color: '#3B82F6' }
   ]);
   const [mergedCourses, setMergedCourses] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [savingRoutine, setSavingRoutine] = useState(false);
   const [loadingRoutines, setLoadingRoutines] = useState({});
   const [copiedId, setCopiedId] = useState(null);
   const mergedRoutineRef = useRef(null);
@@ -76,6 +80,56 @@ const MergeRoutinesPage = () => {
       setTimeout(() => setCopiedId(null), 2000);
     } catch (error) {
       toast.error('Failed to copy routine ID');
+    }
+  };
+
+  // Save merged routine to database
+  const saveMergedRoutine = async () => {
+    if (!session?.user?.email) {
+      toast.error('Please login to save your merged routine');
+      return;
+    }
+
+    if (mergedCourses.length === 0) {
+      toast.error('Please merge some routines first');
+      return;
+    }
+
+    setSavingRoutine(true);
+    
+    try {
+      // Build the routine data structure with friend names and their section IDs
+      const routineData = routineInputs
+        .filter(r => r.routineId && r.friendName)
+        .map(input => {
+          const friendCourses = mergedCourses.filter(c => c.friendName === input.friendName);
+          return {
+            friendName: input.friendName,
+            sectionIds: friendCourses.map(c => c.sectionId)
+          };
+        })
+        .filter(item => item.sectionIds.length > 0);
+
+      const response = await fetch('/api/merged-routine', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          routineData: JSON.stringify(routineData)
+        }),
+      });
+
+      if (response.ok) {
+        toast.success('Merged routine saved successfully!');
+      } else {
+        throw new Error('Failed to save merged routine');
+      }
+    } catch (error) {
+      console.error('Error saving merged routine:', error);
+      toast.error('Failed to save merged routine. Please try again.');
+    } finally {
+      setSavingRoutine(false);
     }
   };
 
@@ -371,15 +425,29 @@ const MergeRoutinesPage = () => {
                     </CardDescription>
                   </div>
                   {mergedCourses.length > 0 && (
-                    <button
-                      onClick={exportAsImage}
-                      className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg flex items-center gap-2 transition-colors text-white"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                      </svg>
-                      Save as PNG
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={saveMergedRoutine}
+                        disabled={savingRoutine || !session}
+                        className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 rounded-lg flex items-center gap-2 transition-colors text-white"
+                      >
+                        {savingRoutine ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Save className="w-4 h-4" />
+                        )}
+                        {savingRoutine ? 'Saving...' : 'Save to Cloud'}
+                      </button>
+                      <button
+                        onClick={exportAsImage}
+                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg flex items-center gap-2 transition-colors text-white"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                        Save as PNG
+                      </button>
+                    </div>
                   )}
                 </div>
               </CardHeader>

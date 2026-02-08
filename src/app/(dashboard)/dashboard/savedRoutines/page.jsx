@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect, useRef } from 'react';
-import { Calendar, Clock, Trash2, Eye, Download, RefreshCw, AlertCircle, X } from 'lucide-react';
+import { Calendar, Clock, Trash2, Eye, Download, RefreshCw, AlertCircle, X, Users } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import RoutineTableGrid from '@/components/routine/RoutineTableGrid';
 import { toast } from 'sonner';
@@ -9,11 +9,15 @@ import * as htmlToImage from 'html-to-image';
 const SavedRoutinesPage = () => {
   const { data: session } = useSession();
   const [routines, setRoutines] = useState([]);
+  const [mergedRoutines, setMergedRoutines] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMerged, setLoadingMerged] = useState(true);
   const [error, setError] = useState(null);
   // Removed local toast state, use sonner toast only
   const [viewingRoutine, setViewingRoutine] = useState(null);
+  const [viewingMergedRoutine, setViewingMergedRoutine] = useState(null);
   const [routineCourses, setRoutineCourses] = useState([]);
+  const [mergedRoutineCourses, setMergedRoutineCourses] = useState([]);
   const [loadingRoutine, setLoadingRoutine] = useState(false);
 
   // Use sonner toast for notifications
@@ -46,9 +50,40 @@ const SavedRoutinesPage = () => {
     } catch (err) {
       console.error('Error fetching routines:', err);
       setError('Failed to load saved routines');
-  toast.error('Failed to load saved routines');
+      toast.error('Failed to load saved routines');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Fetch merged routines
+  const fetchMergedRoutines = async () => {
+    try {
+      setLoadingMerged(true);
+      
+      const response = await fetch('/api/merged-routine', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch merged routines');
+      }
+
+      const data = await response.json();
+      
+      if (data.success) {
+        setMergedRoutines(data.routines || []);
+        console.log('Fetched merged routines:', data.routines);
+      } else {
+        throw new Error('Failed to fetch merged routines');
+      }
+    } catch (err) {
+      console.error('Error fetching merged routines:', err);
+    } finally {
+      setLoadingMerged(false);
     }
   };
 
@@ -61,13 +96,32 @@ const SavedRoutinesPage = () => {
 
       if (response.ok) {
         setRoutines(prev => prev.filter(routine => routine.id !== routineId));
-    toast.success('Routine deleted successfully');
+        toast.success('Routine deleted successfully');
       } else {
         throw new Error('Failed to delete routine');
       }
     } catch (err) {
       console.error('Error deleting routine:', err);
-  toast.error('Failed to delete routine');
+      toast.error('Failed to delete routine');
+    }
+  };
+
+  // Delete merged routine
+  const deleteMergedRoutine = async (routineId) => {
+    try {
+      const response = await fetch(`/api/merged-routine/${routineId}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        setMergedRoutines(prev => prev.filter(routine => routine.id !== routineId));
+        toast.success('Merged routine deleted successfully');
+      } else {
+        throw new Error('Failed to delete merged routine');
+      }
+    } catch (err) {
+      console.error('Error deleting merged routine:', err);
+      toast.error('Failed to delete merged routine');
     }
   };
 
@@ -78,6 +132,18 @@ const SavedRoutinesPage = () => {
       return sectionIds.length;
     } catch (err) {
       return 0;
+    }
+  };
+
+  // Parse merged routine data to get friend names and total courses
+  const parseMergedRoutineData = (routineData) => {
+    try {
+      const data = JSON.parse(routineData);
+      const friendNames = data.map(item => item.friendName).filter(Boolean);
+      const totalCourses = data.reduce((sum, item) => sum + (item.sectionIds?.length || 0), 0);
+      return { friendNames, totalCourses };
+    } catch (err) {
+      return { friendNames: [], totalCourses: 0 };
     }
   };
 
@@ -106,8 +172,41 @@ const SavedRoutinesPage = () => {
       }
     } catch (err) {
       console.error('Error viewing routine:', err);
-  toast.error('Failed to load routine details');
+      toast.error('Failed to load routine details');
       setViewingRoutine(null);
+    } finally {
+      setLoadingRoutine(false);
+    }
+  };
+
+  // View merged routine details - fetch course data and show in modal
+  const viewMergedRoutine = async (routine) => {
+    try {
+      setLoadingRoutine(true);
+      setViewingMergedRoutine(routine);
+      
+      // Parse the routine data to get all section IDs
+      const data = JSON.parse(routine.routineData);
+      const allSectionIds = data.flatMap(item => item.sectionIds || []);
+      
+      // Fetch course data from the API
+      const response = await fetch('https://usis-cdn.eniamza.com/connect.json');
+      const allCourses = await response.json();
+      
+      // Filter courses that match the section IDs in the routine
+      const matchedCourses = allCourses.filter(course => 
+        allSectionIds.includes(course.sectionId)
+      );
+      
+      setMergedRoutineCourses(matchedCourses);
+      
+      if (matchedCourses.length === 0) {
+        toast.error('No matching courses found for this merged routine');
+      }
+    } catch (err) {
+      console.error('Error viewing merged routine:', err);
+      toast.error('Failed to load merged routine details');
+      setViewingMergedRoutine(null);
     } finally {
       setLoadingRoutine(false);
     }
@@ -192,8 +291,15 @@ const SavedRoutinesPage = () => {
     setRoutineCourses([]);
   };
 
+  // Helper to close merged routine modal
+  const closeMergedRoutineModal = () => {
+    setViewingMergedRoutine(null);
+    setMergedRoutineCourses([]);
+  };
+
   useEffect(() => {
     fetchRoutines();
+    fetchMergedRoutines();
   }, []);
 
   return (
@@ -289,26 +395,139 @@ const SavedRoutinesPage = () => {
         </div>
       )}
 
-      {/* Stats */}
+      {/* Merged Routines Section */}
+      <div className="mt-12">
+        <h2 className="text-2xl font-bold mb-6 text-center flex items-center justify-center gap-2">
+          <Users className="w-6 h-6 text-purple-400" />
+          Merged Routines
+        </h2>
+        
+        {loadingMerged ? (
+          <div className="flex flex-col items-center justify-center py-12">
+            <RefreshCw className="w-6 h-6 animate-spin text-purple-400 mb-4" />
+            <p className="text-gray-400">Loading merged routines...</p>
+          </div>
+        ) : mergedRoutines.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12">
+            <Users className="w-8 h-8 text-gray-400 mb-4" />
+            <p className="text-gray-500 mb-4">
+              You haven't saved any merged routines yet. Create a merged routine in the Merge Routines page.
+            </p>
+            <a
+              href="/dashboard/merge-routines"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors"
+            >
+              <Users className="w-4 h-4" />
+              Merge Routines
+            </a>
+          </div>
+        ) : (
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {mergedRoutines.map((routine, index) => {
+              const { friendNames, totalCourses } = parseMergedRoutineData(routine.routineData);
+              return (
+                <div
+                  key={routine.id}
+                  className="bg-gray-900 border border-purple-800/50 rounded-lg p-6 hover:border-purple-600/50 transition-colors"
+                >
+                  {/* Routine Header */}
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-purple-600/20 rounded-lg">
+                        <Users className="w-5 h-5 text-purple-400" />
+                      </div>
+                      <div className="flex flex-col">
+                        <h3 className="font-semibold text-lg text-purple-100">Merged Routine</h3>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <p className="text-xs text-gray-500">
+                            {routine.createdAt ? new Date(Number(routine.createdAt) * 1000).toLocaleString() : 'N/A'}
+                          </p>
+                          {routine.semester && (
+                            <span className="inline-block bg-purple-800/80 text-purple-100 text-[10px] font-semibold px-2 py-0.5 rounded ml-1 align-middle">
+                              {routine.semester}
+                            </span>
+                          )}
+                        </div>
+                        {/* Friend Names */}
+                        {friendNames.length > 0 && (
+                          <div className="mt-2 flex flex-wrap gap-1">
+                            {friendNames.map((name, idx) => (
+                              <span 
+                                key={idx} 
+                                className="inline-block bg-purple-900/50 text-purple-200 text-xs px-2 py-0.5 rounded"
+                              >
+                                {name}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                        <p className="text-sm text-gray-400 mt-1">
+                          {totalCourses} courses • {friendNames.length} {friendNames.length === 1 ? 'friend' : 'friends'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => viewMergedRoutine(routine)}
+                      disabled={loadingRoutine}
+                      className="flex-1 px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg flex items-center justify-center gap-2 text-sm transition-colors"
+                    >
+                      <Eye className="w-4 h-4" />
+                      {loadingRoutine && viewingMergedRoutine?.id === routine.id ? 'Loading...' : 'View'}
+                    </button>
+                    <button
+                      title="Copy Routine ID"
+                      onClick={async () => {
+                        try {
+                          await navigator.clipboard.writeText(routine.id.toString());
+                          toast.success('Routine ID copied!');
+                        } catch (err) {
+                          toast.error('Failed to copy ID');
+                        }
+                      }}
+                      className="px-3 py-2 hover:bg-gray-800 rounded-lg flex items-center justify-center gap-2 text-sm transition-colors"
+                      style={{ lineHeight: 0 }}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-gray-400 hover:text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2" /><rect x="3" y="3" width="13" height="13" rx="2" /></svg>
+                    </button>
+                    <button
+                      onClick={() => deleteMergedRoutine(routine.id)}
+                      className="px-3 py-2 hover:bg-red-700 rounded-lg flex items-center justify-center gap-2 text-sm transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+            {/* Stats */}
       {routines.length > 0 && (
         <div className="mt-8 bg-gray-900 border border-gray-800 rounded-lg p-6 w-4/6 mx-auto">
-          <h3 className="text-lg font-semibold mb-4 text-center">Statistics</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="text-center">
+              <h3 className="text-lg font-semibold mb-4 text-center">Total Routines</h3>
               <div className="text-2xl font-bold text-blue-400">{routines.length}</div>
-              <div className="text-sm text-gray-400">Total Routines</div>
             </div>
             <div className="text-center">
+              <h3 className="text-lg font-semibold mb-4 text-center">Total Courses</h3>
               <div className="text-2xl font-bold text-green-400">
                 {routines.reduce((sum, routine) => sum + parseRoutineString(routine.routineStr), 0)}
               </div>
-              <div className="text-sm text-gray-400">Total Courses</div>
+
             </div>
             <div className="text-center">
+              <h3 className="text-lg font-semibold mb-4 text-center">Avg. Courses per Routine</h3>
               <div className="text-2xl font-bold text-purple-400">
                 {routines.length > 0 ? Math.round(routines.reduce((sum, routine) => sum + parseRoutineString(routine.routineStr), 0) / routines.length) : 0}
               </div>
-              <div className="text-sm text-gray-400">Avg. Courses per Routine</div>
+
             </div>
           </div>
         </div>
@@ -319,6 +538,14 @@ const SavedRoutinesPage = () => {
         <RoutineTableModal 
           selectedCourses={routineCourses} 
           onClose={closeRoutineModal}
+        />
+      )}
+
+      {/* Merged Routine View Modal */}
+      {viewingMergedRoutine && (
+        <RoutineTableModal 
+          selectedCourses={mergedRoutineCourses} 
+          onClose={closeMergedRoutineModal}
         />
       )}
     </div>
