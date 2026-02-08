@@ -301,10 +301,33 @@ const PreRegistrationPage = () => {
     setSavingRoutine(true);
     
     try {
-      // Extract section IDs and encode as base64
-      const sectionIds = selectedCourses.map(course => course.sectionId);
+      // Extract section IDs and sort them chronologically for consistent comparison
+      const sectionIds = selectedCourses.map(course => course.sectionId).sort();
       const routineStr = btoa(JSON.stringify(sectionIds));
       
+      // First, fetch existing routines to check for duplicates
+      const checkResponse = await fetch('/api/routine', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (checkResponse.ok) {
+        const existingData = await checkResponse.json();
+        const existingRoutines = existingData.routines || [];
+        
+        // Check if the exact routine already exists
+        const duplicateRoutine = existingRoutines.find(r => r.routineStr === routineStr);
+        
+        if (duplicateRoutine) {
+          toast.error('This exact routine is already saved!');
+          setSavingRoutine(false);
+          return;
+        }
+      }
+      
+      // No duplicate found, proceed to save
       const response = await fetch('/api/routine', {
         method: 'POST',
         headers: {
