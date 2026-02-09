@@ -34,11 +34,13 @@ const PreRegistrationPage = () => {
   const [hoveredFaculty, setHoveredFaculty] = useState(null);
   const [facultyTooltipPosition, setFacultyTooltipPosition] = useState({ x: 0, y: 0 });
   const [facultyImageError, setFacultyImageError] = useState(false);
+  const [filterDropdownOpen, setFilterDropdownOpen] = useState(false);
   const observerRef = useRef();
   const lastCourseRef = useRef();
   const routineRef = useRef(null);
   const facultyDropdownRef = useRef(null);
   const facultyListRef = useRef(null);
+  const filterDropdownRef = useRef(null);
 
   // Helper to get faculty details for a course
   const getFacultyDetails = useCallback((faculties) => {
@@ -220,6 +222,9 @@ const PreRegistrationPage = () => {
     const handleClickOutside = (event) => {
       if (facultyDropdownRef.current && !facultyDropdownRef.current.contains(event.target)) {
         setFacultyDropdownOpen(false);
+      }
+      if (filterDropdownRef.current && !filterDropdownRef.current.contains(event.target)) {
+        setFilterDropdownOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -426,17 +431,90 @@ const PreRegistrationPage = () => {
               <Filter className="w-5 h-5" />
               Filters
             </button>
+            
+            {/* Active Filters Dropdown - Shows when filters are applied */}
+            {/* Saihan: Why are these comments so hard to read, ugh */}
             {(filters.hideFilled || filters.avoidFaculties.length > 0) && (
-              <button
-                onClick={() => setFilters({ hideFilled: false, avoidFaculties: [] })}
-                className="px-3 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg flex items-center gap-1 transition-colors"
-                title="Reset Filters"
-              >
-                <div className="relative">
-                  <Filter className="w-5 h-5" />
-                  <X className="w-3 h-3 absolute -top-1 -right-1 bg-red-600 rounded-full" />
-                </div>
-              </button>
+              <div className="relative" ref={filterDropdownRef}>
+                {/* Dropdown Trigger Button */}
+                <button
+                  onClick={() => setFilterDropdownOpen(!filterDropdownOpen)}
+                  className="h-[50px] px-4 bg-red-600 hover:bg-red-700 text-white rounded-lg flex items-center gap-2 transition-colors"
+                  title="Manage Active Filters"
+                >
+                  <div className="relative">
+                    <Filter className="w-5 h-5" />
+                    {/* Badge showing count of active filters */}
+                    <span className="absolute -top-1.5 -right-1.5 bg-white text-red-600 text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold">
+                      {(filters.hideFilled ? 1 : 0) + filters.avoidFaculties.length}
+                    </span>
+                  </div>
+                </button>
+
+                {/* Dropdown Menu */}
+                {filterDropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-72 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl z-50">
+                    {/* Dropdown Header */}
+                    <div className="p-3 border-b border-gray-200 dark:border-gray-700">
+                      <div className="flex items-center justify-between">
+                        <h3 className="font-semibold text-gray-900 dark:text-white">Active Filters</h3>
+                        {/* Clear All Button */}
+                        <button
+                          onClick={() => {
+                            setFilters({ hideFilled: false, avoidFaculties: [] });
+                            setFilterDropdownOpen(false);
+                          }}
+                          className="text-xs text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 font-medium"
+                        >
+                          Clear All
+                        </button>
+                      </div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Click to remove individual filters</p>
+                    </div>
+
+                    {/* Filter Items List */}
+                    <div className="p-2 max-h-64 overflow-y-auto">
+                      {/* Hide Filled Sections Filter Item */}
+                      {filters.hideFilled && (
+                        <button
+                          onClick={() => setFilters(prev => ({ ...prev, hideFilled: false }))}
+                          className="w-full flex items-center justify-between px-3 py-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors group"
+                        >
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                            <span className="text-sm text-gray-700 dark:text-gray-300">Hide Filled Sections</span>
+                          </div>
+                          <X className="w-4 h-4 text-gray-400 group-hover:text-red-500 transition-colors" />
+                        </button>
+                      )}
+
+                      {/* Avoided Faculties Section */}
+                      {filters.avoidFaculties.length > 0 && (
+                        <div className="mt-1">
+                          {/* Section Label */}
+                          <div className="px-3 py-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                            Avoided Faculties
+                          </div>
+                          {/* Individual Faculty Items */}
+                          {filters.avoidFaculties.map(faculty => (
+                            <button
+                              key={faculty}
+                              onClick={() => removeFaculty(faculty)}
+                              className="w-full flex items-center justify-between px-3 py-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors group"
+                            >
+                              <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                                <span className="text-sm text-gray-700 dark:text-gray-300">{faculty}</span>
+                              </div>
+                              <X className="w-4 h-4 text-gray-400 group-hover:text-red-500 transition-colors" />
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
           </div>
           
