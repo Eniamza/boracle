@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,8 @@ import { Calendar, User, ArrowRightLeft, Tag, CheckCircle, Trash2 } from 'lucide
 
 const SwapCard = ({ swap, courses = [], onDelete, onMarkComplete }) => {
   const { data: session } = useSession();
+  const [hoveredCourse, setHoveredCourse] = useState(null);
+  const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
   
   if (!swap) return null;
   
@@ -107,7 +109,21 @@ const SwapCard = ({ swap, courses = [], onDelete, onMarkComplete }) => {
                       <Badge 
                         key={sectionId} 
                         variant="outline" 
-                        className="bg-white dark:bg-gray-900 border-purple-300 dark:border-blue-700 text-blue-700 dark:text-blue-400"
+                        className="bg-white dark:bg-gray-900 border-purple-300 dark:border-blue-700 text-blue-700 dark:text-blue-400 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                        onMouseEnter={(e) => {
+                          if (askCourse) {
+                            setHoveredCourse(askCourse);
+                            const rect = e.currentTarget.getBoundingClientRect();
+                            const viewportWidth = window.innerWidth;
+                            const tooltipWidth = 384;
+                            const shouldShowLeft = rect.right + tooltipWidth + 10 > viewportWidth;
+                            setTooltipPosition({ 
+                              x: shouldShowLeft ? rect.left - tooltipWidth - 10 : rect.right + 10, 
+                              y: rect.top 
+                            });
+                          }
+                        }}
+                        onMouseLeave={() => setHoveredCourse(null)}
                       >
                         {askCourse ? formatCourse(askCourse) : `Section ${sectionId}`}
                       </Badge>
@@ -161,6 +177,46 @@ const SwapCard = ({ swap, courses = [], onDelete, onMarkComplete }) => {
           )}
         </div>
       </CardContent>
+      
+      {/* Hover Tooltip for "Looking For" Courses */}
+      {hoveredCourse && (
+        <div 
+          className="fixed z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg p-4 shadow-xl w-96 pointer-events-none"
+          style={{ 
+            left: `${Math.max(10, Math.min(tooltipPosition.x, typeof window !== 'undefined' ? window.innerWidth - 394 : 800))}px`, 
+            top: `${tooltipPosition.y}px`,
+            transform: 'translateY(-50%)'
+          }}
+        >
+          <div className="space-y-2 text-sm text-gray-900 dark:text-gray-100">
+            <div className="font-bold text-lg">{hoveredCourse.courseCode}-{hoveredCourse.sectionName}</div>
+            <div><span className="text-gray-500 dark:text-gray-400">Credits:</span> {hoveredCourse.courseCredit}</div>
+            
+            {/* Faculty Information */}
+            <div className="bg-gray-100 dark:bg-gray-700/50 rounded p-2 space-y-1">
+              <div className="font-medium text-blue-600 dark:text-blue-400">Faculty Information</div>
+              <div><span className="text-gray-500 dark:text-gray-400">Name:</span> {hoveredCourse.employeeName || hoveredCourse.faculties || 'TBA'}</div>
+              {hoveredCourse.employeeEmail && (
+                <div><span className="text-gray-500 dark:text-gray-400">Email:</span> {hoveredCourse.employeeEmail}</div>
+              )}
+              {!hoveredCourse.employeeEmail && hoveredCourse.faculties && (
+                <div><span className="text-gray-500 dark:text-gray-400">Initial:</span> {hoveredCourse.faculties}</div>
+              )}
+            </div>
+            
+            <div><span className="text-gray-500 dark:text-gray-400">Type:</span> {hoveredCourse.sectionType}</div>
+            <div><span className="text-gray-500 dark:text-gray-400">Capacity:</span> {hoveredCourse.capacity} (Filled: {hoveredCourse.consumedSeat})</div>
+            <div><span className="text-gray-500 dark:text-gray-400">Prerequisites:</span> {hoveredCourse.prerequisiteCourses || 'None'}</div>
+            <div><span className="text-gray-500 dark:text-gray-400">Room:</span> {hoveredCourse.roomName || 'TBA'}</div>
+            {hoveredCourse.labCourseCode && (
+              <div><span className="text-gray-500 dark:text-gray-400">Lab:</span> {hoveredCourse.labCourseCode} - {hoveredCourse.labRoomName}</div>
+            )}
+            <div><span className="text-gray-500 dark:text-gray-400">Mid Exam:</span> {hoveredCourse.sectionSchedule?.midExamDetail || 'TBA'}</div>
+            <div><span className="text-gray-500 dark:text-gray-400">Final Exam:</span> {hoveredCourse.sectionSchedule?.finalExamDetail || 'TBA'}</div>
+            <div><span className="text-gray-500 dark:text-gray-400">Class Period:</span> {hoveredCourse.sectionSchedule?.classStartDate} to {hoveredCourse.sectionSchedule?.classEndDate}</div>
+          </div>
+        </div>
+      )}
     </Card>
   );
 };
