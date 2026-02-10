@@ -253,38 +253,47 @@ const MergeRoutinesPage = () => {
     // Store original styles
     const originalBodyOverflow = document.body.style.overflow;
     const originalHtmlOverflow = document.documentElement.style.overflow;
+    const originalRoutineSegment = mergedRoutineRef.current;
+    if (!originalRoutineSegment) return;
 
-    // Find all overflow-x-auto elements within the ref and store their original overflow
-    const overflowElements = mergedRoutineRef.current.querySelectorAll('.overflow-x-auto, .overflow-auto, .overflow-y-auto');
-    const originalOverflows = Array.from(overflowElements).map(el => ({
-      element: el,
-      overflow: el.style.overflow,
-      overflowX: el.style.overflowX,
-      overflowY: el.style.overflowY
-    }));
+    const scrolledWidth = 1800; // ! FORCE a standard desktop width- Change to increase downloaded image's width
+
+    // ? Hidden container for the cloned routine segment
+    const container = document.createElement('div');
+    container.style.position = 'absolute';
+    container.style.top = '-9999px';
+    container.style.left = '-9999px';
+    container.style.width = scrolledWidth + 'px';
+
+    container.style.zoom = 0.5;
+
+    document.body.appendChild(container);
+
+    // ? Cloning the Routine Segment
+    const clonedRoutine = originalRoutineSegment.cloneNode(true);
+
+    // ? Force the clonedRoutine to show everything and adjust to desktop resolution
+    clonedRoutine.style.width = scrolledWidth + 'px';
+    clonedRoutine.style.height = 'auto';
+    clonedRoutine.style.overflow = 'visible';
+
+    container.appendChild(clonedRoutine);
+
+    // ? We are waiting here, because our browser can be stuipidly dumb (And also slow ¯\_(ツ)_/¯)
+    // ? which causes html-to-image to capture the image before styles are even applied, resulting in a broken image
+    await new Promise(resolve => setTimeout(resolve, 100));
 
     try {
-      // Prevent scrollbars during export
-      document.body.style.overflow = 'hidden';
-      document.documentElement.style.overflow = 'hidden';
-
-      // Temporarily remove overflow from all scrollable containers
-      overflowElements.forEach(el => {
-        el.style.overflow = 'visible';
-        el.style.overflowX = 'visible';
-        el.style.overflowY = 'visible';
-      });
-
-      const dataUrl = await htmlToImage.toPng(mergedRoutineRef.current, {
+      const dataUrl = await htmlToImage.toPng(clonedRoutine, {
         quality: 0.95,
-        pixelRatio: 2,
+        pixelRatio: 3, // ! Higher number -> Higher resolution -> Larger file size (Maybe add a slider on client side for them to adjust this in the future?) 
         backgroundColor: '#111827',
-        cacheBust: true,
-        skipAutoScale: true,
-        style: {
-          overflow: 'visible',
-        }
+        width: scrolledWidth,
+        height: clonedRoutine.scrollHeight,
       });
+
+      // ? Anhilation of the cloned routine and resetting styles back to normal
+      document.body.removeChild(container);
 
       const link = document.createElement('a');
       link.download = `merged-routine-${new Date().toISOString().split('T')[0]}.png`;
@@ -294,9 +303,9 @@ const MergeRoutinesPage = () => {
       toast.success('Routine exported successfully!');
     } catch (error) {
       console.error('Error exporting routine:', error);
-      toast.error('Failed to export routine as PNG. Please try again.');
+      toast.error('Failed to export routine.');
     } finally {
-      // Restore original styles
+      // Restore original styles (if any were modified on the main document)
       document.body.style.overflow = originalBodyOverflow;
       document.documentElement.style.overflow = originalHtmlOverflow;
 
@@ -504,6 +513,8 @@ const MergeRoutinesPage = () => {
               </div>
             </CardHeader>
             <CardContent>
+              {/* The Routine Gets Loaded Here*/}
+              {/* Saihan: why was this so hard to find :| */}
               {mergedCourses.length > 0 ? (
                 <div ref={mergedRoutineRef}>
                   <MergedRoutineGrid
