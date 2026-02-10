@@ -20,7 +20,7 @@ const PreRegistrationPage = () => {
   const [loading, setLoading] = useState(true);
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [showRoutineModal, setShowRoutineModal] = useState(false);
-  const [selectedCourses, setSelectedCourses] = useLocalStorage('boracle_selected_courses', []); // Changed to useLocalStorage
+  const [selectedCourses, setSelectedCourses] = useLocalStorage('boracle_selected_courses', []);
   const [savingRoutine, setSavingRoutine] = useState(false);
   const [creditLimitWarning, setCreditLimitWarning] = useState(false);
   const [customToast, setCustomToast] = useState({ show: false, message: '', type: 'success' });
