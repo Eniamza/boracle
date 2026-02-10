@@ -189,7 +189,7 @@ const SwapCard = ({ swap, courses = [], onDelete, onMarkComplete }) => {
                 const courseInfo = giveCourse ? `${giveCourse.courseCode}-${giveCourse.sectionName} (${giveCourse.faculties || 'TBA'})` : `Section ${swap.getSectionId}`;
                 window.open(`https://mail.google.com/mail/?view=cm&to=${swap.uEmail}&su=Course Swap Request - ${encodeURIComponent(courseInfo)}`, '_blank');
               }}
-              className="gap-2 bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white"
+              className="gap-2 bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 dark:text-white text-white"
               title="Contact via Gmail"
             >
               Send <Mail className="w-4 h-4" />
