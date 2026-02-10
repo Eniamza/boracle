@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useSession } from 'next-auth/react';
-import { Calendar, User, ArrowRightLeft, Tag, CheckCircle, Trash2 } from 'lucide-react';
+import { Calendar, User, ArrowRightLeft, Tag, CheckCircle, Trash2, Mail } from 'lucide-react';
 
 const SwapCard = ({ swap, courses = [], onDelete, onMarkComplete }) => {
   const { data: session } = useSession();
@@ -15,7 +15,7 @@ const SwapCard = ({ swap, courses = [], onDelete, onMarkComplete }) => {
   if (!swap) return null;
   
   const formatCourse = (course) => {
-    return `${course.courseCode}-[${course.sectionName}]`;
+    return `${course.courseCode}-${course.sectionName}-${course.faculties || 'TBA'}`;
   };
 
   const getCourseBySection = (sectionId) => {
@@ -109,7 +109,15 @@ const SwapCard = ({ swap, courses = [], onDelete, onMarkComplete }) => {
                       <Badge 
                         key={sectionId} 
                         variant="outline" 
-                        className="bg-white dark:bg-gray-900 border-purple-300 dark:border-blue-700 text-blue-700 dark:text-blue-400 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                        className="px-3 py-1.5 text font-medium
+                        bg-white dark:bg-gray-900 
+                        border-purple-300 dark:border-blue-700 
+                        text-blue-700 dark:text-blue-400 
+                        cursor-pointer 
+                        hover:bg-purple-50 dark:hover:bg-blue-900/30 
+                        hover:border-purple-400 dark:hover:border-blue-600
+                        hover:shadow-sm
+                        transition-all duration-200"
                         onMouseEnter={(e) => {
                           if (askCourse) {
                             setHoveredCourse(askCourse);
@@ -138,7 +146,7 @@ const SwapCard = ({ swap, courses = [], onDelete, onMarkComplete }) => {
         </div>
       </CardHeader>
       
-      <CardContent className="border-t bg-gray-50/50 dark:bg-gray-800/50">
+      <CardContent className="py-3 border-t bg-gray-50/50 dark:bg-gray-800/50">
         {/* User Info */}
         <div className="flex items-center justify-between py-3">
           <div className="space-y-1">
@@ -155,7 +163,7 @@ const SwapCard = ({ swap, courses = [], onDelete, onMarkComplete }) => {
           </div>
           
           {/* Action Buttons */}
-          {isOwner && (
+          {isOwner ? (
             <div className="flex gap-2">
               {!swap.isDone && (
                 <Button 
@@ -174,6 +182,18 @@ const SwapCard = ({ swap, courses = [], onDelete, onMarkComplete }) => {
                 <Trash2 className="w-4 h-4" />
               </Button>
             </div>
+          ) : swap.uEmail && (
+            <Button
+              size="sm"
+              onClick={() => {
+                const courseInfo = giveCourse ? `${giveCourse.courseCode}-${giveCourse.sectionName} (${giveCourse.faculties || 'TBA'})` : `Section ${swap.getSectionId}`;
+                window.open(`https://mail.google.com/mail/?view=cm&to=${swap.uEmail}&su=Course Swap Request - ${encodeURIComponent(courseInfo)}`, '_blank');
+              }}
+              className="gap-2 bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white"
+              title="Contact via Gmail"
+            >
+              Send <Mail className="w-4 h-4" />
+            </Button>
           )}
         </div>
       </CardContent>
@@ -204,7 +224,7 @@ const SwapCard = ({ swap, courses = [], onDelete, onMarkComplete }) => {
               )}
             </div>
             
-            <div><span className="text-gray-500 dark:text-gray-400">Type:</span> {hoveredCourse.sectionType}</div>
+            <div><span className="text-gray-500 dark:text-gray-400">Type:</span> {hoveredCourse.sectionType === 'OTHER' ? 'THEORY' : hoveredCourse.sectionType}</div>
             <div><span className="text-gray-500 dark:text-gray-400">Capacity:</span> {hoveredCourse.capacity} (Filled: {hoveredCourse.consumedSeat})</div>
             <div><span className="text-gray-500 dark:text-gray-400">Prerequisites:</span> {hoveredCourse.prerequisiteCourses || 'None'}</div>
             <div><span className="text-gray-500 dark:text-gray-400">Room:</span> {hoveredCourse.roomName || 'TBA'}</div>
