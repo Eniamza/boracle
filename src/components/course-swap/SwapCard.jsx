@@ -163,7 +163,7 @@ const SwapCard = ({ swap, courses = [], onDelete, onMarkComplete }) => {
           </div>
           
           {/* Action Buttons */}
-          {isOwner && (
+          {isOwner ? (
             <div className="flex gap-2">
               {!swap.isDone && (
                 <Button 
@@ -182,23 +182,20 @@ const SwapCard = ({ swap, courses = [], onDelete, onMarkComplete }) => {
                 <Trash2 className="w-4 h-4" />
               </Button>
             </div>
+          ) : swap.uEmail && (
+            <Button
+              size="sm"
+              onClick={() => {
+                const courseInfo = giveCourse ? `${giveCourse.courseCode}-${giveCourse.sectionName} (${giveCourse.faculties || 'TBA'})` : `Section ${swap.getSectionId}`;
+                window.open(`https://mail.google.com/mail/?view=cm&to=${swap.uEmail}&su=Course Swap Request - ${encodeURIComponent(courseInfo)}`, '_blank');
+              }}
+              className="gap-2 bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white"
+              title="Contact via Gmail"
+            >
+              Send <Mail className="w-4 h-4" />
+            </Button>
           )}
         </div>
-        
-        {/* Contact Button for non-owners */}
-        {!isOwner && swap.uEmail && (
-          <Button
-            size="sm"
-            onClick={() => {
-              const courseInfo = giveCourse ? `${giveCourse.courseCode}-${giveCourse.sectionName} (${giveCourse.faculties || 'TBA'})` : `Section ${swap.getSectionId}`;
-              window.open(`https://mail.google.com/mail/?view=cm&to=${swap.uEmail}&su=Course Swap Request - ${encodeURIComponent(courseInfo)}`, '_blank');
-            }}
-            className="w-full gap-2 bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white font-medium transition-all shadow-sm hover:shadow-md"
-          >
-            <Mail className="w-4 h-4" />
-            Contact via Gmail
-          </Button>
-        )}
       </CardContent>
       
       {/* Hover Tooltip for "Looking For" Courses */}
