@@ -218,7 +218,13 @@ const SwapCard = ({ swap, courses = [], onDelete, onMarkComplete }) => {
             {/* Faculty Information */}
             <div className="bg-gray-100 dark:bg-gray-700/50 rounded p-2 space-y-1">
               <div className="font-medium text-blue-600 dark:text-blue-400">Faculty Information</div>
-              <div><span className="text-gray-500 dark:text-gray-400">Faculty Initial:</span> {hoveredCourse.faculties || 'TBA'}</div>
+              <div><span className="text-gray-500 dark:text-gray-400">Initial:</span> {hoveredCourse.faculties || 'TBA'}</div>
+              {hoveredCourse.employeeName && (
+                <div><span className="text-gray-500 dark:text-gray-400">Name:</span> {hoveredCourse.employeeName}</div>
+              )}
+              {hoveredCourse.employeeEmail && (
+                <div><span className="text-gray-500 dark:text-gray-400">Email:</span> {hoveredCourse.employeeEmail}</div>
+              )}
             </div>
             
             <div><span className="text-gray-500 dark:text-gray-400">Type:</span> {hoveredCourse.sectionType === 'OTHER' ? 'THEORY' : hoveredCourse.sectionType}</div>

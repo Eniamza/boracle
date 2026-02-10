@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowLeftRight, Loader2, User } from "lucide-react";
 import { useSession } from 'next-auth/react';
@@ -23,6 +23,7 @@ const CourseSwapPage = () => {
   const [loading, setLoading] = useState(true);
   const [selectedFilters, setSelectedFilters] = useState([]);
   const [showMySwapsOnly, setShowMySwapsOnly] = useState(false);
+  const [facultyMap, setFacultyMap] = useState({});
 
   // Current semester from global config
   const currentSemester = globalInfo.semester;
@@ -46,6 +47,44 @@ const CourseSwapPage = () => {
   const normalizedCurrentSemester = useMemo(() => {
     return normalizeSemester(currentSemester);
   }, [currentSemester]);
+
+  // Helper to get faculty details for a course
+  const getFacultyDetails = useCallback((faculties) => {
+    if (!faculties) return { facultyName: null, facultyEmail: null };
+    const firstInitial = faculties.split(',')[0]?.trim().toUpperCase();
+    const facultyInfo = facultyMap[firstInitial];
+    if (facultyInfo) {
+      return {
+        facultyName: facultyInfo.facultyName,
+        facultyEmail: facultyInfo.email,
+      };
+    }
+    return { facultyName: null, facultyEmail: null };
+  }, [facultyMap]);
+
+  // Enrich courses with faculty details
+  const enrichCoursesWithFaculty = useCallback((courses) => {
+    return courses.map(course => {
+      const { facultyName, facultyEmail } = getFacultyDetails(course.faculties);
+      return {
+        ...course,
+        employeeName: facultyName,
+        employeeEmail: facultyEmail,
+      };
+    });
+  }, [getFacultyDetails]);
+
+  // Fetch faculty data
+  useEffect(() => {
+    fetch('/api/faculty/lookup')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          setFacultyMap(data.facultyMap);
+        }
+      })
+      .catch(err => console.error('Error fetching faculty data:', err));
+  }, []);
 
   // Fetch backup index
   useEffect(() => {
@@ -133,19 +172,23 @@ const CourseSwapPage = () => {
   const getCoursesForSwap = (swap) => {
     const swapSemester = normalizeSemester(swap.semester);
     
+    let courses;
     // If no semester info or matches current semester, use current courses
     if (!swapSemester || swapSemester === normalizedCurrentSemester) {
-      return currentCourses;
+      courses = currentCourses;
+    } else {
+      // Use cached backup courses if available
+      const cachedCourses = semesterCoursesCache[swapSemester];
+      if (cachedCourses && cachedCourses.length > 0) {
+        courses = cachedCourses;
+      } else {
+        // Fallback to current courses while loading
+        courses = currentCourses;
+      }
     }
     
-    // Use cached backup courses if available
-    const cachedCourses = semesterCoursesCache[swapSemester];
-    if (cachedCourses && cachedCourses.length > 0) {
-      return cachedCourses;
-    }
-    
-    // Fallback to current courses while loading
-    return currentCourses;
+    // Enrich courses with faculty details
+    return enrichCoursesWithFaculty(courses);
   };
 
   // Preload backup courses for swaps from previous semesters
@@ -206,8 +249,9 @@ const CourseSwapPage = () => {
         }
       });
     });
-    return allCourses;
-  }, [currentCourses, semesterCoursesCache]);
+    // Enrich with faculty details
+    return enrichCoursesWithFaculty(allCourses);
+  }, [currentCourses, semesterCoursesCache, enrichCoursesWithFaculty]);
 
   const applyFilters = () => {
     let filtered = [...swaps];
