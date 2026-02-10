@@ -5,9 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { 
-  Plus, 
-  Trash2, 
+import {
+  Plus,
+  Trash2,
   Loader2,
   Users,
   Eye,
@@ -21,11 +21,16 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import * as htmlToImage from 'html-to-image';
 import { useSession } from 'next-auth/react';
 
+import { useLocalStorage } from '@/hooks/use-local-storage';
+
 const MergeRoutinesPage = () => {
   const { data: session } = useSession();
-  const [routineInputs, setRoutineInputs] = useState([
+  // Use local storage for routine inputs
+  const [routineInputs, setRoutineInputs] = useLocalStorage('boracle_merge_inputs', [
     { id: 1, routineId: '', friendName: '', color: '#3B82F6' }
   ]);
+
+
   const [mergedCourses, setMergedCourses] = useState([]);
   const [loading, setLoading] = useState(false);
   const [savingRoutine, setSavingRoutine] = useState(false);
@@ -57,6 +62,8 @@ const MergeRoutinesPage = () => {
     ]);
   };
 
+
+
   // Remove routine input
   const removeRoutineInput = (id) => {
     if (routineInputs.length > 1) {
@@ -66,7 +73,7 @@ const MergeRoutinesPage = () => {
 
   // Update routine input
   const updateRoutineInput = (id, field, value) => {
-    setRoutineInputs(routineInputs.map(r => 
+    setRoutineInputs(routineInputs.map(r =>
       r.id === id ? { ...r, [field]: value } : r
     ));
   };
@@ -96,7 +103,7 @@ const MergeRoutinesPage = () => {
     }
 
     setSavingRoutine(true);
-    
+
     try {
       // Build the routine data structure with friend names and their section IDs
       const routineData = routineInputs
@@ -161,46 +168,52 @@ const MergeRoutinesPage = () => {
 
     for (const input of validInputs) {
       setLoadingRoutines(prev => ({ ...prev, [input.id]: true }));
-      
-      try {
-        const response = await fetch(`/api/routine/${input.routineId}`);
-        const data = await response.json();
 
-        if (response.ok && data.success) {
-          // Decode the base64 encoded section IDs
-          const sectionIds = JSON.parse(atob(data.routine.routineStr || ''));
-          
-          // Find courses by section IDs
-          const coursesForThisRoutine = sectionIds.map(sectionId => {
-            const course = allAvailableCourses.find(c => c.sectionId === sectionId);
-            if (course) {
-              return {
-                ...course,
-                friendName: input.friendName,
-                friendColor: input.color,
-                originalRoutineId: input.routineId
-              };
+      // Sanitization: Trim whitespace from routine ID
+      const trimmedRoutineId = input.routineId.trim();
+
+      try {
+        // Handle Fetched Routines
+        {
+          const response = await fetch(`/api/routine/${trimmedRoutineId}`);
+          const data = await response.json();
+
+          if (response.ok && data.success) {
+            // Decode the base64 encoded section IDs
+            const sectionIds = JSON.parse(atob(data.routine.routineStr || ''));
+
+            // Find courses by section IDs
+            const coursesForThisRoutine = sectionIds.map(sectionId => {
+              const course = allAvailableCourses.find(c => c.sectionId === sectionId);
+              if (course) {
+                return {
+                  ...course,
+                  friendName: input.friendName,
+                  friendColor: input.color,
+                  originalRoutineId: trimmedRoutineId
+                };
+              }
+              return null;
+            }).filter(Boolean); // Remove null values
+
+            allCourses.push(...coursesForThisRoutine);
+
+            if (coursesForThisRoutine.length !== sectionIds.length) {
+              const missingCount = sectionIds.length - coursesForThisRoutine.length;
+              toast.warning(`${input.friendName}: ${missingCount} course(s) not found in current semester data`);
             }
-            return null;
-          }).filter(Boolean); // Remove null values
-          
-          allCourses.push(...coursesForThisRoutine);
-          
-          if (coursesForThisRoutine.length !== sectionIds.length) {
-            const missingCount = sectionIds.length - coursesForThisRoutine.length;
-            toast.warning(`${input.friendName}: ${missingCount} course(s) not found in current semester data`);
+          } else {
+            failedRoutines.push({
+              id: trimmedRoutineId,
+              name: input.friendName,
+              error: data.error || 'Failed to fetch routine'
+            });
           }
-        } else {
-          failedRoutines.push({
-            id: input.routineId,
-            name: input.friendName,
-            error: data.error || 'Failed to fetch routine'
-          });
         }
       } catch (error) {
-        console.error(`Error fetching routine ${input.routineId}:`, error);
+        console.error(`Error fetching routine ${trimmedRoutineId}:`, error);
         failedRoutines.push({
-          id: input.routineId,
+          id: trimmedRoutineId,
           name: input.friendName,
           error: 'Network error'
         });
@@ -240,7 +253,7 @@ const MergeRoutinesPage = () => {
     // Store original styles
     const originalBodyOverflow = document.body.style.overflow;
     const originalHtmlOverflow = document.documentElement.style.overflow;
-    
+
     // Find all overflow-x-auto elements within the ref and store their original overflow
     const overflowElements = mergedRoutineRef.current.querySelectorAll('.overflow-x-auto, .overflow-auto, .overflow-y-auto');
     const originalOverflows = Array.from(overflowElements).map(el => ({
@@ -249,19 +262,19 @@ const MergeRoutinesPage = () => {
       overflowX: el.style.overflowX,
       overflowY: el.style.overflowY
     }));
-    
+
     try {
       // Prevent scrollbars during export
       document.body.style.overflow = 'hidden';
       document.documentElement.style.overflow = 'hidden';
-      
+
       // Temporarily remove overflow from all scrollable containers
       overflowElements.forEach(el => {
         el.style.overflow = 'visible';
         el.style.overflowX = 'visible';
         el.style.overflowY = 'visible';
       });
-      
+
       const dataUrl = await htmlToImage.toPng(mergedRoutineRef.current, {
         quality: 0.95,
         pixelRatio: 2,
@@ -272,12 +285,12 @@ const MergeRoutinesPage = () => {
           overflow: 'visible',
         }
       });
-      
+
       const link = document.createElement('a');
       link.download = `merged-routine-${new Date().toISOString().split('T')[0]}.png`;
       link.href = dataUrl;
       link.click();
-      
+
       toast.success('Routine exported successfully!');
     } catch (error) {
       console.error('Error exporting routine:', error);
@@ -286,7 +299,7 @@ const MergeRoutinesPage = () => {
       // Restore original styles
       document.body.style.overflow = originalBodyOverflow;
       document.documentElement.style.overflow = originalHtmlOverflow;
-      
+
       // Restore overflow on all elements
       originalOverflows.forEach(({ element, overflow, overflowX, overflowY }) => {
         element.style.overflow = overflow;
@@ -332,7 +345,7 @@ const MergeRoutinesPage = () => {
                   <div key={input.id} className="flex-shrink-0 w-72 space-y-3 p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800/50">
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
-                        <div 
+                        <div
                           className="w-4 h-4 rounded-full"
                           style={{ backgroundColor: input.color }}
                         />
@@ -418,6 +431,8 @@ const MergeRoutinesPage = () => {
               </div>
 
               <div className="flex gap-2 mt-4 justify-center">
+
+
                 <Button
                   onClick={addRoutineInput}
                   variant="outline"
@@ -491,7 +506,7 @@ const MergeRoutinesPage = () => {
             <CardContent>
               {mergedCourses.length > 0 ? (
                 <div ref={mergedRoutineRef}>
-                  <MergedRoutineGrid 
+                  <MergedRoutineGrid
                     courses={mergedCourses}
                     friends={routineInputs.filter(r => r.routineId && r.friendName)}
                   />
@@ -516,7 +531,7 @@ const MergeRoutinesPage = () => {
 const MergedRoutineGrid = ({ courses, friends }) => {
   const [hoveredCourse, setHoveredCourse] = useState(null);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
-  
+
   const timeSlots = [
     '08:00 AM-09:20 AM',
     '09:30 AM-10:50 AM',
@@ -526,9 +541,9 @@ const MergedRoutineGrid = ({ courses, friends }) => {
     '03:30 PM-04:50 PM',
     '05:00 PM-06:20 PM'
   ];
-  
+
   const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  
+
   // Time conversion utilities
   const timeToMinutes = (timeStr) => {
     const [time, period] = timeStr.split(' ');
@@ -538,7 +553,7 @@ const MergedRoutineGrid = ({ courses, friends }) => {
     if (period === 'AM' && hours === 12) totalMinutes -= 12 * 60;
     return totalMinutes;
   };
-  
+
   const formatTime = (time) => {
     if (!time) return '';
     const [hours, minutes] = time.split(':');
@@ -547,13 +562,13 @@ const MergedRoutineGrid = ({ courses, friends }) => {
     const displayHour = hour % 12 || 12;
     return `${displayHour}:${minutes} ${ampm}`;
   };
-  
+
   // Get courses for a specific slot
   const getCoursesForSlot = (day, timeSlot) => {
     const [slotStart, slotEnd] = timeSlot.split('-');
     const slotStartMin = timeToMinutes(slotStart);
     const slotEndMin = timeToMinutes(slotEnd);
-    
+
     return courses.filter(course => {
       // Check class schedules
       const classMatch = course.sectionSchedule?.classSchedules?.some(schedule => {
@@ -562,7 +577,7 @@ const MergedRoutineGrid = ({ courses, friends }) => {
         const scheduleEnd = timeToMinutes(formatTime(schedule.endTime));
         return scheduleStart < slotEndMin && scheduleEnd > slotStartMin;
       });
-      
+
       // Check lab schedules
       const labMatch = course.labSchedules?.some(schedule => {
         if (schedule.day !== day.toUpperCase()) return false;
@@ -570,7 +585,7 @@ const MergedRoutineGrid = ({ courses, friends }) => {
         const scheduleEnd = timeToMinutes(formatTime(schedule.endTime));
         return scheduleStart < slotEndMin && scheduleEnd > slotStartMin;
       });
-      
+
       return classMatch || labMatch;
     });
   };
@@ -582,7 +597,7 @@ const MergedRoutineGrid = ({ courses, friends }) => {
         <div className="mb-4 flex flex-wrap gap-3">
           {friends.map(friend => (
             <div key={friend.id} className="flex items-center gap-2">
-              <div 
+              <div
                 className="w-4 h-4 rounded-full"
                 style={{ backgroundColor: friend.color }}
               />
@@ -611,7 +626,7 @@ const MergedRoutineGrid = ({ courses, friends }) => {
                   </td>
                   {days.map(day => {
                     const slotCourses = getCoursesForSlot(day, timeSlot);
-                    
+
                     return (
                       <td key={`${day}-${timeSlot}`} className="p-2 border-r border-gray-300 dark:border-gray-700 last:border-r-0 relative">
                         {slotCourses.length > 0 && (
@@ -626,7 +641,7 @@ const MergedRoutineGrid = ({ courses, friends }) => {
                                 const slotEndMin = timeToMinutes(timeSlot.split('-')[1]);
                                 return scheduleStart < slotEndMin && scheduleEnd > slotStartMin;
                               });
-                              
+
                               return (
                                 <div
                                   key={`${course.sectionId}-${idx}`}
@@ -638,8 +653,8 @@ const MergedRoutineGrid = ({ courses, friends }) => {
                                   onMouseEnter={(e) => {
                                     setHoveredCourse(course);
                                     const rect = e.currentTarget.getBoundingClientRect();
-                                    setTooltipPosition({ 
-                                      x: rect.right + 10, 
+                                    setTooltipPosition({
+                                      x: rect.right + 10,
                                       y: rect.top
                                     });
                                   }}
@@ -672,10 +687,10 @@ const MergedRoutineGrid = ({ courses, friends }) => {
 
         {/* Tooltip */}
         {hoveredCourse && (
-          <div 
+          <div
             className="fixed z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg p-3 shadow-xl pointer-events-none"
-            style={{ 
-              left: `${tooltipPosition.x}px`, 
+            style={{
+              left: `${tooltipPosition.x}px`,
               top: `${tooltipPosition.y}px`,
               transform: 'translateY(-50%)'
             }}
@@ -693,7 +708,7 @@ const MergedRoutineGrid = ({ courses, friends }) => {
             </div>
           </div>
         )}
-        
+
         {/* Footer */}
         <div className="mt-4 text-center text-sm text-gray-500">
           Made with 💖 from https://oracle.eniamza.com

@@ -8,6 +8,8 @@ import { toast } from 'sonner';
 
 
 
+import { useLocalStorage } from '@/hooks/use-local-storage';
+
 const PreRegistrationPage = () => {
   const { data: session } = useSession();
   const [courses, setCourses] = useState([]);
@@ -18,7 +20,7 @@ const PreRegistrationPage = () => {
   const [loading, setLoading] = useState(true);
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [showRoutineModal, setShowRoutineModal] = useState(false);
-  const [selectedCourses, setSelectedCourses] = useState([]);
+  const [selectedCourses, setSelectedCourses] = useLocalStorage('boracle_selected_courses', []); // Changed to useLocalStorage
   const [savingRoutine, setSavingRoutine] = useState(false);
   const [creditLimitWarning, setCreditLimitWarning] = useState(false);
   const [customToast, setCustomToast] = useState({ show: false, message: '', type: 'success' });
@@ -45,11 +47,11 @@ const PreRegistrationPage = () => {
   // Helper to get faculty details for a course
   const getFacultyDetails = useCallback((faculties) => {
     if (!faculties) return { facultyName: null, facultyEmail: null, imgUrl: null };
-    
+
     // Get the first initial from the faculties string
     const firstInitial = faculties.split(',')[0]?.trim().toUpperCase();
     const facultyInfo = facultyMap[firstInitial];
-    
+
     if (facultyInfo) {
       return {
         facultyName: facultyInfo.facultyName,
@@ -113,12 +115,12 @@ const PreRegistrationPage = () => {
           if (sectionA > sectionB) return 1;
           return 0;
         });
-        
+
         // Set courses immediately so UI loads
         setCourses(data);
         setFilteredCourses(data);
         setLoading(false);
-        
+
         // Fetch all faculty data in the background (single query, non-blocking)
         fetch('/api/faculty/lookup')
           .then(res => res.json())
@@ -147,31 +149,31 @@ const PreRegistrationPage = () => {
   // Apply filters and search
   useEffect(() => {
     let filtered = [...courses];
-    
+
     // Apply search
     if (debouncedSearchTerm) {
-      filtered = filtered.filter(course => 
+      filtered = filtered.filter(course =>
         course.courseCode?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
         course.faculties?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
         course.sectionName?.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
       );
     }
-    
+
     // Apply filters
     if (filters.hideFilled) {
-      filtered = filtered.filter(course => 
+      filtered = filtered.filter(course =>
         course.capacity > course.consumedSeat
       );
     }
-    
+
     if (filters.avoidFaculties.length > 0) {
-      filtered = filtered.filter(course => 
-        !filters.avoidFaculties.some(faculty => 
+      filtered = filtered.filter(course =>
+        !filters.avoidFaculties.some(faculty =>
           course.faculties?.toLowerCase().includes(faculty.toLowerCase())
         )
       );
     }
-    
+
     setFilteredCourses(filtered);
     setDisplayCount(50);
   }, [debouncedSearchTerm, courses, filters]);
@@ -184,9 +186,9 @@ const PreRegistrationPage = () => {
   // Infinite scroll observer
   useEffect(() => {
     if (loading || displayCount >= filteredCourses.length) return;
-    
+
     const currentRef = lastCourseRef.current;
-    
+
     const observer = new IntersectionObserver(
       entries => {
         const entry = entries[0];
@@ -199,16 +201,16 @@ const PreRegistrationPage = () => {
           });
         }
       },
-      { 
+      {
         threshold: 0.1,
         rootMargin: '50px'
       }
     );
-    
+
     if (currentRef) {
       observer.observe(currentRef);
     }
-    
+
     return () => {
       if (currentRef) {
         observer.unobserve(currentRef);
@@ -259,7 +261,7 @@ const PreRegistrationPage = () => {
   // Format schedule with newlines
   const formatSchedule = (schedules) => {
     if (!schedules || schedules.length === 0) return 'TBA';
-    return schedules.map(s => 
+    return schedules.map(s =>
       `${s.day.slice(0, 3)} ${formatTime(s.startTime)}-${formatTime(s.endTime)}`
     ).join('\n');
   };
@@ -268,7 +270,7 @@ const PreRegistrationPage = () => {
   const addToRoutine = (course) => {
     const existsBySection = selectedCourses.find(c => c.sectionId === course.sectionId);
     const existsByCourse = selectedCourses.find(c => c.courseCode === course.courseCode);
-    
+
     if (existsBySection) {
       // Removing course
       setCreditLimitWarning(false);
@@ -280,13 +282,13 @@ const PreRegistrationPage = () => {
     } else {
       // Adding new course - check credit limit
       const newTotalCredits = selectedCourses.reduce((sum, c) => sum + (c.courseCredit || 0), 0) + (course.courseCredit || 0);
-      
+
       if (newTotalCredits > 15) {
         setCreditLimitWarning(true);
         setTimeout(() => setCreditLimitWarning(false), 3000);
         return; // Don't proceed further
       }
-      
+
       setSelectedCourses(prev => [...prev, course]);
     }
   };
@@ -304,12 +306,12 @@ const PreRegistrationPage = () => {
     }
 
     setSavingRoutine(true);
-    
+
     try {
       // Extract section IDs and sort them chronologically for consistent comparison
       const sectionIds = selectedCourses.map(course => course.sectionId).sort();
       const routineStr = btoa(JSON.stringify(sectionIds));
-      
+
       // First, fetch existing routines to check for duplicates
       const checkResponse = await fetch('/api/routine', {
         method: 'GET',
@@ -317,21 +319,21 @@ const PreRegistrationPage = () => {
           'Content-Type': 'application/json',
         },
       });
-      
+
       if (checkResponse.ok) {
         const existingData = await checkResponse.json();
         const existingRoutines = existingData.routines || [];
-        
+
         // Check if the exact routine already exists
         const duplicateRoutine = existingRoutines.find(r => r.routineStr === routineStr);
-        
+
         if (duplicateRoutine) {
           toast.error('This exact routine is already saved!');
           setSavingRoutine(false);
           return;
         }
       }
-      
+
       // No duplicate found, proceed to save
       const response = await fetch('/api/routine', {
         method: 'POST',
@@ -377,13 +379,12 @@ const PreRegistrationPage = () => {
   };
 
   return (
-    <div className="min-h-screen text-gray-100">
+    <div className="min-h-screen text-gray-100 pb-24">
       {/* Toast Notification */}
       {customToast.show && (
-        <div className={`fixed top-20 left-1/2 transform -translate-x-1/2 z-50 px-6 py-3 rounded-lg shadow-lg flex items-center gap-2 ${
-          customToast.type === 'success' ? 'bg-green-600 text-white' : 
+        <div className={`fixed top-20 left-1/2 transform -translate-x-1/2 z-50 px-6 py-3 rounded-lg shadow-lg flex items-center gap-2 ${customToast.type === 'success' ? 'bg-green-600 text-white' :
           customToast.type === 'info' ? 'bg-blue-600 text-white' : 'bg-red-600 text-white'
-        }`}>
+          }`}>
           {customToast.type === 'success' ? (
             <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
@@ -411,7 +412,7 @@ const PreRegistrationPage = () => {
       <div className="sticky top-16 z-40 bg-white dark:bg-gray-900 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800 -mx-6 -mt-6 px-6 pt-6 pb-4">
         <div className="container mx-auto">
           {/* <h1 className="text-2xl font-bold text-white-500 mb-4 text-center">Build Routines with Confidence</h1> */}
-          
+
           {/* Search Bar */}
           <div className="flex gap-2">
             <div className="flex-1 relative">
@@ -431,7 +432,7 @@ const PreRegistrationPage = () => {
               <Filter className="w-5 h-5" />
               Filters
             </button>
-            
+
             {/* Active Filters Dropdown - Shows when filters are applied */}
             {/* Saihan: Why are these comments so hard to read, ugh */}
             {(filters.hideFilled || filters.avoidFaculties.length > 0) && (
@@ -517,7 +518,7 @@ const PreRegistrationPage = () => {
               </div>
             )}
           </div>
-          
+
           {/* Selected Courses Tags */}
           {selectedCourses.length > 0 && (
             <div className="flex flex-wrap gap-2 mt-3">
@@ -566,18 +567,18 @@ const PreRegistrationPage = () => {
                   const isLast = index === displayedCourses.length - 1;
                   const isSelected = selectedCourses.find(c => c.sectionId === course.sectionId);
                   const availableSeats = course.capacity - course.consumedSeat;
-                  
-                    return (
-                    <tr 
+
+                  return (
+                    <tr
                       key={course.sectionId}
                       ref={isLast && displayCount < filteredCourses.length ? lastCourseRef : null}
                       className={`border-b border-gray-200 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-800/50 transition-colors ${isSelected ? 'bg-green-50 dark:bg-green-900/20' : ''}`}
                     >
                       <td className="py-3 px-2 text-sm font-medium text-gray-900 dark:text-gray-100">
-                      {course.courseCode}-[{course.sectionName}]
+                        {course.courseCode}-[{course.sectionName}]
                       </td>
                       <td className="py-3 px-2 text-sm relative text-gray-900 dark:text-gray-100">
-                        <span 
+                        <span
                           className="cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                           onMouseEnter={(e) => {
                             if (course.faculties) {
@@ -604,37 +605,36 @@ const PreRegistrationPage = () => {
                       <td className="py-3 px-2 text-sm text-center text-gray-900 dark:text-gray-100">{course.capacity}</td>
                       <td className="py-3 px-2 text-sm text-center text-gray-900 dark:text-gray-100">{course.consumedSeat}</td>
                       <td className="py-3 px-2 text-sm text-center">
-                      <span className={`font-medium ${availableSeats > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                        {availableSeats}
-                      </span>
+                        <span className={`font-medium ${availableSeats > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                          {availableSeats}
+                        </span>
                       </td>
                       <td className="py-3 px-2 text-xs whitespace-pre-line text-gray-700 dark:text-gray-300">
-                      {formatSchedule(course.sectionSchedule?.classSchedules)}
+                        {formatSchedule(course.sectionSchedule?.classSchedules)}
                       </td>
                       <td className="py-3 px-2 text-xs whitespace-pre-line text-gray-700 dark:text-gray-300">
-                      {course.labSchedules?.length > 0 ? formatSchedule(course.labSchedules) : 'N/A'}
+                        {course.labSchedules?.length > 0 ? formatSchedule(course.labSchedules) : 'N/A'}
                       </td>
                       <td className="py-3 px-2 text-xs text-gray-700 dark:text-gray-300">
-                      {course.sectionSchedule?.finalExamDetail || 'TBA'}
+                        {course.sectionSchedule?.finalExamDetail || 'TBA'}
                       </td>
                       <td className="py-3 px-2 text-center">
-                      <button
-                        onClick={() => addToRoutine(course)}
-                        className={`p-2 rounded-lg transition-colors ${
-                        isSelected 
-                          ? 'bg-red-600 hover:bg-red-700 text-white' 
-                          : 'border border-gray-400 dark:border-white text-gray-700 dark:text-white hover:bg-green-600 hover:border-green-600 hover:text-white'
-                        }`}
-                      >
-                        {isSelected ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-                      </button>
+                        <button
+                          onClick={() => addToRoutine(course)}
+                          className={`p-2 rounded-lg transition-colors ${isSelected
+                            ? 'bg-red-600 hover:bg-red-700 text-white'
+                            : 'border border-gray-400 dark:border-white text-gray-700 dark:text-white hover:bg-green-600 hover:border-green-600 hover:text-white'
+                            }`}
+                        >
+                          {isSelected ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+                        </button>
                       </td>
                     </tr>
-                    );
+                  );
                 })}
               </tbody>
             </table>
-            
+
             {displayCount < filteredCourses.length && (
               <div className="text-center py-4">
                 <div className="text-gray-600 dark:text-gray-400 mb-4">
@@ -654,11 +654,11 @@ const PreRegistrationPage = () => {
 
       {/* Filter Modal */}
       {showFilterModal && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/50 dark:bg-black/75 flex items-center justify-center z-50 p-4"
           onClick={() => setShowFilterModal(false)}
         >
-          <div 
+          <div
             className="bg-white dark:bg-[#0f172a] border border-gray-200 dark:border-blue-800/50 rounded-lg max-w-md w-full shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
@@ -675,7 +675,7 @@ const PreRegistrationPage = () => {
                 <X className="w-5 h-5 text-gray-500 dark:text-blue-300" />
               </button>
             </div>
-            
+
             {/* Content */}
             <div className="p-4 space-y-5">
               {/* Hide Filled Sections - Material Design Checkbox */}
@@ -701,11 +701,11 @@ const PreRegistrationPage = () => {
                   <p className="text-xs text-gray-500 dark:text-blue-300/70">Only show sections with available seats</p>
                 </div>
               </label>
-              
+
               {/* Avoid Faculties - Dropdown */}
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700 dark:text-blue-200">Avoid Faculties</label>
-                
+
                 {/* Selected Faculties Tags - above input */}
                 {filters.avoidFaculties.length > 0 && (
                   <div className="flex flex-wrap gap-2 mb-2">
@@ -725,7 +725,7 @@ const PreRegistrationPage = () => {
                     ))}
                   </div>
                 )}
-                
+
                 <div className="relative" ref={facultyDropdownRef}>
                   {/* Input with dropdown trigger */}
                   <div className="w-full bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-gray-100 flex items-center">
@@ -739,10 +739,10 @@ const PreRegistrationPage = () => {
                       }}
                       onFocus={() => setFacultyDropdownOpen(true)}
                       onKeyDown={(e) => {
-                        const filteredList = cdnFacultyList.filter(initial => 
+                        const filteredList = cdnFacultyList.filter(initial =>
                           initial.toLowerCase().includes(facultySearch.toLowerCase())
                         );
-                        
+
                         if (e.key === 'ArrowDown') {
                           e.preventDefault();
                           setHighlightedIndex(prev => Math.min(prev + 1, filteredList.length - 1));
@@ -778,19 +778,19 @@ const PreRegistrationPage = () => {
                       <ChevronDown className={`h-4 w-4 text-gray-500 dark:text-gray-400 transition-transform ${facultyDropdownOpen ? 'rotate-180' : ''}`} />
                     </button>
                   </div>
-                  
+
                   {/* Dropdown - positioned to overflow modal */}
                   {facultyDropdownOpen && (
-                    <div 
+                    <div
                       className="absolute z-[9999] mt-1 w-full rounded-lg border border-gray-200 dark:border-blue-700/50 bg-white dark:bg-[#0f172a] shadow-xl"
                       style={{ maxHeight: '320px' }}
                     >
-                      <div 
+                      <div
                         ref={facultyListRef}
                         className="overflow-y-auto max-h-[320px] faculty-dropdown-scroll"
                       >
                         {cdnFacultyList
-                          .filter(initial => 
+                          .filter(initial =>
                             initial.toLowerCase().includes(facultySearch.toLowerCase())
                           )
                           .slice(0, 100)
@@ -801,9 +801,8 @@ const PreRegistrationPage = () => {
                               <div
                                 key={initial}
                                 data-index={index}
-                                className={`flex items-center px-3 py-2.5 cursor-pointer transition-colors ${
-                                  isHighlighted ? 'bg-blue-600 text-white' : isSelected ? 'bg-blue-100 dark:bg-blue-800/40' : 'hover:bg-gray-100 dark:hover:bg-[#1e3a5f]'
-                                }`}
+                                className={`flex items-center px-3 py-2.5 cursor-pointer transition-colors ${isHighlighted ? 'bg-blue-600 text-white' : isSelected ? 'bg-blue-100 dark:bg-blue-800/40' : 'hover:bg-gray-100 dark:hover:bg-[#1e3a5f]'
+                                  }`}
                                 onClick={() => {
                                   if (isSelected) {
                                     removeFaculty(initial);
@@ -833,19 +832,19 @@ const PreRegistrationPage = () => {
                         {cdnFacultyList.length === 0 && (
                           <div className="py-4 text-center text-sm text-gray-500 dark:text-blue-300/70">Loading faculties...</div>
                         )}
-                        {cdnFacultyList.length > 0 && 
-                         cdnFacultyList.filter(initial => 
-                           initial.toLowerCase().includes(facultySearch.toLowerCase())
-                         ).length === 0 && (
-                          <div className="py-4 text-center text-sm text-gray-500 dark:text-blue-300/70">No faculty found</div>
-                        )}
+                        {cdnFacultyList.length > 0 &&
+                          cdnFacultyList.filter(initial =>
+                            initial.toLowerCase().includes(facultySearch.toLowerCase())
+                          ).length === 0 && (
+                            <div className="py-4 text-center text-sm text-gray-500 dark:text-blue-300/70">No faculty found</div>
+                          )}
                       </div>
                     </div>
                   )}
                 </div>
               </div>
             </div>
-            
+
             {/* Footer */}
             <div className="flex gap-2 p-4 border-t border-gray-200 dark:border-blue-800/50 bg-gray-50 dark:bg-[#0c1629]">
               <button
@@ -899,11 +898,11 @@ const PreRegistrationPage = () => {
                 </button>
               </div>
             </div>
-            
+
             <div className="flex-1 overflow-auto" ref={routineRef}>
-              <RoutineTableGrid 
-                selectedCourses={enrichedSelectedCourses} 
-                onRemoveCourse={addToRoutine} 
+              <RoutineTableGrid
+                selectedCourses={enrichedSelectedCourses}
+                onRemoveCourse={addToRoutine}
                 showRemoveButtons={true}
               />
             </div>
@@ -913,10 +912,10 @@ const PreRegistrationPage = () => {
 
       {/* Faculty Hover Tooltip */}
       {hoveredFaculty && (
-        <div 
+        <div
           className="fixed z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg p-4 shadow-xl w-80 pointer-events-none"
-          style={{ 
-            left: `${Math.min(facultyTooltipPosition.x, window.innerWidth - 340)}px`, 
+          style={{
+            left: `${Math.min(facultyTooltipPosition.x, window.innerWidth - 340)}px`,
             top: `${facultyTooltipPosition.y}px`
           }}
         >
@@ -924,21 +923,21 @@ const PreRegistrationPage = () => {
             {/* Faculty Image */}
             <div className="shrink-0">
               {hoveredFaculty.imgUrl && hoveredFaculty.imgUrl !== 'N/A' && !facultyImageError ? (
-                <img 
-                  src={hoveredFaculty.imgUrl} 
-                  alt={hoveredFaculty.facultyName || 'Faculty'} 
+                <img
+                  src={hoveredFaculty.imgUrl}
+                  alt={hoveredFaculty.facultyName || 'Faculty'}
                   className="w-16 h-16 rounded-full object-cover border-2 border-blue-500"
                   onError={() => setFacultyImageError(true)}
                 />
               ) : (
                 <div className="w-16 h-16 rounded-full bg-blue-500 dark:bg-blue-400 flex items-center justify-center border-2 border-blue-600 dark:border-blue-500">
                   <svg className="w-10 h-10 text-white dark:text-blue-100" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
                   </svg>
                 </div>
               )}
             </div>
-            
+
             {/* Faculty Details */}
             <div className="flex-1 space-y-1 text-sm">
               <div>
