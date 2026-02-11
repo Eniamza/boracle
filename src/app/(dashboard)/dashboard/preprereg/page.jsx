@@ -416,22 +416,40 @@ const PreRegistrationPage = () => {
   // Handle sort click
   const handleSort = (key) => {
     let direction = 'asc';
-    if (sortConfig.key === key && sortConfig.direction === 'asc') {
-      direction = 'desc';
+    if (sortConfig.key === key) {
+      if (sortConfig.direction === 'asc') {
+        direction = 'desc';
+      } else if (sortConfig.direction === 'desc') {
+        // Reset to default (no sort key implies default sorting)
+        setSortConfig({ key: null, direction: 'asc' });
+        return;
+      }
     }
     setSortConfig({ key, direction });
   };
 
   // Render sort icon
   const renderSortIcon = (columnKey) => {
-    if (sortConfig.key !== columnKey) return <div className="w-4 h-4" />; // Placeholder to keep layout stable
+    const isActive = sortConfig.key === columnKey;
+    const isAsc = isActive && sortConfig.direction === 'asc';
+    const isDesc = isActive && sortConfig.direction === 'desc';
+
     return (
-      <div className="w-4 h-4">
-        {sortConfig.direction === 'asc' ? (
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
-        ) : (
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-        )}
+      <div className="flex flex-col -space-y-1 ml-1">
+        <svg
+          className={`w-3 h-3 ${isAsc ? 'text-gray-900 dark:text-white' : 'text-gray-300 dark:text-gray-600'}`}
+          fill="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path d="M12 4l-8 8h16l-8-8z" />
+        </svg>
+        <svg
+          className={`w-3 h-3 ${isDesc ? 'text-gray-900 dark:text-white' : 'text-gray-300 dark:text-gray-600'}`}
+          fill="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path d="M12 20l-8-8h16l-8 8z" />
+        </svg>
       </div>
     );
   };
@@ -626,9 +644,9 @@ const PreRegistrationPage = () => {
                       {renderSortIcon('faculties')}
                     </div>
                   </th>
-                  <th className="text-left py-3 px-2 text-sm font-medium text-gray-600 dark:text-gray-400 w-[200px]">Prereq</th>
+                  <th className="text-left py-3 px-2 text-sm font-medium text-gray-600 dark:text-gray-400 w-[150px]">Prereq</th>
                   <th
-                    className="text-center py-3 px-2 text-sm font-medium text-gray-600 dark:text-gray-400 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800/50 transition-colors group select-none min-w-[100px]"
+                    className="text-center py-3 px-1 text-sm font-medium text-gray-600 dark:text-gray-400 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800/50 transition-colors group select-none min-w-[100px]"
                     onClick={() => handleSort('capacity')}
                   >
                     <div className="flex items-center justify-center gap-1">
@@ -657,12 +675,10 @@ const PreRegistrationPage = () => {
                   <th className="text-left py-3 px-2 text-sm font-medium text-gray-600 dark:text-gray-400 min-w-[160px]">Class Schedule</th>
                   <th className="text-left py-3 px-2 text-sm font-medium text-gray-600 dark:text-gray-400 min-w-[160px]">Lab Schedule</th>
                   <th
-                    className="text-left py-3 px-2 text-sm font-medium text-gray-600 dark:text-gray-400 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800/50 transition-colors group select-none min-w-[120px]"
-                    onClick={() => handleSort('exam')}
+                    className="text-left py-3 px-2 text-sm font-medium text-gray-600 dark:text-gray-400 min-w-[120px]"
                   >
                     <div className="flex items-center gap-1">
                       Exam Day
-                      {renderSortIcon('exam')}
                     </div>
                   </th>
                   <th className="text-center py-3 px-2 text-sm font-medium text-gray-600 dark:text-gray-400 min-w-[80px]">Action</th>
