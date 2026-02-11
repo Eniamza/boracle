@@ -35,6 +35,7 @@ const SavedRoutinesPage = () => {
   const [routineIdInput, setRoutineIdInput] = useState('');
   const [importing, setImporting] = useState(false);
   const [sharingRoutineId, setSharingRoutineId] = useState(null);
+  const [sharingRoutineType, setSharingRoutineType] = useState('routine');
 
   // Predefined color palette for friends
   const colorPalette = [
@@ -377,9 +378,9 @@ const SavedRoutinesPage = () => {
   };
 
   // Share Modal Component
-  const ShareModal = ({ routineId, onClose }) => {
+  const ShareModal = ({ routineId, type = 'routine', onClose }) => {
     const [linkCopied, setLinkCopied] = useState(false);
-    const shareUrl = `${window.location.origin}/routine/${routineId}`;
+    const shareUrl = `${window.location.origin}/${type}/${routineId}`;
     const shareText = `Check out my routine on BRACU O.R.A.C.L.E!`;
 
     const copyLink = async () => {
@@ -857,9 +858,15 @@ const SavedRoutinesPage = () => {
                 <div
                   className="fixed z-50 bg-gray-800 border border-gray-600 rounded-lg p-4 shadow-xl w-96 pointer-events-none"
                   style={{
-                    left: `${tooltipPosition.x}px`,
-                    top: `${tooltipPosition.y}px`,
-                    transform: 'translateY(-50%)'
+                    left: tooltipPosition.x + 384 + 10 > window.innerWidth
+                      ? `${tooltipPosition.x - 384 - 10}px`
+                      : `${tooltipPosition.x}px`,
+                    top: tooltipPosition.y + 200 > window.innerHeight
+                      ? `${Math.max(10, window.innerHeight - 420)}px`
+                      : `${tooltipPosition.y}px`,
+                    transform: tooltipPosition.y + 200 > window.innerHeight ? 'none' : 'translateY(-50%)',
+                    maxHeight: '90vh',
+                    overflowY: 'auto'
                   }}
                 >
                   <div className="space-y-2 text-sm">
@@ -1022,7 +1029,7 @@ const SavedRoutinesPage = () => {
                   {loadingRoutine && viewingRoutine?.id === routine.id ? 'Loading...' : 'View'}
                 </button>
                 <button
-                  onClick={() => setSharingRoutineId(routine.id)}
+                  onClick={() => { setSharingRoutineId(routine.id); setSharingRoutineType('routine'); }}
                   className="px-3 py-2 hover:bg-gray-700 rounded-lg flex items-center justify-center gap-2 text-sm transition-colors"
                   title="Share routine"
                 >
@@ -1163,7 +1170,7 @@ const SavedRoutinesPage = () => {
                       {loadingRoutine && viewingMergedRoutine?.id === routine.id ? 'Loading...' : 'View'}
                     </button>
                     <button
-                      onClick={() => setSharingRoutineId(routine.id)}
+                      onClick={() => { setSharingRoutineId(routine.id); setSharingRoutineType('merged-routine'); }}
                       className="px-3 py-2 hover:bg-gray-700 rounded-lg flex items-center justify-center gap-2 text-sm transition-colors"
                       title="Share routine"
                     >
@@ -1321,6 +1328,7 @@ const SavedRoutinesPage = () => {
       {sharingRoutineId && (
         <ShareModal
           routineId={sharingRoutineId}
+          type={sharingRoutineType}
           onClose={() => setSharingRoutineId(null)}
         />
       )}

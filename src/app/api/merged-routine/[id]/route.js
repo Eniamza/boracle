@@ -1,7 +1,7 @@
 // app/api/merged-routine/[id]/route.js
 import { auth } from "@/auth";
 import { db, eq, and } from "@/lib/db";
-import { savedMergedRoutine } from "@/lib/db/schema";
+import { savedMergedRoutine, userinfo } from "@/lib/db/schema";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request, { params }) {
@@ -21,6 +21,8 @@ export async function GET(request, { params }) {
         routineId: savedMergedRoutine.routineId,
         routineData: savedMergedRoutine.routineData,
         email: savedMergedRoutine.email,
+        createdAt: savedMergedRoutine.createdAt,
+        semester: savedMergedRoutine.semester,
       })
       .from(savedMergedRoutine)
       .where(eq(savedMergedRoutine.routineId, id));
@@ -34,12 +36,29 @@ export async function GET(request, { params }) {
 
     const routine = result[0];
 
+    // Fetch the owner's name from userinfo table
+    let ownerName = null;
+    try {
+      const userResult = await db
+        .select({ userName: userinfo.userName })
+        .from(userinfo)
+        .where(eq(userinfo.email, routine.email));
+      if (userResult.length > 0) {
+        ownerName = userResult[0].userName?.split(' ')[0] || null;
+      }
+    } catch (nameErr) {
+      console.error("Error fetching user name:", nameErr);
+    }
+
     return NextResponse.json({
       success: true,
       routine: {
         id: routine.routineId,
         routineData: routine.routineData,
-        email: "Anonymous"
+        email: "Anonymous",
+        createdAt: routine.createdAt,
+        semester: routine.semester,
+        ownerName: ownerName,
       }
     });
 
@@ -55,11 +74,11 @@ export async function GET(request, { params }) {
 export async function DELETE(request, { params }) {
   try {
     const { id } = await params;
-    
+
     // Get authenticated user session
     const session = await auth();
     console.log("Merged Routine Delete API accessed by:", session?.user?.email);
-    
+
     if (!session || !session.user?.email) {
       return NextResponse.json(
         { error: "Unauthorized" },
