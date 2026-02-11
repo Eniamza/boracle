@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect, useRef } from 'react';
-import { Calendar, Clock, Trash2, Eye, Download, RefreshCw, AlertCircle, X, Users, Share2, Copy, Check, Link } from 'lucide-react';
+import { Calendar, Clock, Trash2, Eye, Download, RefreshCw, AlertCircle, X, Users, Share2, Copy, Check, Link, Plus, Cable, Hammer } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import RoutineTableGrid from '@/components/routine/RoutineTableGrid';
@@ -28,7 +28,7 @@ const SavedRoutinesPage = () => {
   const [loadingRoutine, setLoadingRoutine] = useState(false);
   const [copiedRoutineId, setCopiedRoutineId] = useState(null);
   const [copiedMergedRoutineId, setCopiedMergedRoutineId] = useState(null);
-  
+
   // Floating button states
   const [showFloatingOptions, setShowFloatingOptions] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
@@ -55,17 +55,17 @@ const SavedRoutinesPage = () => {
     '#0EA5E9', // Sky
   ];
 
-  
+
   // Close floating options when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (showFloatingOptions 
-        && !event.target.closest('.floating-action-container') 
+      if (showFloatingOptions
+        && !event.target.closest('.floating-action-container')
         && !event.target.closest('.floating-action-sheet')) {
         setShowFloatingOptions(false);
       }
     };
-    
+
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showFloatingOptions]);
@@ -215,7 +215,7 @@ const SavedRoutinesPage = () => {
     try {
       setImporting(true);
       const routineId = routineIdInput.trim();
-      
+
       // ! Hunt routine in saved routines first
       const savedResponse = await fetch(`/api/routine/${routineId}`);
       if (savedResponse.ok) {
@@ -230,7 +230,7 @@ const SavedRoutinesPage = () => {
               email: session.user.email
             })
           });
-          
+
           if (importResponse.ok) {
             toast.success('Routine imported successfully!');
             fetchRoutines(); // Refreshing the list, to show the newly imported routine :D :D :D
@@ -240,7 +240,7 @@ const SavedRoutinesPage = () => {
           }
         }
       }
-      
+
       // ! Next, Checking in the merged routines table if not found in saved routines
       const mergedResponse = await fetch(`/api/merged-routine/${routineId}`);
       if (mergedResponse.ok) {
@@ -254,7 +254,7 @@ const SavedRoutinesPage = () => {
               routineData: mergedData.routine.routineData
             })
           });
-          
+
           if (importResponse.ok) {
             toast.success('Merged routine imported successfully!');
             fetchMergedRoutines(); // Refresh the list
@@ -264,10 +264,10 @@ const SavedRoutinesPage = () => {
           }
         }
       }
-      
+
       // If routine not found in either table
       toast.error('Routine not found. Please check the routine ID.');
-      
+
     } catch (error) {
       console.error('Error importing routine:', error);
       toast.error('Failed to import routine');
@@ -1202,7 +1202,7 @@ const SavedRoutinesPage = () => {
 
       {/* Backdrop overlay when floating menu is open */}
       {showFloatingOptions && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 transition-opacity duration-300"
           onClick={() => setShowFloatingOptions(false)}
         />
@@ -1282,7 +1282,7 @@ const SavedRoutinesPage = () => {
               Enter the routine ID shared by your friend. We&apos;ll automatically detect the type and save a copy to your profile.
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="space-y-5 pt-2 pb-1">
             <div className="space-y-2">
               <Label htmlFor="routine-id" className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-medium">Routine ID</Label>
@@ -1296,7 +1296,7 @@ const SavedRoutinesPage = () => {
                 className="h-12 rounded-xl !bg-gray-50 dark:!bg-gray-900 !border-gray-300 dark:!border-gray-700 text-center text-lg font-mono placeholder:text-gray-400 dark:placeholder:text-gray-600 focus-visible:!border-blue-500 focus-visible:!ring-blue-500/20"
               />
             </div>
-            
+
             <Button
               onClick={importRoutineById}
               disabled={importing || !routineIdInput.trim()}
