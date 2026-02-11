@@ -37,6 +37,7 @@ const PreRegistrationPage = () => {
   const [facultyTooltipPosition, setFacultyTooltipPosition] = useState({ x: 0, y: 0 });
   const [facultyImageError, setFacultyImageError] = useState(false);
   const [filterDropdownOpen, setFilterDropdownOpen] = useState(false);
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
   const observerRef = useRef();
   const lastCourseRef = useRef();
   const routineRef = useRef(null);
@@ -174,9 +175,43 @@ const PreRegistrationPage = () => {
       );
     }
 
+    // Apply sorting
+    if (sortConfig.key) {
+      filtered.sort((a, b) => {
+        let aValue = a[sortConfig.key];
+        let bValue = b[sortConfig.key];
+
+        // Specific handling for nested or calculated fields
+        if (sortConfig.key === 'available') {
+          aValue = (a.capacity || 0) - (a.consumedSeat || 0);
+          bValue = (b.capacity || 0) - (b.consumedSeat || 0);
+        } else if (sortConfig.key === 'exam') {
+          aValue = a.sectionSchedule?.finalExamDetail || '';
+          bValue = b.sectionSchedule?.finalExamDetail || '';
+        }
+
+        if (aValue < bValue) {
+          return sortConfig.direction === 'asc' ? -1 : 1;
+        }
+        if (aValue > bValue) {
+          return sortConfig.direction === 'asc' ? 1 : -1;
+        }
+
+        // Secondary sort by section name if primary sort values are equal
+        // This is especially important for courseCode sort
+        const sectionA = a.sectionName || '';
+        const sectionB = b.sectionName || '';
+
+        if (sectionA < sectionB) return sortConfig.direction === 'asc' ? -1 : 1;
+        if (sectionA > sectionB) return sortConfig.direction === 'asc' ? 1 : -1;
+
+        return 0;
+      });
+    }
+
     setFilteredCourses(filtered);
     setDisplayCount(50);
-  }, [debouncedSearchTerm, courses, filters]);
+  }, [debouncedSearchTerm, courses, filters, sortConfig]);
 
   // Update displayed courses when filtered courses or display count changes
   useEffect(() => {
@@ -378,6 +413,29 @@ const PreRegistrationPage = () => {
     }
   };
 
+  // Handle sort click
+  const handleSort = (key) => {
+    let direction = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  // Render sort icon
+  const renderSortIcon = (columnKey) => {
+    if (sortConfig.key !== columnKey) return <div className="w-4 h-4" />; // Placeholder to keep layout stable
+    return (
+      <div className="w-4 h-4">
+        {sortConfig.direction === 'asc' ? (
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
+        ) : (
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen text-gray-100 pb-24">
       {/* Toast Notification */}
@@ -550,16 +608,64 @@ const PreRegistrationPage = () => {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-gray-200 dark:border-gray-800">
-                  <th className="text-left py-3 px-2 text-sm font-medium text-gray-600 dark:text-gray-400">Course Code</th>
-                  <th className="text-left py-3 px-2 text-sm font-medium text-gray-600 dark:text-gray-400">Fac. Init.</th>
-                  <th className="text-left py-3 px-2 text-sm font-medium text-gray-600 dark:text-gray-400">Prereq</th>
-                  <th className="text-center py-3 px-2 text-sm font-medium text-gray-600 dark:text-gray-400">Seat Cap.</th>
-                  <th className="text-center py-3 px-2 text-sm font-medium text-gray-600 dark:text-gray-400">Booked</th>
-                  <th className="text-center py-3 px-2 text-sm font-medium text-gray-600 dark:text-gray-400">Available</th>
-                  <th className="text-left py-3 px-2 text-sm font-medium text-gray-600 dark:text-gray-400">Class Schedule</th>
-                  <th className="text-left py-3 px-2 text-sm font-medium text-gray-600 dark:text-gray-400">Lab Schedule</th>
-                  <th className="text-left py-3 px-2 text-sm font-medium text-gray-600 dark:text-gray-400">Exam Day</th>
-                  <th className="text-center py-3 px-2 text-sm font-medium text-gray-600 dark:text-gray-400">Action</th>
+                  <th
+                    className="text-left py-3 px-2 text-sm font-medium text-gray-600 dark:text-gray-400 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800/50 transition-colors group select-none w-[140px]"
+                    onClick={() => handleSort('courseCode')}
+                  >
+                    <div className="flex items-center gap-1">
+                      Course Code
+                      {renderSortIcon('courseCode')}
+                    </div>
+                  </th>
+                  <th
+                    className="text-left py-3 px-2 text-sm font-medium text-gray-600 dark:text-gray-400 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800/50 transition-colors group select-none min-w-[100px]"
+                    onClick={() => handleSort('faculties')}
+                  >
+                    <div className="flex items-center gap-1">
+                      Fac. Init.
+                      {renderSortIcon('faculties')}
+                    </div>
+                  </th>
+                  <th className="text-left py-3 px-2 text-sm font-medium text-gray-600 dark:text-gray-400 w-[200px]">Prereq</th>
+                  <th
+                    className="text-center py-3 px-2 text-sm font-medium text-gray-600 dark:text-gray-400 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800/50 transition-colors group select-none min-w-[100px]"
+                    onClick={() => handleSort('capacity')}
+                  >
+                    <div className="flex items-center justify-center gap-1">
+                      Seat Cap.
+                      {renderSortIcon('capacity')}
+                    </div>
+                  </th>
+                  <th
+                    className="text-center py-3 px-2 text-sm font-medium text-gray-600 dark:text-gray-400 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800/50 transition-colors group select-none min-w-[100px]"
+                    onClick={() => handleSort('consumedSeat')}
+                  >
+                    <div className="flex items-center justify-center gap-1">
+                      Booked
+                      {renderSortIcon('consumedSeat')}
+                    </div>
+                  </th>
+                  <th
+                    className="text-center py-3 px-2 text-sm font-medium text-gray-600 dark:text-gray-400 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800/50 transition-colors group select-none min-w-[100px]"
+                    onClick={() => handleSort('available')}
+                  >
+                    <div className="flex items-center justify-center gap-1">
+                      Available
+                      {renderSortIcon('available')}
+                    </div>
+                  </th>
+                  <th className="text-left py-3 px-2 text-sm font-medium text-gray-600 dark:text-gray-400 min-w-[160px]">Class Schedule</th>
+                  <th className="text-left py-3 px-2 text-sm font-medium text-gray-600 dark:text-gray-400 min-w-[160px]">Lab Schedule</th>
+                  <th
+                    className="text-left py-3 px-2 text-sm font-medium text-gray-600 dark:text-gray-400 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800/50 transition-colors group select-none min-w-[120px]"
+                    onClick={() => handleSort('exam')}
+                  >
+                    <div className="flex items-center gap-1">
+                      Exam Day
+                      {renderSortIcon('exam')}
+                    </div>
+                  </th>
+                  <th className="text-center py-3 px-2 text-sm font-medium text-gray-600 dark:text-gray-400 min-w-[80px]">Action</th>
                 </tr>
               </thead>
               <tbody>
