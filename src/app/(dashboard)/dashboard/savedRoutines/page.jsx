@@ -26,6 +26,8 @@ const SavedRoutinesPage = () => {
   const [mergedRoutineCourses, setMergedRoutineCourses] = useState([]);
   const [mergedRoutineFriends, setMergedRoutineFriends] = useState([]);
   const [loadingRoutine, setLoadingRoutine] = useState(false);
+  const [copiedRoutineId, setCopiedRoutineId] = useState(null);
+  const [copiedMergedRoutineId, setCopiedMergedRoutineId] = useState(null);
   
   // Floating button states
   const [showFloatingOptions, setShowFloatingOptions] = useState(false);
@@ -45,6 +47,11 @@ const SavedRoutinesPage = () => {
     '#F97316', // Orange
     '#06B6D4', // Cyan
     '#84CC16', // Lime
+    '#E879F9', // Fuchsia
+    '#A855F7', // Violet
+    '#F43F5E', // Rose
+    '#8B5CF6', // Indigo
+    '#0EA5E9', // Sky
   ];
 
   
@@ -82,8 +89,13 @@ const SavedRoutinesPage = () => {
       const data = await response.json();
       
       if (data.success) {
-        setRoutines(data.routines || []);
-        console.log('Fetched routines:', data.routines);
+        // Sort routines by createdAt (newest first) for display, but keep original order info for numbering
+        const routinesWithIndex = (data.routines || [])
+          .sort((a, b) => Number(a.createdAt || 0) - Number(b.createdAt || 0)) // oldest first for numbering
+          .map((routine, idx) => ({ ...routine, routineNumber: idx + 1 })) // assign number based on creation order
+          .sort((a, b) => Number(b.createdAt || 0) - Number(a.createdAt || 0)); // newest first for display
+        setRoutines(routinesWithIndex);
+        console.log('Fetched routines:', routinesWithIndex);
       } else {
         throw new Error('Failed to fetch routines');
       }
@@ -115,8 +127,13 @@ const SavedRoutinesPage = () => {
       const data = await response.json();
       
       if (data.success) {
-        setMergedRoutines(data.routines || []);
-        console.log('Fetched merged routines:', data.routines);
+        // Sort merged routines by createdAt (newest first) for display, but keep original order info for numbering
+        const routinesWithIndex = (data.routines || [])
+          .sort((a, b) => Number(a.createdAt || 0) - Number(b.createdAt || 0)) // oldest first for numbering
+          .map((routine, idx) => ({ ...routine, routineNumber: idx + 1 })) // assign number based on creation order
+          .sort((a, b) => Number(b.createdAt || 0) - Number(a.createdAt || 0)); // newest first for display
+        setMergedRoutines(routinesWithIndex);
+        console.log('Fetched merged routines:', routinesWithIndex);
       } else {
         throw new Error('Failed to fetch merged routines');
       }
@@ -810,13 +827,54 @@ const SavedRoutinesPage = () => {
                     <Calendar className="w-5 h-5 text-blue-400" />
                   </div>
                   <div className="flex flex-col">
-                    <h3 className="font-semibold text-lg">Routine #{routine.id}</h3>
-                    <div className="flex items-center gap-2 mt-0.5">
+                    {/* User's First name with routine number */}
+                    <h3 className="font-semibold text-lg">
+                      {session?.user?.name 
+                        ? `${session.user.name.split(' ')[0].charAt(0).toUpperCase() + session.user.name.split(' ')[0].slice(1).toLowerCase()}'s Routine #${routine.routineNumber}`
+                        : `Routine #${routine.routineNumber}`}
+                    </h3>
+                    {/* Routine ID as copyable code subtitle */}
+                    <button
+                      onClick={async () => {
+                        try {
+                          await navigator.clipboard.writeText(routine.id.toString());
+                          setCopiedRoutineId(routine.id);
+                          setTimeout(() => setCopiedRoutineId(null), 3000);
+                        } catch (err) {
+                          toast.error('Failed to copy ID');
+                        }
+                      }}
+                      className={`flex items-center gap-1.5 mt-1 text-xs transition-colors ${
+                        copiedRoutineId === routine.id 
+                          ? 'text-green-400' 
+                          : 'text-gray-300 hover:text-blue-400'
+                      }`}
+                    >
+                      <code className={`px-2 py-0.5 rounded font-mono ${
+                        copiedRoutineId === routine.id 
+                          ? 'bg-green-900/50 text-green-400' 
+                          : 'bg-gray-800'
+                      }`}>{routine.id}</code>
+                      <span className="flex items-center gap-1">
+                        {copiedRoutineId === routine.id ? 'Copied' : 'Copy'}
+                        {copiedRoutineId === routine.id ? (
+                          <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
+                        ) : (
+                          <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                            <rect x="9" y="9" width="13" height="13" rx="2" />
+                            <rect x="3" y="3" width="13" height="13" rx="2" />
+                          </svg>
+                        )}
+                      </span>
+                    </button>
+                    <div className="flex items-center gap-2 mt-1.5">
                       <p className="text-xs text-gray-500">
-                        Last updated: {routine.createdAt ? new Date(Number(routine.createdAt) * 1000).toLocaleString() : 'N/A'}
+                        {routine.createdAt ? new Date(Number(routine.createdAt) * 1000).toLocaleString() : 'N/A'}
                       </p>
                       {routine.semester && (
-                        <span className="inline-block bg-blue-800/80 text-blue-100 text-[10px] font-semibold px-2 py-0.5 rounded ml-1 align-middle">
+                        <span className="inline-block bg-blue-800/80 text-blue-100 text-[10px] font-semibold px-2 py-0.5 rounded">
                           {routine.semester}
                         </span>
                       )}
@@ -837,22 +895,6 @@ const SavedRoutinesPage = () => {
                 >
                   <Eye className="w-4 h-4" />
                   {loadingRoutine && viewingRoutine?.id === routine.id ? 'Loading...' : 'View'}
-                </button>
-                <button
-                  title="Copy Routine ID"
-                  onClick={async () => {
-                    try {
-                      await navigator.clipboard.writeText(routine.id.toString());
-                      toast.success('Routine ID copied!');
-                    } catch (err) {
-                      toast.error('Failed to copy ID');
-                    }
-                  }}
-                  className="px-3 py-2 hover:bg-gray-800 rounded-lg flex items-center justify-center gap-2 text-sm transition-colors"
-                  style={{ lineHeight: 0 }}
-                >
-                  {/* Lucide Copy icon */}
-                  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-gray-400 hover:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2" /><rect x="3" y="3" width="13" height="13" rx="2" /></svg>
                 </button>
                 <button
                   onClick={() => deleteRoutine(routine.id)}
@@ -908,13 +950,54 @@ const SavedRoutinesPage = () => {
                         <Users className="w-5 h-5 text-purple-400" />
                       </div>
                       <div className="flex flex-col">
-                        <h3 className="font-semibold text-lg text-purple-100">Routine #{routine.id}</h3>
-                        <div className="flex items-center gap-2 mt-0.5">
+                        {/* Merged Routine title with number */}
+                        <h3 className="font-semibold text-lg text-purple-100">
+                          {session?.user?.name 
+                            ? `${session.user.name.split(' ')[0].charAt(0).toUpperCase() + session.user.name.split(' ')[0].slice(1).toLowerCase()}'s Merged Routine #${routine.routineNumber}`
+                            : `Merged Routine #${routine.routineNumber}`}
+                        </h3>
+                        {/* Routine ID as copyable code subtitle */}
+                        <button
+                          onClick={async () => {
+                            try {
+                              await navigator.clipboard.writeText(routine.id.toString());
+                              setCopiedMergedRoutineId(routine.id);
+                              setTimeout(() => setCopiedMergedRoutineId(null), 3000);
+                            } catch (err) {
+                              toast.error('Failed to copy ID');
+                            }
+                          }}
+                          className={`flex items-center gap-1.5 mt-1 text-xs transition-colors ${
+                            copiedMergedRoutineId === routine.id 
+                              ? 'text-green-400' 
+                              : 'text-gray-300 hover:text-purple-400'
+                          }`}
+                        >
+                          <code className={`px-2 py-0.5 rounded font-mono ${
+                            copiedMergedRoutineId === routine.id 
+                              ? 'bg-green-900/50 text-green-400' 
+                              : 'bg-gray-800'
+                          }`}>{routine.id}</code>
+                          <span className="flex items-center gap-1">
+                            {copiedMergedRoutineId === routine.id ? 'Copied' : 'Copy'}
+                            {copiedMergedRoutineId === routine.id ? (
+                              <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                              </svg>
+                            ) : (
+                              <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                <rect x="9" y="9" width="13" height="13" rx="2" />
+                                <rect x="3" y="3" width="13" height="13" rx="2" />
+                              </svg>
+                            )}
+                          </span>
+                        </button>
+                        <div className="flex items-center gap-2 mt-1.5">
                           <p className="text-xs text-gray-500">
                             {routine.createdAt ? new Date(Number(routine.createdAt) * 1000).toLocaleString() : 'N/A'}
                           </p>
                           {routine.semester && (
-                            <span className="inline-block bg-purple-800/80 text-purple-100 text-[10px] font-semibold px-2 py-0.5 rounded ml-1 align-middle">
+                            <span className="inline-block bg-purple-800/80 text-purple-100 text-[10px] font-semibold px-2 py-0.5 rounded">
                               {routine.semester}
                             </span>
                           )}
@@ -950,21 +1033,6 @@ const SavedRoutinesPage = () => {
                       {loadingRoutine && viewingMergedRoutine?.id === routine.id ? 'Loading...' : 'View'}
                     </button>
                     <button
-                      title="Copy Routine ID"
-                      onClick={async () => {
-                        try {
-                          await navigator.clipboard.writeText(routine.id.toString());
-                          toast.success('Routine ID copied!');
-                        } catch (err) {
-                          toast.error('Failed to copy ID');
-                        }
-                      }}
-                      className="px-3 py-2 hover:bg-gray-800 rounded-lg flex items-center justify-center gap-2 text-sm transition-colors"
-                      style={{ lineHeight: 0 }}
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-gray-400 hover:text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2" /><rect x="3" y="3" width="13" height="13" rx="2" /></svg>
-                    </button>
-                    <button
                       onClick={() => deleteMergedRoutine(routine.id)}
                       className="px-3 py-2 hover:bg-red-700 rounded-lg flex items-center justify-center gap-2 text-sm transition-colors"
                     >
@@ -977,32 +1045,6 @@ const SavedRoutinesPage = () => {
           </div>
         )}
       </div>
-
-            {/* Stats */}
-      {routines.length > 0 && (
-        <div className="mt-8 bg-gray-900 border border-gray-800 rounded-lg p-6 w-4/6 mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="text-center">
-              <h3 className="text-lg font-semibold mb-4 text-center">Total Routines</h3>
-              <div className="text-2xl font-bold text-blue-400">{routines.length}</div>
-            </div>
-            <div className="text-center">
-              <h3 className="text-lg font-semibold mb-4 text-center">Total Courses</h3>
-              <div className="text-2xl font-bold text-green-400">
-                {routines.reduce((sum, routine) => sum + parseRoutineString(routine.routineStr), 0)}
-              </div>
-
-            </div>
-            <div className="text-center">
-              <h3 className="text-lg font-semibold mb-4 text-center">Avg. Courses per Routine</h3>
-              <div className="text-2xl font-bold text-purple-400">
-                {routines.length > 0 ? Math.round(routines.reduce((sum, routine) => sum + parseRoutineString(routine.routineStr), 0) / routines.length) : 0}
-              </div>
-
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Routine View Modal */}
       {viewingRoutine && (
