@@ -80,7 +80,24 @@ const SwapCard = ({ swap, courses = [], onDelete, onMarkComplete }) => {
                 Offering
               </span>
             </div>
-            <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
+            {/* I am working here */}
+            <div 
+              className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
+              onMouseEnter={(e) => {
+                if (giveCourse) {
+                  setHoveredCourse(giveCourse);
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const viewportWidth = window.innerWidth;
+                  const tooltipWidth = 384;
+                  const shouldShowLeft = rect.right + tooltipWidth + 10 > viewportWidth;
+                  setTooltipPosition({ 
+                    x: shouldShowLeft ? rect.left - tooltipWidth - 10 : rect.right + 10, 
+                    y: rect.top 
+                  });
+                }
+              }}
+              onMouseLeave={() => setHoveredCourse(null)}
+            >
               <p className="font-bold text-lg text-gray-900 dark:text-white">
                 {giveCourse ? formatCourse(giveCourse) : `Section ${swap.getSectionId}`}
               </p>
