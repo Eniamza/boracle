@@ -1,13 +1,19 @@
 'use client';
 import React, { useState, useEffect, useRef } from 'react';
-import { Calendar, Clock, Trash2, Eye, Download, RefreshCw, AlertCircle, X, Users } from 'lucide-react';
+import { Calendar, Clock, Trash2, Eye, Download, RefreshCw, AlertCircle, X, Users, Plus, Hammer, Cable } from 'lucide-react';
 import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import RoutineTableGrid from '@/components/routine/RoutineTableGrid';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import * as htmlToImage from 'html-to-image';
 
 const SavedRoutinesPage = () => {
   const { data: session } = useSession();
+  const router = useRouter();
   const [routines, setRoutines] = useState([]);
   const [mergedRoutines, setMergedRoutines] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -20,6 +26,12 @@ const SavedRoutinesPage = () => {
   const [mergedRoutineCourses, setMergedRoutineCourses] = useState([]);
   const [mergedRoutineFriends, setMergedRoutineFriends] = useState([]);
   const [loadingRoutine, setLoadingRoutine] = useState(false);
+  
+  // Floating button states
+  const [showFloatingOptions, setShowFloatingOptions] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [routineIdInput, setRoutineIdInput] = useState('');
+  const [importing, setImporting] = useState(false);
 
   // Predefined color palette for friends
   const colorPalette = [
@@ -35,7 +47,20 @@ const SavedRoutinesPage = () => {
     '#84CC16', // Lime
   ];
 
-  // Use sonner toast for notifications
+  
+  // Close floating options when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showFloatingOptions 
+        && !event.target.closest('.floating-action-container') 
+        && !event.target.closest('.floating-action-sheet')) {
+        setShowFloatingOptions(false);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showFloatingOptions]);
 
   // Fetch saved routines
   const fetchRoutines = async () => {
@@ -160,6 +185,93 @@ const SavedRoutinesPage = () => {
     } catch (err) {
       return { friendNames: [], totalCourses: 0 };
     }
+  };
+
+  // ! Import routine by ID [Saved + Merged]
+  const importRoutineById = async () => {
+    if (!routineIdInput.trim()) {
+      toast.error('Please enter a routine ID');
+      return;
+    }
+
+    try {
+      setImporting(true);
+      const routineId = routineIdInput.trim();
+      
+      // ! Hunt routine in saved routines first
+      const savedResponse = await fetch(`/api/routine/${routineId}`);
+      if (savedResponse.ok) {
+        const savedData = await savedResponse.json();
+        if (savedData.success && savedData.routine) {
+          // ? Import as a new saved routine - POST request to routine endpoint
+          const importResponse = await fetch('/api/routine', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              routineStr: savedData.routine.routineStr,
+              email: session.user.email
+            })
+          });
+          
+          if (importResponse.ok) {
+            toast.success('Routine imported successfully!');
+            fetchRoutines(); // Refreshing the list, to show the newly imported routine :D :D :D
+            setShowImportModal(false);
+            setRoutineIdInput('');
+            return;
+          }
+        }
+      }
+      
+      // ! Next, Checking in the merged routines table if not found in saved routines
+      const mergedResponse = await fetch(`/api/merged-routine/${routineId}`);
+      if (mergedResponse.ok) {
+        const mergedData = await mergedResponse.json();
+        if (mergedData.success && mergedData.routine) {
+          // ? Import as a new merged routine - POST request to merged routine endpoint
+          const importResponse = await fetch('/api/merged-routine', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              routineData: mergedData.routine.routineData
+            })
+          });
+          
+          if (importResponse.ok) {
+            toast.success('Merged routine imported successfully!');
+            fetchMergedRoutines(); // Refresh the list
+            setShowImportModal(false);
+            setRoutineIdInput('');
+            return;
+          }
+        }
+      }
+      
+      // If routine not found in either table
+      toast.error('Routine not found. Please check the routine ID.');
+      
+    } catch (error) {
+      console.error('Error importing routine:', error);
+      toast.error('Failed to import routine');
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  // ? Handle floating button actions
+  const handleBuildRoutine = () => {
+    router.push('/dashboard/preprereg');
+    setShowFloatingOptions(false);
+  };
+
+  const handleMergeRoutines = () => {
+    router.push('/dashboard/merge-routines');
+    setShowFloatingOptions(false);
+  };
+
+  const handleImportRoutine = () => {
+    setShowImportModal(true);
+    setShowFloatingOptions(false);
   };
 
   // View routine details - fetch course data and show in modal
@@ -908,6 +1020,124 @@ const SavedRoutinesPage = () => {
           onClose={closeMergedRoutineModal}
         />
       )}
+
+      {/* Backdrop overlay when floating menu is open */}
+      {showFloatingOptions && (
+        <div 
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 transition-opacity duration-300"
+          onClick={() => setShowFloatingOptions(false)}
+        />
+      )}
+
+      {/* Centered Action Sheet */}
+      {showFloatingOptions && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
+          <div className="floating-action-sheet pointer-events-auto flex flex-col gap-3 w-80 animate-in fade-in zoom-in-95 duration-200">
+            {/* Build a Routine */}
+            <button
+              onClick={handleBuildRoutine}
+              className="group flex items-center gap-4 px-6 py-5 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border border-gray-200 dark:border-gray-700/60 rounded-2xl shadow-2xl hover:border-blue-500/50 hover:shadow-blue-500/10 hover:ring-2 hover:ring-blue-400/60 transition-all duration-200 hover:scale-[1.02] text-gray-900 dark:text-white"
+            >
+              <div className="p-3 rounded-xl bg-blue-500/15 group-hover:bg-blue-500/25 transition-colors">
+                <Hammer className="w-6 h-6 text-blue-500 dark:text-blue-400" />
+              </div>
+              <div className="text-left">
+                <span className="text-base font-semibold block leading-tight">Build a Routine</span>
+                <span className="text-xs text-gray-500 dark:text-gray-400">Create your own from scratch</span>
+              </div>
+            </button>
+
+            {/* Import a Routine */}
+            <button
+              onClick={handleImportRoutine}
+              className="group flex items-center gap-4 px-6 py-5 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border border-gray-200 dark:border-gray-700/60 rounded-2xl shadow-2xl hover:border-green-500/50 hover:shadow-green-500/10 hover:ring-2 hover:ring-green-400/60 transition-all duration-200 hover:scale-[1.02] text-gray-900 dark:text-white"
+            >
+              <div className="p-3 rounded-xl bg-green-500/15 group-hover:bg-green-500/25 transition-colors">
+                <Download className="w-6 h-6 text-green-500 dark:text-green-400" />
+              </div>
+              <div className="text-left">
+                <span className="text-base font-semibold block leading-tight">Import a Routine</span>
+                <span className="text-xs text-gray-500 dark:text-gray-400">Via a shared Routine ID</span>
+              </div>
+            </button>
+
+            {/* Merge Routines */}
+            <button
+              onClick={handleMergeRoutines}
+              className="group flex items-center gap-4 px-6 py-5 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border border-gray-200 dark:border-gray-700/60 rounded-2xl shadow-2xl hover:border-purple-500/50 hover:shadow-purple-500/10 hover:ring-2 hover:ring-purple-400/60 transition-all duration-200 hover:scale-[1.02] text-gray-900 dark:text-white"
+            >
+              <div className="p-3 rounded-xl bg-purple-500/15 group-hover:bg-purple-500/25 transition-colors">
+                <Cable className="w-6 h-6 text-purple-500 dark:text-purple-400" />
+              </div>
+              <div className="text-left">
+                <span className="text-base font-semibold block leading-tight">Merge Routines</span>
+                <span className="text-xs text-gray-500 dark:text-gray-400">Combine with friends</span>
+              </div>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Floating Action Button */}
+      <div className="fixed bottom-6 right-6 z-50 floating-action-container">
+        <button
+          onClick={() => setShowFloatingOptions(!showFloatingOptions)}
+          className="group px-5 py-3.5 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 rounded-2xl shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition-all duration-300 hover:scale-105 flex items-center gap-3 text-white"
+        >
+          <Plus className={`w-5 h-5 transition-transform duration-300 ${showFloatingOptions ? 'rotate-45' : 'rotate-0'}`} />
+          <span className="text-sm font-semibold">Add A New Routine?</span>
+        </button>
+      </div>
+
+      {/* Import Routine Modal */}
+      <Dialog open={showImportModal} onOpenChange={setShowImportModal}>
+        <DialogContent className="sm:max-w-md !bg-white dark:!bg-gray-900 !border-gray-200 dark:!border-gray-700/60 !rounded-2xl">
+          <DialogHeader>
+            <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-green-500/10 ring-1 ring-green-500/20">
+              <Download className="w-6 h-6 text-green-400" />
+            </div>
+            <DialogTitle className="text-center text-lg">
+              Import a Routine
+            </DialogTitle>
+            <DialogDescription className="text-center text-gray-500 dark:text-gray-400">
+              Enter the routine ID shared by your friend. We&apos;ll automatically detect the type and save a copy to your profile.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-5 pt-2 pb-1">
+            <div className="space-y-2">
+              <Label htmlFor="routine-id" className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-medium">Routine ID</Label>
+              <Input
+                id="routine-id"
+                placeholder="Paste your routine ID here..."
+                value={routineIdInput}
+                onChange={(e) => setRoutineIdInput(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter' && routineIdInput.trim() && !importing) importRoutineById(); }}
+                disabled={importing}
+                className="h-12 rounded-xl !bg-gray-50 dark:!bg-gray-900 !border-gray-300 dark:!border-gray-700 text-center text-lg font-mono placeholder:text-gray-400 dark:placeholder:text-gray-600 focus-visible:!border-blue-500 focus-visible:!ring-blue-500/20"
+              />
+            </div>
+            
+            <Button
+              onClick={importRoutineById}
+              disabled={importing || !routineIdInput.trim()}
+              className="w-full h-11 rounded-xl !bg-blue-600 hover:!bg-blue-500 !text-white font-semibold transition-colors disabled:opacity-40 !shadow-none"
+            >
+              {importing ? (
+                <>
+                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                  Importing...
+                </>
+              ) : (
+                <>
+                  <Download className="w-4 h-4 mr-2" />
+                  Import Routine
+                </>
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
