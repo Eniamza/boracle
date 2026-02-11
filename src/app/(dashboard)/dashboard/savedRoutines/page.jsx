@@ -1127,7 +1127,7 @@ const SavedRoutinesPage = () => {
           className="group px-5 py-3.5 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 rounded-2xl shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition-all duration-300 hover:scale-105 flex items-center gap-3 text-white"
         >
           <Plus className={`w-5 h-5 transition-transform duration-300 ${showFloatingOptions ? 'rotate-45' : 'rotate-0'}`} />
-          <span className="text-sm font-semibold">Add A New Routine?</span>
+          <span className="text-sm font-semibold">Add Routine</span>
         </button>
       </div>
 
