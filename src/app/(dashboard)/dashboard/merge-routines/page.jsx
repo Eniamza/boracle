@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -51,6 +51,30 @@ const MergeRoutinesPage = () => {
     '#06B6D4', // Cyan
     '#84CC16', // Lime
   ];
+
+  // Detect duplicate routine IDs
+  const duplicateRoutineIds = useMemo(() => {
+    const routineIdCounts = {};
+    const duplicates = new Set();
+    
+    routineInputs.forEach(input => {
+      const trimmedId = input.routineId.trim().toLowerCase();
+      if (trimmedId) {
+        if (routineIdCounts[trimmedId]) {
+          duplicates.add(trimmedId);
+        } else {
+          routineIdCounts[trimmedId] = true;
+        }
+      }
+    });
+    
+    return duplicates;
+  }, [routineInputs]);
+
+  // Check if a specific input has a duplicate routine ID
+  const hasDuplicateRoutineId = (routineId) => {
+    return duplicateRoutineIds.has(routineId.trim().toLowerCase());
+  };
 
   // Add new routine input
   const addRoutineInput = () => {
@@ -142,6 +166,12 @@ const MergeRoutinesPage = () => {
 
   // Fetch and merge routines
   const mergeRoutines = async () => {
+    // Check for duplicate routine IDs
+    if (duplicateRoutineIds.size > 0) {
+      toast.error('Please remove duplicate routine IDs before merging');
+      return;
+    }
+
     // Validate inputs
     const validInputs = routineInputs.filter(r => r.routineId && r.friendName);
     if (validInputs.length === 0) {
@@ -391,7 +421,11 @@ const MergeRoutinesPage = () => {
                           placeholder="e.g., abc123def456"
                           value={input.routineId}
                           onChange={(e) => updateRoutineInput(input.id, 'routineId', e.target.value)}
-                          className="flex-1 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
+                          className={`flex-1 bg-white dark:bg-gray-800 text-gray-900 dark:text-white ${
+                            hasDuplicateRoutineId(input.routineId) 
+                              ? 'border-red-500 dark:border-red-500 border-2 focus:ring-red-500 focus:border-red-500' 
+                              : 'border-gray-300 dark:border-gray-600'
+                          }`}
                         />
                         {input.routineId && (
                           <Button
@@ -408,6 +442,11 @@ const MergeRoutinesPage = () => {
                           </Button>
                         )}
                       </div>
+                      {hasDuplicateRoutineId(input.routineId) && (
+                        <p className="text-red-500 text-sm mt-1">
+                          Each routine ID must be unique.
+                        </p>
+                      )}
                     </div>
 
                     <div className="space-y-2">
