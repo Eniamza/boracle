@@ -194,6 +194,7 @@ const SwapCard = ({ swap, courses = [], onDelete, onMarkComplete }) => {
                   title="Mark as Done"
                 >
                   <CheckCircle className="w-4 h-4" />
+                  Done
                 </Button>
               )}
               <Button 
@@ -203,6 +204,7 @@ const SwapCard = ({ swap, courses = [], onDelete, onMarkComplete }) => {
                 title="Delete Swap"
               >
                 <Trash2 className="w-4 h-4" />
+                Delete
               </Button>
             </div>
           ) : swap.uEmail && (

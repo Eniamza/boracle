@@ -265,6 +265,16 @@ const CourseSwapPage = () => {
     } else {
       // When "My Swaps Only" is OFF, hide inactive (isDone) swaps
       filtered = filtered.filter(swap => !swap.isDone);
+
+      // Sort user swaps first, then others
+      if (session?.user?.email) {
+        filtered.sort((a, b) => {
+          const isAUser = a.uEmail?.toLowerCase() === session.user.email?.toLowerCase();
+          const isBUser = b.uEmail?.toLowerCase() === session.user.email?.toLowerCase();
+          if (isAUser === isBUser) return 0;
+          return isAUser ? -1 : 1;
+        });
+      }
     }
 
     // Apply course filters
