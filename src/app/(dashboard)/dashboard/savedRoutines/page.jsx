@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect, useRef } from 'react';
-import { Calendar, Clock, Trash2, Eye, Download, RefreshCw, AlertCircle, X, Users } from 'lucide-react';
+import { Calendar, Clock, Trash2, Eye, Download, RefreshCw, AlertCircle, X, Users, Share2, Copy, Check, Link } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import RoutineTableGrid from '@/components/routine/RoutineTableGrid';
 import { toast } from 'sonner';
@@ -22,6 +22,7 @@ const SavedRoutinesPage = () => {
   const [loadingRoutine, setLoadingRoutine] = useState(false);
   const [copiedRoutineId, setCopiedRoutineId] = useState(null);
   const [copiedMergedRoutineId, setCopiedMergedRoutineId] = useState(null);
+  const [sharingRoutineId, setSharingRoutineId] = useState(null);
 
   // Predefined color palette for friends
   const colorPalette = [
@@ -49,7 +50,7 @@ const SavedRoutinesPage = () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const response = await fetch('/api/routine', {
         method: 'GET',
         headers: {
@@ -62,7 +63,7 @@ const SavedRoutinesPage = () => {
       }
 
       const data = await response.json();
-      
+
       if (data.success) {
         // Sort routines by createdAt (newest first) for display, but keep original order info for numbering
         const routinesWithIndex = (data.routines || [])
@@ -87,7 +88,7 @@ const SavedRoutinesPage = () => {
   const fetchMergedRoutines = async () => {
     try {
       setLoadingMerged(true);
-      
+
       const response = await fetch('/api/merged-routine', {
         method: 'GET',
         headers: {
@@ -100,7 +101,7 @@ const SavedRoutinesPage = () => {
       }
 
       const data = await response.json();
-      
+
       if (data.success) {
         // Sort merged routines by createdAt (newest first) for display, but keep original order info for numbering
         const routinesWithIndex = (data.routines || [])
@@ -184,21 +185,21 @@ const SavedRoutinesPage = () => {
     try {
       setLoadingRoutine(true);
       setViewingRoutine(routine);
-      
+
       // Decode the routine string to get section IDs
       const sectionIds = JSON.parse(atob(routine.routineStr));
-      
+
       // Fetch course data from the API
       const response = await fetch('https://usis-cdn.eniamza.com/connect.json');
       const allCourses = await response.json();
-      
+
       // Filter courses that match the section IDs in the routine
-      const matchedCourses = allCourses.filter(course => 
+      const matchedCourses = allCourses.filter(course =>
         sectionIds.includes(course.sectionId)
       );
-      
+
       setRoutineCourses(matchedCourses);
-      
+
       if (matchedCourses.length === 0) {
         toast.error('No matching courses found for this routine');
       }
@@ -216,10 +217,10 @@ const SavedRoutinesPage = () => {
     try {
       setLoadingRoutine(true);
       setViewingMergedRoutine(routine);
-      
+
       // Parse the routine data to get all section IDs with friend info
       const data = JSON.parse(routine.routineData);
-      
+
       // Create friends array with colors
       const friends = data.map((item, index) => ({
         id: index,
@@ -227,15 +228,15 @@ const SavedRoutinesPage = () => {
         color: colorPalette[index % colorPalette.length],
         sectionIds: item.sectionIds || []
       }));
-      
+
       setMergedRoutineFriends(friends);
-      
+
       const allSectionIds = data.flatMap(item => item.sectionIds || []);
-      
+
       // Fetch course data from the API
       const response = await fetch('https://usis-cdn.eniamza.com/connect.json');
       const allCourses = await response.json();
-      
+
       // Filter courses that match the section IDs and attach friend info
       const matchedCourses = allCourses
         .filter(course => allSectionIds.includes(course.sectionId))
@@ -248,9 +249,9 @@ const SavedRoutinesPage = () => {
             friendColor: friend?.color || '#6B7280'
           };
         });
-      
+
       setMergedRoutineCourses(matchedCourses);
-      
+
       if (matchedCourses.length === 0) {
         toast.error('No matching courses found for this merged routine');
       }
@@ -261,6 +262,132 @@ const SavedRoutinesPage = () => {
     } finally {
       setLoadingRoutine(false);
     }
+  };
+
+  // Share Modal Component
+  const ShareModal = ({ routineId, onClose }) => {
+    const [linkCopied, setLinkCopied] = useState(false);
+    const shareUrl = `${window.location.origin}/routine/${routineId}`;
+    const shareText = `Check out my routine on BRACU O.R.A.C.L.E!`;
+
+    const copyLink = async () => {
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        setLinkCopied(true);
+        setTimeout(() => setLinkCopied(false), 3000);
+        toast.success('Link copied to clipboard!');
+      } catch (err) {
+        toast.error('Failed to copy link');
+      }
+    };
+
+    const shareToMessenger = () => {
+      window.open(`https://www.facebook.com/dialog/send?link=${encodeURIComponent(shareUrl)}&app_id=966242223397117&redirect_uri=${encodeURIComponent(shareUrl)}`, '_blank');
+    };
+
+    const shareToWhatsApp = () => {
+      window.open(`https://wa.me/?text=${encodeURIComponent(shareText + ' ' + shareUrl)}`, '_blank');
+    };
+
+    const shareToDiscord = () => {
+      // Discord doesn't have a direct share URL, so copy a formatted message
+      navigator.clipboard.writeText(`${shareText}\n${shareUrl}`);
+      toast.success('Copied! Paste it in your Discord chat.');
+    };
+
+    return (
+      <>
+        {/* Blurred backdrop overlay */}
+        <div
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 transition-opacity duration-300"
+          onClick={onClose}
+        />
+        {/* Centered modal */}
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+          <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border border-gray-200 dark:border-gray-700/60 rounded-2xl p-6 max-w-md w-full shadow-2xl pointer-events-auto animate-in fade-in zoom-in-95 duration-200">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-2">
+                <Share2 className="w-5 h-5 text-blue-400" />
+                <h2 className="text-lg font-semibold text-white">Share Routine</h2>
+              </div>
+              <button onClick={onClose} className="p-1.5 hover:bg-gray-800 rounded-lg transition-colors">
+                <X className="w-4 h-4 text-gray-400" />
+              </button>
+            </div>
+
+            {/* Copiable Link */}
+            <div className="mb-5">
+              <label className="text-xs font-medium text-gray-400 mb-1.5 block">Shareable Link</label>
+              <div className="flex items-center gap-2">
+                <div className="flex-1 flex items-center gap-2 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2.5 min-w-0">
+                  <Link className="w-4 h-4 text-gray-500 flex-shrink-0" />
+                  <span className="text-sm text-gray-300 truncate font-mono">{shareUrl}</span>
+                </div>
+                <button
+                  onClick={copyLink}
+                  className={`flex-shrink-0 px-3 py-2.5 rounded-lg flex items-center gap-1.5 text-sm font-medium transition-all ${linkCopied
+                    ? 'bg-green-600 text-white'
+                    : 'bg-blue-600 hover:bg-blue-700 text-white'
+                    }`}
+                >
+                  {linkCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                  {linkCopied ? 'Copied' : 'Copy'}
+                </button>
+              </div>
+            </div>
+
+            {/* Social Media Icons */}
+            <div>
+              <label className="text-xs font-medium text-gray-400 mb-3 block">Share via</label>
+              <div className="flex items-center justify-center gap-4">
+                {/* Messenger */}
+                <button
+                  onClick={shareToMessenger}
+                  className="group flex flex-col items-center gap-1.5"
+                  title="Share on Messenger"
+                >
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg">
+                    <svg viewBox="0 0 24 24" className="w-6 h-6 fill-white">
+                      <path d="M12 2C6.36 2 2 6.13 2 11.7c0 2.91 1.2 5.42 3.15 7.2.15.14.25.36.22.58l-.04 1.78c-.02.58.56.98 1.08.74l1.98-.87c.17-.07.36-.09.54-.05.92.25 1.9.39 2.93.39h.14c5.64 0 10.02-4.13 10.02-9.7C22 6.13 17.64 2 12 2zm5.85 7.65l-2.85 4.53c-.46.73-1.44.9-2.1.37l-2.27-1.7a.6.6 0 00-.72 0l-3.06 2.32c-.41.31-.94-.2-.67-.65l2.85-4.53c.46-.73 1.44-.9 2.1-.37l2.27 1.7a.6.6 0 00.72 0l3.06-2.32c.41-.31.94.2.67.65z" />
+                    </svg>
+                  </div>
+                  <span className="text-xs text-gray-400 group-hover:text-gray-300">Messenger</span>
+                </button>
+
+                {/* WhatsApp */}
+                <button
+                  onClick={shareToWhatsApp}
+                  className="group flex flex-col items-center gap-1.5"
+                  title="Share on WhatsApp"
+                >
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg">
+                    <svg viewBox="0 0 24 24" className="w-6 h-6 fill-white">
+                      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+                    </svg>
+                  </div>
+                  <span className="text-xs text-gray-400 group-hover:text-gray-300">WhatsApp</span>
+                </button>
+
+                {/* Discord */}
+                <button
+                  onClick={shareToDiscord}
+                  className="group flex flex-col items-center gap-1.5"
+                  title="Share on Discord"
+                >
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-indigo-700 flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg">
+                    <svg viewBox="0 0 24 24" className="w-6 h-6 fill-white">
+                      <path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.8732.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189z" />
+                    </svg>
+                  </div>
+                  <span className="text-xs text-gray-400 group-hover:text-gray-300">Discord</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </>
+    );
   };
 
   // Simple Modal wrapper for routine display
@@ -289,20 +416,20 @@ const SavedRoutinesPage = () => {
         container.style.position = 'absolute';
         container.style.top = '-9999px';
         container.style.left = '-9999px';
-        container.style.width = scrolledWidth + 'px'; 
+        container.style.width = scrolledWidth + 'px';
 
-        container.style.zoom=0.5;
+        container.style.zoom = 0.5;
 
         document.body.appendChild(container);
 
         // ? Cloning the Routine Segment
         const clonedRoutine = originalRoutineSegment.cloneNode(true);
-        
+
         // ? Force the clonedRoutine to show everything and adjust to desktop resolution
         clonedRoutine.style.width = scrolledWidth + 'px';
         clonedRoutine.style.height = 'auto';
         clonedRoutine.style.overflow = 'visible';
-        
+
         container.appendChild(clonedRoutine);
 
         // ? We are waiting here, because our browser can be stuipidly dumb (And also slow ¯\_(ツ)_/¯)
@@ -311,10 +438,10 @@ const SavedRoutinesPage = () => {
 
         const dataUrl = await htmlToImage.toPng(clonedRoutine, {
           quality: 0.95,
-          pixelRatio: 3, // ! Higher number -> Higher resolution -> Larger file size (Maybe add a slider on client side for them to adjust this in the future?) 
+          pixelRatio: 3, // ! Higher number -> Higher resolution -> Larger file size (Maybe add a slider on client side for them to adjust this in the future?)
           backgroundColor: '#111827',
           width: scrolledWidth,
-          height: clonedRoutine.scrollHeight, 
+          height: clonedRoutine.scrollHeight,
         });
 
         // ? Anhilation of the cloned routine and resetting styles back to normal
@@ -324,7 +451,7 @@ const SavedRoutinesPage = () => {
         link.download = `merged-routine-${new Date().toISOString().split('T')[0]}.png`;
         link.href = dataUrl;
         link.click();
-        
+
         toast.success('Routine exported successfully!');
       } catch (error) {
         console.error('Error exporting routine:', error);
@@ -356,8 +483,8 @@ const SavedRoutinesPage = () => {
             </div>
           </div>
           <div className="flex-1 overflow-auto p-4" ref={routineRef}>
-            <RoutineTableGrid 
-              selectedCourses={selectedCourses} 
+            <RoutineTableGrid
+              selectedCourses={selectedCourses}
               showRemoveButtons={false}
               className="h-full"
             />
@@ -382,9 +509,9 @@ const SavedRoutinesPage = () => {
       '03:30 PM-04:50 PM',
       '05:00 PM-06:20 PM'
     ];
-    
+
     const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    
+
     // Time conversion utilities
     const timeToMinutes = (timeStr) => {
       const [time, period] = timeStr.split(' ');
@@ -394,7 +521,7 @@ const SavedRoutinesPage = () => {
       if (period === 'AM' && hours === 12) totalMinutes -= 12 * 60;
       return totalMinutes;
     };
-    
+
     const formatTime = (time) => {
       if (!time) return '';
       const [hours, minutes] = time.split(':');
@@ -403,13 +530,13 @@ const SavedRoutinesPage = () => {
       const displayHour = hour % 12 || 12;
       return `${displayHour}:${minutes} ${ampm}`;
     };
-    
+
     // Get courses for a specific slot
     const getCoursesForSlot = (day, timeSlot) => {
       const [slotStart, slotEnd] = timeSlot.split('-');
       const slotStartMin = timeToMinutes(slotStart);
       const slotEndMin = timeToMinutes(slotEnd);
-      
+
       return courses.filter(course => {
         // Check class schedules
         const classMatch = course.sectionSchedule?.classSchedules?.some(schedule => {
@@ -418,7 +545,7 @@ const SavedRoutinesPage = () => {
           const scheduleEnd = timeToMinutes(formatTime(schedule.endTime));
           return scheduleStart < slotEndMin && scheduleEnd > slotStartMin;
         });
-        
+
         // Check lab schedules
         const labMatch = course.labSchedules?.some(schedule => {
           if (schedule.day !== day.toUpperCase()) return false;
@@ -426,7 +553,7 @@ const SavedRoutinesPage = () => {
           const scheduleEnd = timeToMinutes(formatTime(schedule.endTime));
           return scheduleStart < slotEndMin && scheduleEnd > slotStartMin;
         });
-        
+
         return classMatch || labMatch;
       });
     };
@@ -445,50 +572,50 @@ const SavedRoutinesPage = () => {
       try {
         const originalRoutineSegment = routineRef.current;
         if (!originalRoutineSegment) return;
-  
+
         const scrolledWidth = 1800; // ! FORCE a standard desktop width- Change to increase downloaded image's width
-  
+
         // ? Hidden container for the cloned routine segment
         const container = document.createElement('div');
         container.style.position = 'absolute';
         container.style.top = '-9999px';
         container.style.left = '-9999px';
-        container.style.width = scrolledWidth + 'px'; 
-  
-        container.style.zoom=0.5;
-  
+        container.style.width = scrolledWidth + 'px';
+
+        container.style.zoom = 0.5;
+
         document.body.appendChild(container);
-  
+
         // ? Cloning the Routine Segment
         const clonedRoutine = originalRoutineSegment.cloneNode(true);
-        
+
         // ? Force the clonedRoutine to show everything and adjust to desktop resolution
         clonedRoutine.style.width = scrolledWidth + 'px';
         clonedRoutine.style.height = 'auto';
         clonedRoutine.style.overflow = 'visible';
-        
+
         container.appendChild(clonedRoutine);
-  
+
         // ? We are waiting here, because our browser can be stuipidly dumb (And also slow ¯\_(ツ)_/¯)
         // ? which causes html-to-image to capture the image before styles are even applied, resulting in a broken image
         await new Promise(resolve => setTimeout(resolve, 100));
-  
+
         const dataUrl = await htmlToImage.toPng(clonedRoutine, {
           quality: 0.95,
-          pixelRatio: 3, // ! Higher number -> Higher resolution -> Larger file size (Maybe add a slider on client side for them to adjust this in the future?) 
+          pixelRatio: 3, // ! Higher number -> Higher resolution -> Larger file size (Maybe add a slider on client side for them to adjust this in the future?)
           backgroundColor: '#111827',
           width: scrolledWidth,
-          height: clonedRoutine.scrollHeight, 
+          height: clonedRoutine.scrollHeight,
         });
-  
+
         // ? Anhilation of the cloned routine and resetting styles back to normal
         document.body.removeChild(container);
-  
+
         const link = document.createElement('a');
         link.download = `merged-routine-${new Date().toISOString().split('T')[0]}.png`;
         link.href = dataUrl;
         link.click();
-        
+
         toast.success('Routine exported successfully!');
       } catch (error) {
         console.error('Error exporting routine:', error);
@@ -525,7 +652,7 @@ const SavedRoutinesPage = () => {
               <div className="mb-4 flex flex-wrap gap-3">
                 {friends.map(friend => (
                   <div key={friend.id} className="flex items-center gap-2">
-                    <div 
+                    <div
                       className="w-4 h-4 rounded-full"
                       style={{ backgroundColor: friend.color }}
                     />
@@ -554,7 +681,7 @@ const SavedRoutinesPage = () => {
                         </td>
                         {days.map(day => {
                           const slotCourses = getCoursesForSlot(day, timeSlot);
-                          
+
                           return (
                             <td key={`${day}-${timeSlot}`} className="p-2 border-l border-gray-800 relative">
                               {slotCourses.length > 0 && (
@@ -569,7 +696,7 @@ const SavedRoutinesPage = () => {
                                       const slotEndMin = timeToMinutes(timeSlot.split('-')[1]);
                                       return scheduleStart < slotEndMin && scheduleEnd > slotStartMin;
                                     });
-                                    
+
                                     return (
                                       <div
                                         key={`${course.sectionId}-${idx}`}
@@ -581,8 +708,8 @@ const SavedRoutinesPage = () => {
                                         onMouseEnter={(e) => {
                                           setHoveredCourse(course);
                                           const rect = e.currentTarget.getBoundingClientRect();
-                                          setTooltipPosition({ 
-                                            x: rect.right + 10, 
+                                          setTooltipPosition({
+                                            x: rect.right + 10,
                                             y: rect.top
                                           });
                                         }}
@@ -615,10 +742,10 @@ const SavedRoutinesPage = () => {
 
               {/* Tooltip */}
               {hoveredCourse && (
-                <div 
+                <div
                   className="fixed z-50 bg-gray-800 border border-gray-600 rounded-lg p-4 shadow-xl w-96 pointer-events-none"
-                  style={{ 
-                    left: `${tooltipPosition.x}px`, 
+                  style={{
+                    left: `${tooltipPosition.x}px`,
                     top: `${tooltipPosition.y}px`,
                     transform: 'translateY(-50%)'
                   }}
@@ -627,7 +754,7 @@ const SavedRoutinesPage = () => {
                     <div className="font-bold text-lg">{hoveredCourse.courseCode}-{hoveredCourse.sectionName}</div>
                     <div><span className="text-gray-400">Friend:</span> {hoveredCourse.friendName}</div>
                     <div><span className="text-gray-400">Credits:</span> {hoveredCourse.courseCredit || 0}</div>
-                    
+
                     {/* Faculty Information */}
                     <div className="bg-gray-700/50 rounded p-2 space-y-1">
                       <div className="font-medium text-blue-400">Faculty Information</div>
@@ -639,7 +766,7 @@ const SavedRoutinesPage = () => {
                         <div><span className="text-gray-400">Initial:</span> {hoveredCourse.faculties}</div>
                       )}
                     </div>
-                    
+
                     <div><span className="text-gray-400">Type:</span> {hoveredCourse.sectionType}</div>
                     <div><span className="text-gray-400">Capacity:</span> {hoveredCourse.capacity} ({hoveredCourse.consumedSeat} filled)</div>
                     <div><span className="text-gray-400">Prerequisites:</span> {hoveredCourse.prerequisiteCourses || 'None'}</div>
@@ -717,7 +844,7 @@ const SavedRoutinesPage = () => {
                   <div className="flex flex-col">
                     {/* User's First name with routine number */}
                     <h3 className="font-semibold text-lg">
-                      {session?.user?.name 
+                      {session?.user?.name
                         ? `${session.user.name.split(' ')[0].charAt(0).toUpperCase() + session.user.name.split(' ')[0].slice(1).toLowerCase()}'s Routine #${routine.routineNumber}`
                         : `Routine #${routine.routineNumber}`}
                     </h3>
@@ -732,17 +859,15 @@ const SavedRoutinesPage = () => {
                           toast.error('Failed to copy ID');
                         }
                       }}
-                      className={`flex items-center gap-1.5 mt-1 text-xs transition-colors ${
-                        copiedRoutineId === routine.id 
-                          ? 'text-green-400' 
-                          : 'text-gray-300 hover:text-blue-400'
-                      }`}
+                      className={`flex items-center gap-1.5 mt-1 text-xs transition-colors ${copiedRoutineId === routine.id
+                        ? 'text-green-400'
+                        : 'text-gray-300 hover:text-blue-400'
+                        }`}
                     >
-                      <code className={`px-2 py-0.5 rounded font-mono ${
-                        copiedRoutineId === routine.id 
-                          ? 'bg-green-900/50 text-green-400' 
-                          : 'bg-gray-800'
-                      }`}>{routine.id}</code>
+                      <code className={`px-2 py-0.5 rounded font-mono ${copiedRoutineId === routine.id
+                        ? 'bg-green-900/50 text-green-400'
+                        : 'bg-gray-800'
+                        }`}>{routine.id}</code>
                       <span className="flex items-center gap-1">
                         {copiedRoutineId === routine.id ? 'Copied' : 'Copy'}
                         {copiedRoutineId === routine.id ? (
@@ -785,6 +910,13 @@ const SavedRoutinesPage = () => {
                   {loadingRoutine && viewingRoutine?.id === routine.id ? 'Loading...' : 'View'}
                 </button>
                 <button
+                  onClick={() => setSharingRoutineId(routine.id)}
+                  className="px-3 py-2 hover:bg-gray-700 rounded-lg flex items-center justify-center gap-2 text-sm transition-colors"
+                  title="Share routine"
+                >
+                  <Share2 className="w-4 h-4" />
+                </button>
+                <button
                   onClick={() => deleteRoutine(routine.id)}
                   className="px-3 py-2 hover:bg-red-700 rounded-lg flex items-center justify-center gap-2 text-sm transition-colors"
                 >
@@ -802,7 +934,7 @@ const SavedRoutinesPage = () => {
           <Users className="w-6 h-6 text-purple-400" />
           Merged Routines
         </h2>
-        
+
         {loadingMerged ? (
           <div className="flex flex-col items-center justify-center py-24">
             <RefreshCw className="w-6 h-6 animate-spin text-purple-400 mb-4" />
@@ -840,7 +972,7 @@ const SavedRoutinesPage = () => {
                       <div className="flex flex-col">
                         {/* Merged Routine title with number */}
                         <h3 className="font-semibold text-lg text-purple-100">
-                          {session?.user?.name 
+                          {session?.user?.name
                             ? `${session.user.name.split(' ')[0].charAt(0).toUpperCase() + session.user.name.split(' ')[0].slice(1).toLowerCase()}'s Merged Routine #${routine.routineNumber}`
                             : `Merged Routine #${routine.routineNumber}`}
                         </h3>
@@ -855,17 +987,15 @@ const SavedRoutinesPage = () => {
                               toast.error('Failed to copy ID');
                             }
                           }}
-                          className={`flex items-center gap-1.5 mt-1 text-xs transition-colors ${
-                            copiedMergedRoutineId === routine.id 
-                              ? 'text-green-400' 
-                              : 'text-gray-300 hover:text-purple-400'
-                          }`}
+                          className={`flex items-center gap-1.5 mt-1 text-xs transition-colors ${copiedMergedRoutineId === routine.id
+                            ? 'text-green-400'
+                            : 'text-gray-300 hover:text-purple-400'
+                            }`}
                         >
-                          <code className={`px-2 py-0.5 rounded font-mono ${
-                            copiedMergedRoutineId === routine.id 
-                              ? 'bg-green-900/50 text-green-400' 
-                              : 'bg-gray-800'
-                          }`}>{routine.id}</code>
+                          <code className={`px-2 py-0.5 rounded font-mono ${copiedMergedRoutineId === routine.id
+                            ? 'bg-green-900/50 text-green-400'
+                            : 'bg-gray-800'
+                            }`}>{routine.id}</code>
                           <span className="flex items-center gap-1">
                             {copiedMergedRoutineId === routine.id ? 'Copied' : 'Copy'}
                             {copiedMergedRoutineId === routine.id ? (
@@ -894,8 +1024,8 @@ const SavedRoutinesPage = () => {
                         {friendNames.length > 0 && (
                           <div className="mt-2 flex flex-wrap gap-1">
                             {friendNames.map((name, idx) => (
-                              <span 
-                                key={idx} 
+                              <span
+                                key={idx}
                                 className="inline-block bg-purple-900/50 text-purple-200 text-xs px-2 py-0.5 rounded"
                               >
                                 {name}
@@ -921,6 +1051,13 @@ const SavedRoutinesPage = () => {
                       {loadingRoutine && viewingMergedRoutine?.id === routine.id ? 'Loading...' : 'View'}
                     </button>
                     <button
+                      onClick={() => setSharingRoutineId(routine.id)}
+                      className="px-3 py-2 hover:bg-gray-700 rounded-lg flex items-center justify-center gap-2 text-sm transition-colors"
+                      title="Share routine"
+                    >
+                      <Share2 className="w-4 h-4" />
+                    </button>
+                    <button
                       onClick={() => deleteMergedRoutine(routine.id)}
                       className="px-3 py-2 hover:bg-red-700 rounded-lg flex items-center justify-center gap-2 text-sm transition-colors"
                     >
@@ -936,18 +1073,26 @@ const SavedRoutinesPage = () => {
 
       {/* Routine View Modal */}
       {viewingRoutine && (
-        <RoutineTableModal 
-          selectedCourses={routineCourses} 
+        <RoutineTableModal
+          selectedCourses={routineCourses}
           onClose={closeRoutineModal}
         />
       )}
 
       {/* Merged Routine View Modal */}
       {viewingMergedRoutine && (
-        <MergedRoutineTableModal 
+        <MergedRoutineTableModal
           courses={mergedRoutineCourses}
           friends={mergedRoutineFriends}
           onClose={closeMergedRoutineModal}
+        />
+      )}
+
+      {/* Share Modal */}
+      {sharingRoutineId && (
+        <ShareModal
+          routineId={sharingRoutineId}
+          onClose={() => setSharingRoutineId(null)}
         />
       )}
     </div>
