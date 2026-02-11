@@ -18,11 +18,10 @@ export async function GET(request) {
       );
     }
 
-    // Fetch all course swap information 
+    // Fetch all course swap information (including inactive ones)
     const swapRequest = await db
       .select()
-      .from(courseSwap)
-      .where(eq(courseSwap.isDone, false));
+      .from(courseSwap);
     
     let swaps = [];
 
