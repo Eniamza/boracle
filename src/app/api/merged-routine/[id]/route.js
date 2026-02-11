@@ -4,6 +4,54 @@ import { db, eq, and } from "@/lib/db";
 import { savedMergedRoutine } from "@/lib/db/schema";
 import { NextRequest, NextResponse } from "next/server";
 
+export async function GET(request, { params }) {
+  try {
+    const { id } = await params;
+
+    if (!id) {
+      return NextResponse.json(
+        { error: "Routine ID is required" },
+        { status: 400 }
+      );
+    }
+
+    // Fetch merged routine from database by ID only
+    const result = await db
+      .select({
+        routineId: savedMergedRoutine.routineId,
+        routineData: savedMergedRoutine.routineData,
+        email: savedMergedRoutine.email,
+      })
+      .from(savedMergedRoutine)
+      .where(eq(savedMergedRoutine.routineId, id));
+
+    if (result.length === 0) {
+      return NextResponse.json(
+        { error: "Merged routine not found" },
+        { status: 404 }
+      );
+    }
+
+    const routine = result[0];
+
+    return NextResponse.json({
+      success: true,
+      routine: {
+        id: routine.routineId,
+        routineData: routine.routineData,
+        email: "Anonymous"
+      }
+    });
+
+  } catch (error) {
+    console.error("Error fetching merged routine:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch merged routine" },
+      { status: 500 }
+    );
+  }
+}
+
 export async function DELETE(request, { params }) {
   try {
     const { id } = await params;
