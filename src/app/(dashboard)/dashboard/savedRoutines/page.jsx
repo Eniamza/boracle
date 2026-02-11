@@ -866,32 +866,6 @@ const SavedRoutinesPage = () => {
         )}
       </div>
 
-            {/* Stats */}
-      {routines.length > 0 && (
-        <div className="mt-8 bg-gray-900 border border-gray-800 rounded-lg p-6 w-4/6 mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="text-center">
-              <h3 className="text-lg font-semibold mb-4 text-center">Total Routines</h3>
-              <div className="text-2xl font-bold text-blue-400">{routines.length}</div>
-            </div>
-            <div className="text-center">
-              <h3 className="text-lg font-semibold mb-4 text-center">Total Courses</h3>
-              <div className="text-2xl font-bold text-green-400">
-                {routines.reduce((sum, routine) => sum + parseRoutineString(routine.routineStr), 0)}
-              </div>
-
-            </div>
-            <div className="text-center">
-              <h3 className="text-lg font-semibold mb-4 text-center">Avg. Courses per Routine</h3>
-              <div className="text-2xl font-bold text-purple-400">
-                {routines.length > 0 ? Math.round(routines.reduce((sum, routine) => sum + parseRoutineString(routine.routineStr), 0) / routines.length) : 0}
-              </div>
-
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Routine View Modal */}
       {viewingRoutine && (
         <RoutineTableModal 
