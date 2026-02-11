@@ -6,6 +6,14 @@ BRACU Oracle is a comprehensive academic management platform designed specifical
 
 ![BRACU Oracle Preview](https://i.imgur.com/zORJ7QM.png)
 
+## Table of Contents
+
+- [Key Features](#key-features)
+- [Tech Stack](#tech-stack)
+- [Getting Started](#getting-started)
+- [Contributing](#contributing)
+- [License](#license)
+
 ## Key Features
 
 - **PrePreReg**: Build your course routine effortlessly with intelligent scheduling based on live data
@@ -16,51 +24,82 @@ BRACU Oracle is a comprehensive academic management platform designed specifical
 
 ## Tech Stack
 
-- Next.js 15
-- React
-- Tailwind CSS
-- NextAuth.js for authentication
-- MongoDB for data storage
+- **Frontend**: Next.js 15, React, Tailwind CSS
+- **Backend**: Supabase (PostgreSQL)
+- **ORM**: Drizzle ORM
+- **Authentication**: NextAuth.js with Google OAuth
+- **UI Components**: Radix UI, shadcn/ui
+- **Package Manager**: npm
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+- Node.js (v18+)
+- npm
+- Supabase account
 
+### Quick Start
+
+1. **Clone and install:**
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone <repository-url>
+cd boracle
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. **Set up environment:**
+Create a `.env` file:
+```env
+DATABASE_URL=postgres://postgres.[project-ref]:[password]@aws-0-[region].pooler.supabase.com:6543/postgres
+AUTH_SECRET=your-auth-secret-here
+GOOGLE_ID=your-google-client-id
+GOOGLE_SECRET=your-google-client-secret
+```
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+3. **Setup database and start:**
+```bash
+npm run db:push
+npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font).
+Open [http://localhost:3000](http://localhost:3000) to view the app.
 
-## Development Status
+**Note:** Only BRACU emails (@g.bracu.ac.bd) can sign in.
 
-All major features are currently under development. Features marked with 🟡 are coming soon.
+### Database Commands
 
-## Learn More
+```bash
+# Generate migration files
+npm run db:generate
 
-To learn more about Next.js, take a look at the following resources:
+# Run migrations
+npm run db:migrate
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# Push schema changes (recommended for Supabase)
+npm run db:push
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme).
+# Seed database with sample data
+npm run db:seed
+```
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+We welcome contributions! Please follow these steps:
+
+1. **Comment on an issue** before starting work
+2. **Fork the repo** and create a feature branch
+3. **Follow conventional commits**: `feat:`, `fix:`, `docs:`, etc.
+4. **Reference issues** in commits: `fixes #123`
+5. **Test locally** before submitting PR
+
+**Commit Examples:**
+```bash
+git commit -m "feat: add course filtering (closes #123)"
+git commit -m "fix: resolve login issue (fixes #456)"
+```
+
+Join our [Discord](https://discord.gg/Tzcmjnq699) for help!
 
 ## License
 
-This project is licensed under the MIT License.
+MIT License
