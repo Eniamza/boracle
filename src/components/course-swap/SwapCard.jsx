@@ -38,8 +38,12 @@ const SwapCard = ({ swap, courses = [], onDelete, onMarkComplete }) => {
   const giveCourse = getCourseBySection(swap.getSectionId);
   const isOwner = session?.user?.email === swap.uEmail;
   
-  // Different card styles for owner vs others
+  // Different card styles for owner vs others and completed status
   const getCardStyle = () => {
+    if (swap.isDone) {
+      // Completed/inactive swap - muted appearance
+      return 'bg-gray-100 dark:bg-gray-800/50 border-gray-300 dark:border-gray-700';
+    }
     if (isOwner) {
       return 'bg-blue-50 dark:bg-blue-950/20 border-blue-300 dark:border-blue-800';
     }
@@ -47,16 +51,16 @@ const SwapCard = ({ swap, courses = [], onDelete, onMarkComplete }) => {
   };
 
   return (
-    <Card className={`relative transition-all hover:shadow-xl ${getCardStyle()} overflow-hidden`}>
+    <Card className={`relative transition-all hover:shadow-xl ${getCardStyle()} ${hoveredCourse ? 'z-[60] overflow-visible' : 'z-0 overflow-hidden'}`}>
       {/* Status Badge */}
       <div className="absolute top-3 right-3 z-10">
         {swap.isDone ? (
-          <Badge className="bg-green-500 text-white border-0">
+          <Badge className=" text-white dark:text-white border-0 dark:bg-red-800 bg-red-600">
             <CheckCircle className="w-3 h-3 mr-1" />
-            Completed
+            Inactive
           </Badge>
         ) : (
-          <Badge variant="secondary" className="bg-gray-100 dark:bg-gray-800">
+          <Badge variant="secondary" className="dark:bg-gray-800 bg-green-500 text-white">
             Active
           </Badge>
         )}
@@ -92,7 +96,7 @@ const SwapCard = ({ swap, courses = [], onDelete, onMarkComplete }) => {
                   const shouldShowLeft = rect.right + tooltipWidth + 10 > viewportWidth;
                   setTooltipPosition({ 
                     x: shouldShowLeft ? rect.left - tooltipWidth - 10 : rect.right + 10, 
-                    y: rect.top 
+                    y: rect.top + window.scrollY
                   });
                 }
               }}
@@ -144,7 +148,7 @@ const SwapCard = ({ swap, courses = [], onDelete, onMarkComplete }) => {
                             const shouldShowLeft = rect.right + tooltipWidth + 10 > viewportWidth;
                             setTooltipPosition({ 
                               x: shouldShowLeft ? rect.left - tooltipWidth - 10 : rect.right + 10, 
-                              y: rect.top 
+                              y: rect.top + window.scrollY
                             });
                           }
                         }}
@@ -187,6 +191,7 @@ const SwapCard = ({ swap, courses = [], onDelete, onMarkComplete }) => {
                   size="sm"
                   onClick={() => onMarkComplete?.(swap.swapId)}
                   className="dark:bg-blue-600 dark:hover:bg-blue-700 dark:text-white bg-green-500 hover:bg-green-600 text-white"
+                  title="Mark as Done"
                 >
                   <CheckCircle className="w-4 h-4" />
                 </Button>
@@ -194,7 +199,8 @@ const SwapCard = ({ swap, courses = [], onDelete, onMarkComplete }) => {
               <Button 
                 size="sm"
                 onClick={() => onDelete?.(swap.swapId)}
-                className="bg-red-500 hover:bg-red-600 dark:bg-red-500 dark:hover:bg-red-600 text-white dark:text-white"
+                className="bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-600 text-white dark:text-white"
+                title="Delete Swap"
               >
                 <Trash2 className="w-4 h-4" />
               </Button>
@@ -218,7 +224,7 @@ const SwapCard = ({ swap, courses = [], onDelete, onMarkComplete }) => {
       {/* Hover Tooltip for "Looking For" Courses */}
       {hoveredCourse && (
         <div 
-          className="fixed z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg p-4 shadow-xl w-96 pointer-events-none"
+          className="fixed z-[100] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg p-4 shadow-xl w-96 pointer-events-none"
           style={{ 
             left: `${Math.max(10, Math.min(tooltipPosition.x, typeof window !== 'undefined' ? window.innerWidth - 394 : 800))}px`, 
             top: `${tooltipPosition.y}px`,

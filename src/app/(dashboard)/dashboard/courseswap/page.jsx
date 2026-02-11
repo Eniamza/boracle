@@ -262,6 +262,9 @@ const CourseSwapPage = () => {
         const isMySwap = swap.uEmail?.toLowerCase() === session.user.email?.toLowerCase();
         return isMySwap;
       });
+    } else {
+      // When "My Swaps Only" is OFF, hide inactive (isDone) swaps
+      filtered = filtered.filter(swap => !swap.isDone);
     }
 
     // Apply course filters
@@ -271,11 +274,17 @@ const CourseSwapPage = () => {
           swap.getSectionId,
           ...(swap.askingSections || [])
         ];
-        return relatedSections.some(sectionId => 
+        return relatedSections.some(sectionId =>
           selectedFilters.includes(sectionId)
         );
       });
     }
+
+    // Sort: Active swaps first, then inactive swaps
+    filtered.sort((a, b) => {
+      if (a.isDone === b.isDone) return 0;
+      return a.isDone ? 1 : -1;
+    });
 
     setFilteredSwaps(filtered);
   };
