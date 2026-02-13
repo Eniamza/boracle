@@ -50,6 +50,7 @@ const MergeRoutinesPage = () => {
   const [copiedId, setCopiedId] = useState(null);
   const [userSavedRoutines, setUserSavedRoutines] = useState([]);
   const [facultyMap, setFacultyMap] = useState({});
+  const [validationErrors, setValidationErrors] = useState({});
 
   // Fetch user's saved routines on mount
   useEffect(() => {
@@ -159,6 +160,14 @@ const MergeRoutinesPage = () => {
     setRoutineInputs(routineInputs.map(r =>
       r.id === id ? { ...r, [field]: value } : r
     ));
+
+    // Clear validation error for this field
+    if (validationErrors[id]?.[field]) {
+      setValidationErrors(prev => ({
+        ...prev,
+        [id]: { ...prev[id], [field]: false }
+      }));
+    }
   };
 
   // Copy routine ID to clipboard
@@ -231,8 +240,36 @@ const MergeRoutinesPage = () => {
       return;
     }
 
-    // Validate inputs
-    const validInputs = routineInputs.filter(r => r.routineId && r.friendName);
+    // Check for incomplete inputs (ID provided but Name missing, or vice versa)
+    const errors = {};
+    let hasFunctionError = false;
+
+    routineInputs.forEach(r => {
+      const hasId = !!r.routineId.trim();
+      const hasName = !!r.friendName.trim();
+
+      // If one exists but not other, mark missing one as error
+      if (hasId && !hasName) {
+        errors[r.id] = { ...errors[r.id], friendName: true };
+        hasFunctionError = true;
+      }
+      if (!hasId && hasName) {
+        errors[r.id] = { ...errors[r.id], routineId: true };
+        hasFunctionError = true;
+      }
+    });
+
+    if (hasFunctionError) {
+      setValidationErrors(errors);
+      toast.error('Both Routine ID and Friend Name are required for all entries');
+      return;
+    } else {
+      setValidationErrors({});
+    }
+
+    // Validate inputs - Filter out completely empty rows (if allowed) or just use all since we validated partials
+    const validInputs = routineInputs.filter(r => r.routineId.trim() && r.friendName.trim());
+
     if (validInputs.length === 0) {
       toast.error('Please add at least one routine with ID and friend name');
       return;
@@ -470,7 +507,10 @@ const MergeRoutinesPage = () => {
                         placeholder="e.g., John Doe"
                         value={input.friendName}
                         onChange={(e) => updateRoutineInput(input.id, 'friendName', e.target.value)}
-                        className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
+                        className={`bg-white dark:bg-gray-800 text-gray-900 dark:text-white ${validationErrors[input.id]?.friendName
+                            ? 'border-red-500 dark:border-red-500 border-2 focus:ring-red-500 focus:border-red-500'
+                            : 'border-gray-300 dark:border-gray-600'
+                          }`}
                       />
                     </div>
 
@@ -482,9 +522,9 @@ const MergeRoutinesPage = () => {
                           placeholder="e.g., abc123def456"
                           value={input.routineId}
                           onChange={(e) => updateRoutineInput(input.id, 'routineId', e.target.value)}
-                          className={`flex-1 bg-white dark:bg-gray-800 text-gray-900 dark:text-white ${hasDuplicateRoutineId(input.routineId)
-                            ? 'border-red-500 dark:border-red-500 border-2 focus:ring-red-500 focus:border-red-500'
-                            : 'border-gray-300 dark:border-gray-600'
+                          className={`flex-1 bg-white dark:bg-gray-800 text-gray-900 dark:text-white ${hasDuplicateRoutineId(input.routineId) || validationErrors[input.id]?.routineId
+                              ? 'border-red-500 dark:border-red-500 border-2 focus:ring-red-500 focus:border-red-500'
+                              : 'border-gray-300 dark:border-gray-600'
                             }`}
                         />
                         {input.routineId && (
