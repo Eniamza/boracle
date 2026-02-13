@@ -1,5 +1,6 @@
 'use client';
 
+
 import React, { useState, useRef, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -20,6 +21,16 @@ import { toast } from 'sonner';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import * as htmlToImage from 'html-to-image';
 import { useSession } from 'next-auth/react';
+import { useEffect } from 'react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ChevronDown } from 'lucide-react';
 
 import { useLocalStorage } from '@/hooks/use-local-storage';
 
@@ -36,6 +47,34 @@ const MergeRoutinesPage = () => {
   const [savingRoutine, setSavingRoutine] = useState(false);
   const [loadingRoutines, setLoadingRoutines] = useState({});
   const [copiedId, setCopiedId] = useState(null);
+  const [userSavedRoutines, setUserSavedRoutines] = useState([]);
+
+  // Fetch user's saved routines on mount
+  useEffect(() => {
+    const fetchSavedRoutines = async () => {
+      try {
+        const response = await fetch('/api/routine');
+        if (response.ok) {
+          const data = await response.json();
+          // Sort routines by createdAt (newest first) for display, but keep original order info for numbering
+          // Logic copied from savedRoutines/page.jsx to match numbering
+          const routinesWithIndex = (data.routines || [])
+            .sort((a, b) => Number(a.createdAt || 0) - Number(b.createdAt || 0)) // oldest first for numbering
+            .map((routine, idx) => ({ ...routine, routineNumber: idx + 1 })) // assign number based on creation order
+            .sort((a, b) => Number(b.createdAt || 0) - Number(a.createdAt || 0)); // newest first for display
+
+          setUserSavedRoutines(routinesWithIndex);
+        }
+      } catch (error) {
+        console.error('Error fetching saved routines:', error);
+      }
+    };
+
+    if (session?.user?.email) {
+      fetchSavedRoutines();
+    }
+  }, [session]);
+
   const mergedRoutineRef = useRef(null);
 
   // Predefined color palette for friends
@@ -56,7 +95,7 @@ const MergeRoutinesPage = () => {
   const duplicateRoutineIds = useMemo(() => {
     const routineIdCounts = {};
     const duplicates = new Set();
-    
+
     routineInputs.forEach(input => {
       const trimmedId = input.routineId.trim().toLowerCase();
       if (trimmedId) {
@@ -67,7 +106,7 @@ const MergeRoutinesPage = () => {
         }
       }
     });
-    
+
     return duplicates;
   }, [routineInputs]);
 
@@ -421,11 +460,10 @@ const MergeRoutinesPage = () => {
                           placeholder="e.g., abc123def456"
                           value={input.routineId}
                           onChange={(e) => updateRoutineInput(input.id, 'routineId', e.target.value)}
-                          className={`flex-1 bg-white dark:bg-gray-800 text-gray-900 dark:text-white ${
-                            hasDuplicateRoutineId(input.routineId) 
-                              ? 'border-red-500 dark:border-red-500 border-2 focus:ring-red-500 focus:border-red-500' 
-                              : 'border-gray-300 dark:border-gray-600'
-                          }`}
+                          className={`flex-1 bg-white dark:bg-gray-800 text-gray-900 dark:text-white ${hasDuplicateRoutineId(input.routineId)
+                            ? 'border-red-500 dark:border-red-500 border-2 focus:ring-red-500 focus:border-red-500'
+                            : 'border-gray-300 dark:border-gray-600'
+                            }`}
                         />
                         {input.routineId && (
                           <Button
@@ -446,6 +484,52 @@ const MergeRoutinesPage = () => {
                         <p className="text-red-500 text-sm mt-1">
                           Each routine ID must be unique.
                         </p>
+                      )}
+
+                      {/* Saved Routine Selector */}
+                      {userSavedRoutines.length > 0 && (
+                        <div className="mt-2">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className=" text-xs flex items-center justify-between bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/80 text-gray-700 dark:text-gray-300"
+                              >
+                                {(() => {
+                                  const matched = userSavedRoutines.find(r => r.id === input.routineId.trim());
+                                  return matched ? (
+                                    <span className="font-medium text-blue-600 dark:text-blue-400">Routine #{matched.routineNumber}</span>
+                                  ) : (
+                                    <span className="text-muted-foreground">Select Saved Routine</span>
+                                  );
+                                })()}
+                                <ChevronDown className="h-3 w-3 opacity-50 ml-2" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start" className="w-[200px] max-h-[240px] overflow-y-auto bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800">
+                              <DropdownMenuLabel className="text-xs text-gray-500 dark:text-gray-400">My Saved Routines</DropdownMenuLabel>
+                              <DropdownMenuSeparator className="bg-gray-100 dark:bg-gray-800" />
+                              {userSavedRoutines.map((routine) => (
+                                <DropdownMenuItem
+                                  key={routine.id}
+                                  onClick={() => updateRoutineInput(input.id, 'routineId', routine.id)}
+                                  className="flex flex-col items-start gap-0.5 cursor-pointer focus:bg-gray-100 dark:focus:bg-gray-800"
+                                >
+                                  <span className={`text-sm font-medium ${input.routineId === routine.id ? 'text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-200'}`}>
+                                    Routine #{routine.routineNumber}
+                                  </span>
+                                  <span className="text-[10px] text-gray-500 dark:text-gray-400">
+                                    {new Date(Number(routine.createdAt) * 1000).toLocaleString(undefined, {
+                                      dateStyle: 'medium',
+                                      timeStyle: 'short'
+                                    })}
+                                  </span>
+                                </DropdownMenuItem>
+                              ))}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
                       )}
                     </div>
 

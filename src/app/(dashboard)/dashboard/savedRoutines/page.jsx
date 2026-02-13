@@ -101,6 +101,7 @@ const SavedRoutinesPage = () => {
       } else {
         throw new Error('Failed to fetch routines');
       }
+
     } catch (err) {
       console.error('Error fetching routines:', err);
       setError('Failed to load saved routines');
