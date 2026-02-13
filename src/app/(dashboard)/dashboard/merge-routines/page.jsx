@@ -33,6 +33,7 @@ import {
 import { ChevronDown } from 'lucide-react';
 
 import { useLocalStorage } from '@/hooks/use-local-storage';
+import CourseHoverTooltip from '@/components/ui/CourseHoverTooltip';
 
 const MergeRoutinesPage = () => {
   const { data: session } = useSession();
@@ -48,30 +49,49 @@ const MergeRoutinesPage = () => {
   const [loadingRoutines, setLoadingRoutines] = useState({});
   const [copiedId, setCopiedId] = useState(null);
   const [userSavedRoutines, setUserSavedRoutines] = useState([]);
+  const [facultyMap, setFacultyMap] = useState({});
 
   // Fetch user's saved routines on mount
   useEffect(() => {
-    const fetchSavedRoutines = async () => {
-      try {
-        const response = await fetch('/api/routine');
-        if (response.ok) {
-          const data = await response.json();
-          // Sort routines by createdAt (newest first) for display, but keep original order info for numbering
-          // Logic copied from savedRoutines/page.jsx to match numbering
-          const routinesWithIndex = (data.routines || [])
-            .sort((a, b) => Number(a.createdAt || 0) - Number(b.createdAt || 0)) // oldest first for numbering
-            .map((routine, idx) => ({ ...routine, routineNumber: idx + 1 })) // assign number based on creation order
-            .sort((a, b) => Number(b.createdAt || 0) - Number(a.createdAt || 0)); // newest first for display
-
-          setUserSavedRoutines(routinesWithIndex);
-        }
-      } catch (error) {
-        console.error('Error fetching saved routines:', error);
-      }
-    };
-
     if (session?.user?.email) {
+      // Fetch saved routines
+      const fetchSavedRoutines = async () => {
+        try {
+          const response = await fetch('/api/routine');
+          if (response.ok) {
+            const data = await response.json();
+            const routinesWithIndex = (data.routines || [])
+              .sort((a, b) => Number(a.createdAt || 0) - Number(b.createdAt || 0))
+              .map((routine, idx) => ({ ...routine, routineNumber: idx + 1 }))
+              .sort((a, b) => Number(b.createdAt || 0) - Number(a.createdAt || 0));
+            setUserSavedRoutines(routinesWithIndex);
+          }
+        } catch (error) {
+          console.error('Error fetching saved routines:', error);
+        }
+      };
+
       fetchSavedRoutines();
+
+      // Fetch faculty data
+      fetch('/api/faculty/lookup')
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            setFacultyMap(data.facultyMap);
+            // Re-enrich currently merged courses if any
+            setMergedCourses(prev => prev.map(course => {
+              const firstInitial = course.faculties?.split(',')[0]?.trim().toUpperCase();
+              const facultyInfo = data.facultyMap[firstInitial];
+              return {
+                ...course,
+                employeeName: facultyInfo?.facultyName || null,
+                employeeEmail: facultyInfo?.email || null,
+              };
+            }));
+          }
+        })
+        .catch(err => console.error('Error fetching faculty data:', err));
     }
   }, [session]);
 
@@ -259,7 +279,9 @@ const MergeRoutinesPage = () => {
                   ...course,
                   friendName: input.friendName,
                   friendColor: input.color,
-                  originalRoutineId: trimmedRoutineId
+                  originalRoutineId: trimmedRoutineId,
+                  employeeName: facultyMap[course.faculties?.split(',')[0]?.trim().toUpperCase()]?.facultyName || null,
+                  employeeEmail: facultyMap[course.faculties?.split(',')[0]?.trim().toUpperCase()]?.email || null
                 };
               }
               return null;
@@ -402,7 +424,7 @@ const MergeRoutinesPage = () => {
 
         <div className="flex flex-col gap-6">
           {/* Input Section - Now on top */}
-          <Card className="bg-white dark:bg-gray-900/50 backdrop-blur border border-gray-200 dark:border-gray-800 shadow-xl">
+          <Card className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-xl">
             <CardHeader>
               <CardTitle className="text-gray-900 dark:text-white">Add Routines</CardTitle>
               <CardDescription className="text-gray-600 dark:text-gray-400">
@@ -599,7 +621,7 @@ const MergeRoutinesPage = () => {
           </Card>
 
           {/* Merged Routine Display - Now below */}
-          <Card className="bg-white dark:bg-gray-900/50 backdrop-blur border border-gray-200 dark:border-gray-800 shadow-xl">
+          <Card className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-xl">
             <CardHeader>
               <div className="flex justify-between items-center">
                 <div>
@@ -787,8 +809,12 @@ const MergedRoutineGrid = ({ courses, friends }) => {
                                   onMouseEnter={(e) => {
                                     setHoveredCourse(course);
                                     const rect = e.currentTarget.getBoundingClientRect();
+                                    const viewportWidth = window.innerWidth;
+                                    const tooltipWidth = 384; // w-96 = 384px
+                                    const shouldShowLeft = rect.right + tooltipWidth + 10 > viewportWidth;
+
                                     setTooltipPosition({
-                                      x: rect.right + 10,
+                                      x: shouldShowLeft ? rect.left - tooltipWidth - 10 : rect.right + 10,
                                       y: rect.top
                                     });
                                   }}
@@ -820,28 +846,11 @@ const MergedRoutineGrid = ({ courses, friends }) => {
         </div>
 
         {/* Tooltip */}
-        {hoveredCourse && (
-          <div
-            className="fixed z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg p-3 shadow-xl pointer-events-none"
-            style={{
-              left: `${tooltipPosition.x}px`,
-              top: `${tooltipPosition.y}px`,
-              transform: 'translateY(-50%)'
-            }}
-          >
-            <div className="space-y-1 text-xs text-gray-900 dark:text-gray-100">
-              <div className="font-bold">{hoveredCourse.courseCode}-{hoveredCourse.sectionName}</div>
-              <div><span className="text-gray-500 dark:text-gray-400">Friend:</span> {hoveredCourse.friendName}</div>
-              <div><span className="text-gray-500 dark:text-gray-400">Credits:</span> {hoveredCourse.courseCredit || 0}</div>
-              <div><span className="text-gray-500 dark:text-gray-400">Faculty:</span> {hoveredCourse.faculties || 'TBA'}</div>
-              <div><span className="text-gray-500 dark:text-gray-400">Room:</span> {hoveredCourse.roomName || 'TBA'}</div>
-              <div><span className="text-gray-500 dark:text-gray-400">Capacity:</span> {hoveredCourse.capacity} ({hoveredCourse.consumedSeat} filled)</div>
-              {hoveredCourse.sectionSchedule?.finalExamDetail && (
-                <div><span className="text-gray-500 dark:text-gray-400">Final:</span> {hoveredCourse.sectionSchedule.finalExamDetail}</div>
-              )}
-            </div>
-          </div>
-        )}
+        <CourseHoverTooltip
+          course={hoveredCourse}
+          position={tooltipPosition}
+          extraFields={hoveredCourse ? [{ label: 'Friend', value: hoveredCourse.friendName }] : []}
+        />
 
         {/* Footer */}
         <div className="mt-4 text-center text-sm text-gray-500">

@@ -1,18 +1,19 @@
 'use client';
 import React, { useState, useRef } from 'react';
 import { X } from 'lucide-react';
+import CourseHoverTooltip from '@/components/ui/CourseHoverTooltip';
 
-const RoutineTableGrid = ({ 
-  selectedCourses = [], 
-  onRemoveCourse = null, 
+const RoutineTableGrid = ({
+  selectedCourses = [],
+  onRemoveCourse = null,
   displayToast = null,
   showRemoveButtons = true,
-  className = "" 
+  className = ""
 }) => {
   const routineRef = useRef(null);
   const [hoveredCourse, setHoveredCourse] = useState(null);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0, showLeft: false });
-  
+
   const timeSlots = [
     '08:00 AM-09:20 AM',
     '09:30 AM-10:50 AM',
@@ -22,9 +23,9 @@ const RoutineTableGrid = ({
     '03:30 PM-04:50 PM',
     '05:00 PM-06:20 PM'
   ];
-  
+
   const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  
+
   // Parse time to minutes for comparison
   const timeToMinutes = (timeStr) => {
     const [time, period] = timeStr.split(' ');
@@ -34,7 +35,7 @@ const RoutineTableGrid = ({
     if (period === 'AM' && hours === 12) totalMinutes -= 12 * 60;
     return totalMinutes;
   };
-  
+
   // Format time from 24h to 12h
   const formatTime = (time) => {
     if (!time) return '';
@@ -44,13 +45,13 @@ const RoutineTableGrid = ({
     const displayHour = hour % 12 || 12;
     return `${displayHour}:${minutes} ${ampm}`;
   };
-  
+
   // Get courses for a specific time slot and day
   const getCoursesForSlot = (day, timeSlot) => {
     const [slotStart, slotEnd] = timeSlot.split('-');
     const slotStartMin = timeToMinutes(slotStart);
     const slotEndMin = timeToMinutes(slotEnd);
-    
+
     return selectedCourses.filter(course => {
       // Check class schedules
       const classMatch = course.sectionSchedule?.classSchedules?.some(schedule => {
@@ -60,7 +61,7 @@ const RoutineTableGrid = ({
         // Check if the course time overlaps with the slot time
         return scheduleStart < slotEndMin && scheduleEnd > slotStartMin;
       });
-      
+
       // Check lab schedules
       const labMatch = course.labSchedules?.some(schedule => {
         if (schedule.day !== day.toUpperCase()) return false;
@@ -69,18 +70,18 @@ const RoutineTableGrid = ({
         // Check if the course time overlaps with the slot time
         return scheduleStart < slotEndMin && scheduleEnd > slotStartMin;
       });
-      
+
       return classMatch || labMatch;
     });
   };
-  
+
   // Check for time conflicts
   const hasConflict = (day, timeSlot) => {
     const courses = getCoursesForSlot(day, timeSlot);
     return courses.length > 1;
   };
-  
-  
+
+
   return (
     <div className={`w-full ${className}`}>
       <div ref={routineRef} className="bg-gray-50 dark:bg-gray-900 p-4">
@@ -104,7 +105,7 @@ const RoutineTableGrid = ({
                 {days.map(day => {
                   const courses = getCoursesForSlot(day, timeSlot);
                   const conflict = hasConflict(day, timeSlot);
-                  
+
                   return (
                     <td key={`${day}-${timeSlot}`} className="p-2 border-r border-gray-300 dark:border-gray-700 last:border-r-0 relative">
                       {courses.length > 0 && (
@@ -119,29 +120,28 @@ const RoutineTableGrid = ({
                               // Check if the lab time overlaps with the slot time
                               return scheduleStart < slotEndMin && scheduleEnd > slotStartMin;
                             });
-                            
+
                             return (
                               <div
                                 key={course.sectionId}
-                                className={`p-3 rounded text-sm ${
-                                  conflict 
-                                    ? 'bg-red-100 dark:bg-red-900/50 border border-red-400 dark:border-red-600 text-red-900 dark:text-red-100' 
-                                    : isLab 
+                                className={`p-3 rounded text-sm ${conflict
+                                    ? 'bg-red-100 dark:bg-red-900/50 border border-red-400 dark:border-red-600 text-red-900 dark:text-red-100'
+                                    : isLab
                                       ? 'bg-purple-100 dark:bg-purple-900/50 border border-purple-400 dark:border-purple-600 text-purple-900 dark:text-purple-100'
                                       : 'bg-blue-100 dark:bg-blue-900/50 border border-blue-400 dark:border-blue-600 text-blue-900 dark:text-blue-100'
-                                } hover:opacity-80 transition-opacity ${onRemoveCourse ? 'cursor-pointer' : ''} group relative`}
+                                  } hover:opacity-80 transition-opacity ${onRemoveCourse ? 'cursor-pointer' : ''} group relative`}
                                 onClick={() => onRemoveCourse?.(course)}
                                 onMouseEnter={(e) => {
                                   setHoveredCourse(course);
                                   const rect = e.currentTarget.getBoundingClientRect();
                                   const viewportWidth = window.innerWidth;
                                   const tooltipWidth = 384; // w-96 = 384px
-                                  
+
                                   // Position tooltip on left if it would go outside viewport
                                   const shouldShowLeft = rect.right + tooltipWidth + 10 > viewportWidth;
-                                  
-                                  setTooltipPosition({ 
-                                    x: shouldShowLeft ? rect.left - tooltipWidth - 10 : rect.right + 10, 
+
+                                  setTooltipPosition({
+                                    x: shouldShowLeft ? rect.left - tooltipWidth - 10 : rect.right + 10,
                                     y: rect.top,
                                     showLeft: shouldShowLeft
                                   });
@@ -173,58 +173,21 @@ const RoutineTableGrid = ({
             ))}
           </tbody>
         </table>
-        
+
         {/* Single global tooltip */}
-        {hoveredCourse && (
-          <div 
-            className="fixed z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg p-4 shadow-xl w-96 pointer-events-none"
-            style={{ 
-              left: `${Math.max(10, Math.min(tooltipPosition.x, window.innerWidth - 394))}px`, 
-              top: `${tooltipPosition.y}px`,
-              transform: 'translateY(-50%)'
-            }}
-          >
-            <div className="space-y-2 text-sm text-gray-900 dark:text-gray-100">
-              <div className="font-bold text-lg">{hoveredCourse.courseCode}-{hoveredCourse.sectionName}</div>
-              <div><span className="text-gray-500 dark:text-gray-400">Credits:</span> {hoveredCourse.courseCredit}</div>
-              
-              {/* Faculty Information */}
-              <div className="bg-gray-100 dark:bg-gray-700/50 rounded p-2 space-y-1">
-                <div className="font-medium text-blue-600 dark:text-blue-400">Faculty Information</div>
-                <div><span className="text-gray-500 dark:text-gray-400">Name:</span> {hoveredCourse.employeeName || hoveredCourse.faculties || 'TBA'}</div>
-                {hoveredCourse.employeeEmail && (
-                  <div><span className="text-gray-500 dark:text-gray-400">Email:</span> {hoveredCourse.employeeEmail}</div>
-                )}
-                {!hoveredCourse.employeeEmail && hoveredCourse.faculties && (
-                  <div><span className="text-gray-500 dark:text-gray-400">Initial:</span> {hoveredCourse.faculties}</div>
-                )}
-              </div>
-              
-              <div><span className="text-gray-500 dark:text-gray-400">Type:</span> {hoveredCourse.sectionType}</div>
-              <div><span className="text-gray-500 dark:text-gray-400">Capacity:</span> {hoveredCourse.capacity} (Filled: {hoveredCourse.consumedSeat})</div>
-              <div><span className="text-gray-500 dark:text-gray-400">Prerequisites:</span> {hoveredCourse.prerequisiteCourses || 'None'}</div>
-              <div><span className="text-gray-500 dark:text-gray-400">Room:</span> {hoveredCourse.roomName || 'TBA'}</div>
-              {hoveredCourse.labCourseCode && (
-                <div><span className="text-gray-500 dark:text-gray-400">Lab:</span> {hoveredCourse.labCourseCode} - {hoveredCourse.labRoomName}</div>
-              )}
-              <div><span className="text-gray-500 dark:text-gray-400">Mid Exam:</span> {hoveredCourse.sectionSchedule?.midExamDetail || 'TBA'}</div>
-              <div><span className="text-gray-500 dark:text-gray-400">Final Exam:</span> {hoveredCourse.sectionSchedule?.finalExamDetail || 'TBA'}</div>
-              <div><span className="text-gray-500 dark:text-gray-400">Class Period:</span> {hoveredCourse.sectionSchedule?.classStartDate} to {hoveredCourse.sectionSchedule?.classEndDate}</div>
-            </div>
-          </div>
-        )}
-        
+        <CourseHoverTooltip course={hoveredCourse} position={tooltipPosition} />
+
         <div className="mt-4 text-center text-sm text-gray-500">
           Made with ❤️ from https://oracle.eniamza.com
         </div>
       </div>
-      
+
       {selectedCourses.length === 0 && (
         <div className="text-center py-12 text-gray-500">
           No courses selected. Add courses from the list to see them in your routine.
         </div>
       )}
-      
+
       {selectedCourses.length > 0 && (
         <div className="mt-4 flex gap-4 text-sm">
           <div className="flex items-center gap-2">

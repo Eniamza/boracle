@@ -1,6 +1,7 @@
 'use client';
 import React, { useState, useEffect, useRef } from 'react';
 import { Calendar, Download, RefreshCw, AlertCircle, Copy, Check, Save, Users, X } from 'lucide-react';
+import CourseHoverTooltip from '@/components/ui/CourseHoverTooltip';
 import { useParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import * as htmlToImage from 'html-to-image';
@@ -450,8 +451,12 @@ const SharedMergedRoutinePage = () => {
                                                                         onMouseEnter={(e) => {
                                                                             setHoveredCourse(course);
                                                                             const rect = e.currentTarget.getBoundingClientRect();
+                                                                            const viewportWidth = window.innerWidth;
+                                                                            const tooltipWidth = 384; // w-96 = 384px
+                                                                            const shouldShowLeft = rect.right + tooltipWidth + 10 > viewportWidth;
+
                                                                             setTooltipPosition({
-                                                                                x: rect.right + 10,
+                                                                                x: shouldShowLeft ? rect.left - tooltipWidth - 10 : rect.right + 10,
                                                                                 y: rect.top
                                                                             });
                                                                         }}
@@ -483,54 +488,11 @@ const SharedMergedRoutinePage = () => {
                     </div>
 
                     {/* Rich Tooltip - viewport-aware positioning */}
-                    {hoveredCourse && (
-                        <div
-                            className="fixed z-50 bg-gray-800 border border-gray-600 rounded-lg p-4 shadow-xl w-96 pointer-events-none"
-                            style={{
-                                left: tooltipPosition.x + 384 + 10 > window.innerWidth
-                                    ? `${tooltipPosition.x - 384 - 10}px`
-                                    : `${tooltipPosition.x}px`,
-                                top: tooltipPosition.y + 200 > window.innerHeight
-                                    ? `${Math.max(10, window.innerHeight - 420)}px`
-                                    : `${tooltipPosition.y}px`,
-                                transform: tooltipPosition.y + 200 > window.innerHeight ? 'none' : 'translateY(-50%)',
-                                maxHeight: '90vh',
-                                overflowY: 'auto'
-                            }}
-                        >
-                            <div className="space-y-2 text-sm">
-                                <div className="font-bold text-lg">{hoveredCourse.courseCode}-{hoveredCourse.sectionName}</div>
-                                <div><span className="text-gray-400">Friend:</span> {hoveredCourse.friendName}</div>
-                                <div><span className="text-gray-400">Credits:</span> {hoveredCourse.courseCredit || 0}</div>
-
-                                {/* Faculty Information */}
-                                <div className="bg-gray-700/50 rounded p-2 space-y-1">
-                                    <div className="font-medium text-blue-400">Faculty Information</div>
-                                    {hoveredCourse.employeeName ? (
-                                        <>
-                                            <div><span className="text-gray-400">Name:</span> {hoveredCourse.employeeName}</div>
-                                            {hoveredCourse.employeeEmail && (
-                                                <div><span className="text-gray-400">Email:</span> {hoveredCourse.employeeEmail}</div>
-                                            )}
-                                        </>
-                                    ) : (
-                                        <div><span className="text-gray-400">Initial:</span> {hoveredCourse.faculties || 'TBA'}</div>
-                                    )}
-                                </div>
-
-                                <div><span className="text-gray-400">Type:</span> {hoveredCourse.sectionType}</div>
-                                <div><span className="text-gray-400">Capacity:</span> {hoveredCourse.capacity} ({hoveredCourse.consumedSeat} filled)</div>
-                                <div><span className="text-gray-400">Prerequisites:</span> {hoveredCourse.prerequisiteCourses || 'None'}</div>
-                                <div><span className="text-gray-400">Room:</span> {hoveredCourse.roomName || 'TBA'}</div>
-                                {hoveredCourse.labCourseCode && (
-                                    <div><span className="text-gray-400">Lab:</span> {hoveredCourse.labCourseCode} - {hoveredCourse.labRoomName}</div>
-                                )}
-                                <div><span className="text-gray-400">Mid Exam:</span> {hoveredCourse.sectionSchedule?.midExamDetail || 'TBA'}</div>
-                                <div><span className="text-gray-400">Final Exam:</span> {hoveredCourse.sectionSchedule?.finalExamDetail || 'TBA'}</div>
-                                <div><span className="text-gray-400">Class Period:</span> {hoveredCourse.sectionSchedule?.classStartDate} to {hoveredCourse.sectionSchedule?.classEndDate}</div>
-                            </div>
-                        </div>
-                    )}
+                    <CourseHoverTooltip
+                        course={hoveredCourse}
+                        position={tooltipPosition}
+                        extraFields={hoveredCourse ? [{ label: 'Friend', value: hoveredCourse.friendName }] : []}
+                    />
 
                     {/* Watermark */}
                     <div className="text-center py-3 text-gray-600 text-xs">

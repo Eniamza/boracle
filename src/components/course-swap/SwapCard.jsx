@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import CourseHoverTooltip from "@/components/ui/CourseHoverTooltip";
 import { useSession } from 'next-auth/react';
 import { Calendar, User, ArrowRightLeft, Tag, CheckCircle, Trash2, Mail } from 'lucide-react';
 
@@ -11,9 +12,9 @@ const SwapCard = ({ swap, courses = [], onDelete, onMarkComplete }) => {
   const { data: session } = useSession();
   const [hoveredCourse, setHoveredCourse] = useState(null);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
-  
+
   if (!swap) return null;
-  
+
   const formatCourse = (course) => {
     return `${course.courseCode}-${course.sectionName}-${course.faculties || 'TBA'}`;
   };
@@ -28,7 +29,7 @@ const SwapCard = ({ swap, courses = [], onDelete, onMarkComplete }) => {
     const now = new Date();
     const diffTime = Math.abs(now - date);
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    
+
     if (diffDays === 0) return 'Today';
     if (diffDays === 1) return 'Yesterday';
     if (diffDays < 7) return `${diffDays} days ago`;
@@ -37,7 +38,7 @@ const SwapCard = ({ swap, courses = [], onDelete, onMarkComplete }) => {
 
   const giveCourse = getCourseBySection(swap.getSectionId);
   const isOwner = session?.user?.email === swap.uEmail;
-  
+
   // Different card styles for owner vs others and completed status
   const getCardStyle = () => {
     if (swap.isDone) {
@@ -74,7 +75,7 @@ const SwapCard = ({ swap, courses = [], onDelete, onMarkComplete }) => {
             </Badge>
           </div>
         )}
-        
+
         <div className="space-y-4">
           {/* Offering Section */}
           <div>
@@ -85,7 +86,7 @@ const SwapCard = ({ swap, courses = [], onDelete, onMarkComplete }) => {
               </span>
             </div>
             {/* I am working here */}
-            <div 
+            <div
               className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
               onMouseEnter={(e) => {
                 if (giveCourse) {
@@ -94,9 +95,9 @@ const SwapCard = ({ swap, courses = [], onDelete, onMarkComplete }) => {
                   const viewportWidth = window.innerWidth;
                   const tooltipWidth = 384;
                   const shouldShowLeft = rect.right + tooltipWidth + 10 > viewportWidth;
-                  setTooltipPosition({ 
-                    x: shouldShowLeft ? rect.left - tooltipWidth - 10 : rect.right + 10, 
-                    y: rect.top + window.scrollY
+                  setTooltipPosition({
+                    x: shouldShowLeft ? rect.left - tooltipWidth - 10 : rect.right + 10,
+                    y: rect.top
                   });
                 }
               }}
@@ -112,7 +113,7 @@ const SwapCard = ({ swap, courses = [], onDelete, onMarkComplete }) => {
               )}
             </div>
           </div>
-          
+
           {/* Looking For Section */}
           <div>
             <div className="flex items-center gap-2 mb-2">
@@ -127,9 +128,9 @@ const SwapCard = ({ swap, courses = [], onDelete, onMarkComplete }) => {
                   {swap.askingSections.map((sectionId) => {
                     const askCourse = getCourseBySection(sectionId);
                     return (
-                      <Badge 
-                        key={sectionId} 
-                        variant="outline" 
+                      <Badge
+                        key={sectionId}
+                        variant="outline"
                         className="px-3 py-1.5 text font-medium
                         bg-white dark:bg-gray-900 
                         border-purple-300 dark:border-blue-700 
@@ -146,9 +147,9 @@ const SwapCard = ({ swap, courses = [], onDelete, onMarkComplete }) => {
                             const viewportWidth = window.innerWidth;
                             const tooltipWidth = 384;
                             const shouldShowLeft = rect.right + tooltipWidth + 10 > viewportWidth;
-                            setTooltipPosition({ 
-                              x: shouldShowLeft ? rect.left - tooltipWidth - 10 : rect.right + 10, 
-                              y: rect.top + window.scrollY
+                            setTooltipPosition({
+                              x: shouldShowLeft ? rect.left - tooltipWidth - 10 : rect.right + 10,
+                              y: rect.top
                             });
                           }
                         }}
@@ -166,7 +167,7 @@ const SwapCard = ({ swap, courses = [], onDelete, onMarkComplete }) => {
           </div>
         </div>
       </CardHeader>
-      
+
       <CardContent className="py-3 border-t bg-gray-50/50 dark:bg-gray-800/50">
         {/* User Info */}
         <div className="flex items-center justify-between py-3">
@@ -182,12 +183,12 @@ const SwapCard = ({ swap, courses = [], onDelete, onMarkComplete }) => {
               {formatDate(swap.createdAt)}
             </div>
           </div>
-          
+
           {/* Action Buttons */}
           {isOwner ? (
             <div className="flex gap-2">
               {!swap.isDone && (
-                <Button 
+                <Button
                   size="sm"
                   onClick={() => onMarkComplete?.(swap.swapId)}
                   className="dark:bg-blue-600 dark:hover:bg-blue-700 dark:text-white bg-green-500 hover:bg-green-600 text-white"
@@ -197,7 +198,7 @@ const SwapCard = ({ swap, courses = [], onDelete, onMarkComplete }) => {
                   Done
                 </Button>
               )}
-              <Button 
+              <Button
                 size="sm"
                 onClick={() => onDelete?.(swap.swapId)}
                 className="bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-600 text-white dark:text-white"
@@ -222,46 +223,9 @@ const SwapCard = ({ swap, courses = [], onDelete, onMarkComplete }) => {
           )}
         </div>
       </CardContent>
-      
+
       {/* Hover Tooltip for "Looking For" Courses */}
-      {hoveredCourse && (
-        <div 
-          className="fixed z-[100] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg p-4 shadow-xl w-96 pointer-events-none"
-          style={{ 
-            left: `${Math.max(10, Math.min(tooltipPosition.x, typeof window !== 'undefined' ? window.innerWidth - 394 : 800))}px`, 
-            top: `${tooltipPosition.y}px`,
-            transform: 'translateY(-50%)'
-          }}
-        >
-          <div className="space-y-2 text-sm text-gray-900 dark:text-gray-100">
-            <div className="font-bold text-lg">{hoveredCourse.courseCode}-{hoveredCourse.sectionName}</div>
-            <div><span className="text-gray-500 dark:text-gray-400">Credits:</span> {hoveredCourse.courseCredit}</div>
-            
-            {/* Faculty Information */}
-            <div className="bg-gray-100 dark:bg-gray-700/50 rounded p-2 space-y-1">
-              <div className="font-medium text-blue-600 dark:text-blue-400">Faculty Information</div>
-              <div><span className="text-gray-500 dark:text-gray-400">Initial:</span> {hoveredCourse.faculties || 'TBA'}</div>
-              {hoveredCourse.employeeName && (
-                <div><span className="text-gray-500 dark:text-gray-400">Name:</span> {hoveredCourse.employeeName}</div>
-              )}
-              {hoveredCourse.employeeEmail && (
-                <div><span className="text-gray-500 dark:text-gray-400">Email:</span> {hoveredCourse.employeeEmail}</div>
-              )}
-            </div>
-            
-            <div><span className="text-gray-500 dark:text-gray-400">Type:</span> {hoveredCourse.sectionType === 'OTHER' ? 'THEORY' : hoveredCourse.sectionType}</div>
-            <div><span className="text-gray-500 dark:text-gray-400">Capacity:</span> {hoveredCourse.capacity} (Filled: {hoveredCourse.consumedSeat})</div>
-            <div><span className="text-gray-500 dark:text-gray-400">Prerequisites:</span> {hoveredCourse.prerequisiteCourses || 'None'}</div>
-            <div><span className="text-gray-500 dark:text-gray-400">Room:</span> {hoveredCourse.roomName || 'TBA'}</div>
-            {hoveredCourse.labCourseCode && (
-              <div><span className="text-gray-500 dark:text-gray-400">Lab:</span> {hoveredCourse.labCourseCode} - {hoveredCourse.labRoomName}</div>
-            )}
-            <div><span className="text-gray-500 dark:text-gray-400">Mid Exam:</span> {hoveredCourse.sectionSchedule?.midExamDetail || 'TBA'}</div>
-            <div><span className="text-gray-500 dark:text-gray-400">Final Exam:</span> {hoveredCourse.sectionSchedule?.finalExamDetail || 'TBA'}</div>
-            <div><span className="text-gray-500 dark:text-gray-400">Class Period:</span> {hoveredCourse.sectionSchedule?.classStartDate} to {hoveredCourse.sectionSchedule?.classEndDate}</div>
-          </div>
-        </div>
-      )}
+      <CourseHoverTooltip course={hoveredCourse} position={tooltipPosition} />
     </Card>
   );
 };

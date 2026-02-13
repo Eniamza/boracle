@@ -1,6 +1,7 @@
 'use client';
 import React, { useState, useEffect, useRef } from 'react';
 import { Calendar, Clock, Trash2, Eye, Download, RefreshCw, AlertCircle, X, Users, Share2, Copy, Check, Link, Plus, Cable, Hammer } from 'lucide-react';
+import CourseHoverTooltip from '@/components/ui/CourseHoverTooltip';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import RoutineTableGrid from '@/components/routine/RoutineTableGrid';
@@ -36,6 +37,7 @@ const SavedRoutinesPage = () => {
   const [importing, setImporting] = useState(false);
   const [sharingRoutineId, setSharingRoutineId] = useState(null);
   const [sharingRoutineType, setSharingRoutineType] = useState('routine');
+  const [facultyMap, setFacultyMap] = useState({});
 
   // Predefined color palette for friends
   const colorPalette = [
@@ -56,6 +58,42 @@ const SavedRoutinesPage = () => {
     '#0EA5E9', // Sky
   ];
 
+
+  // Fetch faculty data for tooltip enrichment
+  useEffect(() => {
+    if (session?.user?.email) {
+      fetch('/api/faculty/lookup')
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            setFacultyMap(data.facultyMap);
+
+            // Re-enrich currently viewed routine courses if any
+            setRoutineCourses(prev => prev.map(course => {
+              const firstInitial = course.faculties?.split(',')[0]?.trim().toUpperCase();
+              const facultyInfo = data.facultyMap[firstInitial];
+              return {
+                ...course,
+                employeeName: facultyInfo?.facultyName || null,
+                employeeEmail: facultyInfo?.email || null,
+              };
+            }));
+
+            // Re-enrich currently viewed merged routine courses if any
+            setMergedRoutineCourses(prev => prev.map(course => {
+              const firstInitial = course.faculties?.split(',')[0]?.trim().toUpperCase();
+              const facultyInfo = data.facultyMap[firstInitial];
+              return {
+                ...course,
+                employeeName: facultyInfo?.facultyName || null,
+                employeeEmail: facultyInfo?.email || null,
+              };
+            }));
+          }
+        })
+        .catch(err => console.error('Error fetching faculty data:', err));
+    }
+  }, [session]);
 
   // Close floating options when clicking outside
   useEffect(() => {
@@ -312,7 +350,15 @@ const SavedRoutinesPage = () => {
         sectionIds.includes(course.sectionId)
       );
 
-      setRoutineCourses(matchedCourses);
+      setRoutineCourses(matchedCourses.map(course => {
+        const firstInitial = course.faculties?.split(',')[0]?.trim().toUpperCase();
+        const facultyInfo = facultyMap[firstInitial];
+        return {
+          ...course,
+          employeeName: facultyInfo?.facultyName || null,
+          employeeEmail: facultyInfo?.email || null,
+        };
+      }));
 
       if (matchedCourses.length === 0) {
         toast.error('No matching courses found for this routine');
@@ -357,10 +403,15 @@ const SavedRoutinesPage = () => {
         .map(course => {
           // Find which friend this course belongs to
           const friend = friends.find(f => f.sectionIds.includes(course.sectionId));
+          // Enrich with faculty data if available
+          const firstInitial = course.faculties?.split(',')[0]?.trim().toUpperCase();
+          const facultyInfo = facultyMap[firstInitial];
           return {
             ...course,
             friendName: friend?.friendName || 'Unknown',
-            friendColor: friend?.color || '#6B7280'
+            friendColor: friend?.color || '#6B7280',
+            employeeName: facultyInfo?.facultyName || null,
+            employeeEmail: facultyInfo?.email || null,
           };
         });
 
@@ -822,8 +873,12 @@ const SavedRoutinesPage = () => {
                                         onMouseEnter={(e) => {
                                           setHoveredCourse(course);
                                           const rect = e.currentTarget.getBoundingClientRect();
+                                          const viewportWidth = window.innerWidth;
+                                          const tooltipWidth = 384; // w-96 = 384px
+                                          const shouldShowLeft = rect.right + tooltipWidth + 10 > viewportWidth;
+
                                           setTooltipPosition({
-                                            x: rect.right + 10,
+                                            x: shouldShowLeft ? rect.left - tooltipWidth - 10 : rect.right + 10,
                                             y: rect.top
                                           });
                                         }}
@@ -855,51 +910,11 @@ const SavedRoutinesPage = () => {
               </div>
 
               {/* Tooltip */}
-              {hoveredCourse && (
-                <div
-                  className="fixed z-50 bg-gray-800 border border-gray-600 rounded-lg p-4 shadow-xl w-96 pointer-events-none"
-                  style={{
-                    left: tooltipPosition.x + 384 + 10 > window.innerWidth
-                      ? `${tooltipPosition.x - 384 - 10}px`
-                      : `${tooltipPosition.x}px`,
-                    top: tooltipPosition.y + 200 > window.innerHeight
-                      ? `${Math.max(10, window.innerHeight - 420)}px`
-                      : `${tooltipPosition.y}px`,
-                    transform: tooltipPosition.y + 200 > window.innerHeight ? 'none' : 'translateY(-50%)',
-                    maxHeight: '90vh',
-                    overflowY: 'auto'
-                  }}
-                >
-                  <div className="space-y-2 text-sm">
-                    <div className="font-bold text-lg">{hoveredCourse.courseCode}-{hoveredCourse.sectionName}</div>
-                    <div><span className="text-gray-400">Friend:</span> {hoveredCourse.friendName}</div>
-                    <div><span className="text-gray-400">Credits:</span> {hoveredCourse.courseCredit || 0}</div>
-
-                    {/* Faculty Information */}
-                    <div className="bg-gray-700/50 rounded p-2 space-y-1">
-                      <div className="font-medium text-blue-400">Faculty Information</div>
-                      <div><span className="text-gray-400">Name:</span> {hoveredCourse.employeeName || hoveredCourse.faculties || 'TBA'}</div>
-                      {hoveredCourse.employeeEmail && (
-                        <div><span className="text-gray-400">Email:</span> {hoveredCourse.employeeEmail}</div>
-                      )}
-                      {!hoveredCourse.employeeEmail && hoveredCourse.faculties && (
-                        <div><span className="text-gray-400">Initial:</span> {hoveredCourse.faculties}</div>
-                      )}
-                    </div>
-
-                    <div><span className="text-gray-400">Type:</span> {hoveredCourse.sectionType}</div>
-                    <div><span className="text-gray-400">Capacity:</span> {hoveredCourse.capacity} ({hoveredCourse.consumedSeat} filled)</div>
-                    <div><span className="text-gray-400">Prerequisites:</span> {hoveredCourse.prerequisiteCourses || 'None'}</div>
-                    <div><span className="text-gray-400">Room:</span> {hoveredCourse.roomName || 'TBA'}</div>
-                    {hoveredCourse.labCourseCode && (
-                      <div><span className="text-gray-400">Lab:</span> {hoveredCourse.labCourseCode} - {hoveredCourse.labRoomName}</div>
-                    )}
-                    <div><span className="text-gray-400">Mid Exam:</span> {hoveredCourse.sectionSchedule?.midExamDetail || 'TBA'}</div>
-                    <div><span className="text-gray-400">Final Exam:</span> {hoveredCourse.sectionSchedule?.finalExamDetail || 'TBA'}</div>
-                    <div><span className="text-gray-400">Class Period:</span> {hoveredCourse.sectionSchedule?.classStartDate} to {hoveredCourse.sectionSchedule?.classEndDate}</div>
-                  </div>
-                </div>
-              )}
+              <CourseHoverTooltip
+                course={hoveredCourse}
+                position={tooltipPosition}
+                extraFields={hoveredCourse ? [{ label: 'Friend', value: hoveredCourse.friendName }] : []}
+              />
             </div>
           </div>
         </div>
