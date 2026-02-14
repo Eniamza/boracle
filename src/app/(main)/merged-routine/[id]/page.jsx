@@ -4,7 +4,7 @@ import { Calendar, Download, RefreshCw, AlertCircle, Copy, Check, Save, Users, X
 import CourseHoverTooltip from '@/components/ui/CourseHoverTooltip';
 import { useParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import * as htmlToImage from 'html-to-image';
+import { exportRoutineToPNG } from '@/components/routine/ExportRoutinePNG';
 
 const SharedMergedRoutinePage = () => {
     const { id } = useParams();
@@ -220,43 +220,11 @@ const SharedMergedRoutinePage = () => {
     const exportToPNG = async () => {
         if (!courses || courses.length === 0 || !routineRef?.current) return;
 
-        try {
-            const originalRoutineSegment = routineRef.current;
-            const scrolledWidth = 1800;
-
-            const container = document.createElement('div');
-            container.style.position = 'absolute';
-            container.style.top = '-9999px';
-            container.style.left = '-9999px';
-            container.style.width = scrolledWidth + 'px';
-            container.style.zoom = 0.5;
-            document.body.appendChild(container);
-
-            const clonedRoutine = originalRoutineSegment.cloneNode(true);
-            clonedRoutine.style.width = scrolledWidth + 'px';
-            clonedRoutine.style.height = 'auto';
-            clonedRoutine.style.overflow = 'visible';
-            container.appendChild(clonedRoutine);
-
-            await new Promise(resolve => setTimeout(resolve, 100));
-
-            const dataUrl = await htmlToImage.toPng(clonedRoutine, {
-                quality: 0.95,
-                pixelRatio: 3,
-                backgroundColor: '#111827',
-                width: scrolledWidth,
-                height: clonedRoutine.scrollHeight,
-            });
-
-            document.body.removeChild(container);
-
-            const link = document.createElement('a');
-            link.download = `shared-merged-routine-${id.slice(0, 8)}-${new Date().toISOString().split('T')[0]}.png`;
-            link.href = dataUrl;
-            link.click();
-        } catch (error) {
-            console.error('Error exporting routine:', error);
-        }
+        await exportRoutineToPNG({
+            routineRef,
+            filename: `shared-merged-routine-${id.slice(0, 8)}`,
+            showToast: false,
+        });
     };
 
     // Loading state
