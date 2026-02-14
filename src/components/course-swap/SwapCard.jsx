@@ -67,7 +67,7 @@ const SwapCard = ({ swap, courses = [], onDelete, onMarkComplete }) => {
         )}
       </div>
 
-      <CardHeader className="pb-4">
+      <CardHeader className="px-3 md:px-6 pb-4">
         {isOwner && (
           <div className="mb-3">
             <Badge className="bg-blue-500 text-white text-xs">
@@ -103,7 +103,7 @@ const SwapCard = ({ swap, courses = [], onDelete, onMarkComplete }) => {
               }}
               onMouseLeave={() => setHoveredCourse(null)}
             >
-              <p className="font-bold text-lg text-gray-900 dark:text-white">
+              <p className="font-bold text-base md:text-lg text-gray-900 dark:text-white break-words">
                 {giveCourse ? formatCourse(giveCourse) : `Section ${swap.getSectionId}`}
               </p>
               {giveCourse && (
@@ -168,44 +168,44 @@ const SwapCard = ({ swap, courses = [], onDelete, onMarkComplete }) => {
         </div>
       </CardHeader>
 
-      <CardContent className="py-3 border-t bg-gray-50/50 dark:bg-gray-800/50">
+      <CardContent className="px-3 md:px-6 py-3 border-t bg-gray-200/60 dark:bg-gray-800/50">
         {/* User Info */}
-        <div className="flex items-center justify-between py-3">
-          <div className="space-y-1">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 py-2">
+          <div className="space-y-1 min-w-0 flex-1">
             <div className="flex items-center gap-2 text-sm">
-              <User className="w-4 h-4 text-gray-500" />
-              <span className="font-medium text-gray-900 dark:text-white">
+              <User className="w-4 h-4 text-gray-500 shrink-0" />
+              <span className="font-medium text-gray-900 dark:text-white truncate">
                 {swap.uEmail || 'Unknown user'}
               </span>
             </div>
             <div className="flex items-center gap-2 text-xs text-gray-500">
-              <Calendar className="w-3 h-3" />
+              <Calendar className="w-3 h-3 shrink-0" />
               {formatDate(swap.createdAt)}
             </div>
           </div>
 
           {/* Action Buttons */}
           {isOwner ? (
-            <div className="flex gap-2">
+            <div className="flex gap-2 w-full sm:w-auto">
               {!swap.isDone && (
                 <Button
                   size="sm"
                   onClick={() => onMarkComplete?.(swap.swapId)}
-                  className="dark:bg-blue-600 dark:hover:bg-blue-700 dark:text-white bg-green-500 hover:bg-green-600 text-white"
+                  className="flex-1 sm:flex-none dark:bg-blue-600 dark:hover:bg-blue-700 dark:text-white bg-green-500 hover:bg-green-600 text-white"
                   title="Mark as Done"
                 >
                   <CheckCircle className="w-4 h-4" />
-                  Done
+                  <span className="ml-1">Done</span>
                 </Button>
               )}
               <Button
                 size="sm"
                 onClick={() => onDelete?.(swap.swapId)}
-                className="bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-600 text-white dark:text-white"
+                className="flex-1 sm:flex-none bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 text-white dark:text-white"
                 title="Delete Swap"
               >
                 <Trash2 className="w-4 h-4" />
-                Delete
+                <span className="ml-1">Delete</span>
               </Button>
             </div>
           ) : swap.uEmail && (
@@ -215,7 +215,7 @@ const SwapCard = ({ swap, courses = [], onDelete, onMarkComplete }) => {
                 const courseInfo = giveCourse ? `${giveCourse.courseCode}-${giveCourse.sectionName} (${giveCourse.faculties || 'TBA'})` : `Section ${swap.getSectionId}`;
                 window.open(`https://mail.google.com/mail/?view=cm&to=${swap.uEmail}&su=Course Swap Request - ${encodeURIComponent(courseInfo)}`, '_blank');
               }}
-              className="gap-2 bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 dark:text-white text-white"
+              className="w-full sm:w-auto gap-2 bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 dark:text-white text-white"
               title="Contact via Gmail"
             >
               Send <Mail className="w-4 h-4" />
