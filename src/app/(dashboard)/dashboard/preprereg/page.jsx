@@ -694,7 +694,13 @@ const PreRegistrationPage = () => {
                     <tr
                       key={course.sectionId}
                       ref={isLast && displayCount < filteredCourses.length ? lastCourseRef : null}
-                      className={`border-b border-gray-200 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-800/50 transition-colors ${isSelected ? 'bg-green-50 dark:bg-green-900/20' : ''}`}
+                      className={`
+                        border-b border-gray-200 dark:border-gray-800 transition-colors
+                        ${isSelected 
+                          ? 'bg-green-200 dark:bg-green-500/30 hover:bg-green-300 dark:hover:bg-green-500/40' 
+                          : 'hover:bg-gray-100 dark:hover:bg-gray-800/50'
+                        }
+                      `}
                     >
                       <td className="py-3 px-2 text-sm font-medium text-gray-900 dark:text-gray-100">
                         {course.courseCode}-[{course.sectionName}]
@@ -923,7 +929,7 @@ const PreRegistrationPage = () => {
                               <div
                                 key={initial}
                                 data-index={index}
-                                className={`flex items-center px-3 py-2.5 cursor-pointer transition-colors ${isHighlighted ? 'bg-blue-600 text-white' : isSelected ? 'bg-blue-100 dark:bg-blue-800/40' : 'hover:bg-gray-100 dark:hover:bg-[#1e3a5f]'
+                                className={`flex items-center px-3 py-2.5 cursor-pointer transition-colors ${isHighlighted ? 'bg-blue-600 text-white' : isSelected ? 'bg-blue-300/60 dark:bg-blue-800/40' : 'hover:bg-gray-100 dark:hover:bg-[#1e3a5f]'
                                   }`}
                                 onClick={() => {
                                   if (isSelected) {
