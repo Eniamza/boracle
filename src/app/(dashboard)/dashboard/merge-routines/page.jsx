@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { toast } from 'sonner';
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import * as htmlToImage from 'html-to-image';
+import { exportRoutineToPNG } from '@/components/routine/ExportRoutinePNG';
 import { useSession } from 'next-auth/react';
 import { useEffect } from 'react';
 import {
@@ -366,84 +366,17 @@ const MergeRoutinesPage = () => {
     setLoading(false);
   };
 
-  // Export routine as image using html-to-image
+  // Export routine as image using centralized utility
   const exportAsImage = async () => {
-    if (!mergedRoutineRef.current) {
-      toast.error('Routine table not found');
-      return;
-    }
-
     if (mergedCourses.length === 0) {
       toast.error('No courses to export');
       return;
     }
 
-    // Store original styles
-    const originalBodyOverflow = document.body.style.overflow;
-    const originalHtmlOverflow = document.documentElement.style.overflow;
-    const originalRoutineSegment = mergedRoutineRef.current;
-    if (!originalRoutineSegment) return;
-
-    const scrolledWidth = 1800; // ! FORCE a standard desktop width- Change to increase downloaded image's width
-
-    // ? Hidden container for the cloned routine segment
-    const container = document.createElement('div');
-    container.style.position = 'absolute';
-    container.style.top = '-9999px';
-    container.style.left = '-9999px';
-    container.style.width = scrolledWidth + 'px';
-
-    container.style.zoom = 0.5;
-
-    document.body.appendChild(container);
-
-    // ? Cloning the Routine Segment
-    const clonedRoutine = originalRoutineSegment.cloneNode(true);
-
-    // ? Force the clonedRoutine to show everything and adjust to desktop resolution
-    clonedRoutine.style.width = scrolledWidth + 'px';
-    clonedRoutine.style.height = 'auto';
-    clonedRoutine.style.overflow = 'visible';
-
-    container.appendChild(clonedRoutine);
-
-    // ? We are waiting here, because our browser can be stuipidly dumb (And also slow ¯\_(ツ)_/¯)
-    // ? which causes html-to-image to capture the image before styles are even applied, resulting in a broken image
-    await new Promise(resolve => setTimeout(resolve, 100));
-
-    try {
-      const dataUrl = await htmlToImage.toPng(clonedRoutine, {
-        quality: 0.95,
-        pixelRatio: 3, // ! Higher number -> Higher resolution -> Larger file size (Maybe add a slider on client side for them to adjust this in the future?) 
-        backgroundColor: '#111827',
-        width: scrolledWidth,
-        height: clonedRoutine.scrollHeight,
-      });
-
-      // ? Anhilation of the cloned routine and resetting styles back to normal
-      document.body.removeChild(container);
-
-      const link = document.createElement('a');
-      link.download = `merged-routine-${new Date().toISOString().split('T')[0]}.png`;
-      link.href = dataUrl;
-      link.click();
-
-      toast.success('Routine exported successfully!');
-    } catch (error) {
-      console.error('Error exporting routine:', error);
-      toast.error('Failed to export routine.');
-    } finally {
-      // Restore original styles (if any were modified on the main document)
-      document.body.style.overflow = originalBodyOverflow;
-      document.documentElement.style.overflow = originalHtmlOverflow;
-
-      // Restore overflow on all elements
-      originalOverflows.forEach(({ element, overflow, overflowX, overflowY }) => {
-        element.style.overflow = overflow;
-        element.style.overflowX = overflowX;
-        element.style.overflowY = overflowY;
-      });
-    }
+    await exportRoutineToPNG({
+      routineRef: mergedRoutineRef,
+      filename: 'merged-routine',
+    });
   };
 
   return (
