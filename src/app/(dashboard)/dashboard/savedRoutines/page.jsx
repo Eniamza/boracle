@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect, useRef } from 'react';
-import { Calendar, Clock, Trash2, Eye, Download, RefreshCw, AlertCircle, X, Users, Share2, Copy, Check, Link, Plus, Cable, Hammer } from 'lucide-react';
+import { Calendar, Clock, Trash2, Eye, Download, RefreshCw, AlertCircle, X, Users, Share2, Copy, Check, Link, Plus, Cable, Hammer, Pencil, Save } from 'lucide-react';
 import CourseHoverTooltip from '@/components/ui/CourseHoverTooltip';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
@@ -38,6 +38,11 @@ const SavedRoutinesPage = () => {
   const [sharingRoutineId, setSharingRoutineId] = useState(null);
   const [sharingRoutineType, setSharingRoutineType] = useState('routine');
   const [facultyMap, setFacultyMap] = useState({});
+
+  // Editing state
+  const [editingRoutineId, setEditingRoutineId] = useState(null);
+  const [editNameInput, setEditNameInput] = useState('');
+  const [isSavingName, setIsSavingName] = useState(false);
 
   // Predefined color palette for friends
   const colorPalette = [
@@ -313,6 +318,37 @@ const SavedRoutinesPage = () => {
       toast.error('Failed to import routine');
     } finally {
       setImporting(false);
+    }
+
+  };
+
+  // Update routine name
+  const updateRoutineName = async (routineId) => {
+    try {
+      setIsSavingName(true);
+
+      const response = await fetch(`/api/routine/${routineId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ routineName: editNameInput }),
+      });
+
+      if (response.ok) {
+        setRoutines(prev => prev.map(r =>
+          r.id === routineId ? { ...r, routineName: editNameInput } : r
+        ));
+        setEditingRoutineId(null);
+        toast.success('Routine name updated!');
+      } else {
+        throw new Error('Failed to update routine name');
+      }
+    } catch (err) {
+      console.error('Error updating routine name:', err);
+      toast.error('Failed to update routine name');
+    } finally {
+      setIsSavingName(false);
     }
   };
 
@@ -872,11 +908,68 @@ const SavedRoutinesPage = () => {
                   </div>
                   <div className="flex flex-col">
                     {/* User's First name with routine number */}
-                    <h3 className="font-semibold text-lg">
-                      {session?.user?.name
-                        ? `${session.user.name.split(' ')[0].charAt(0).toUpperCase() + session.user.name.split(' ')[0].slice(1).toLowerCase()}'s Routine #${routine.routineNumber}`
-                        : `Routine #${routine.routineNumber}`}
-                    </h3>
+                    <div className="flex items-center gap-2">
+                      {editingRoutineId === routine.id ? (
+                        <div className="flex flex-col gap-1">
+                          <div className="flex items-center gap-2">
+                            <Input
+                              value={editNameInput}
+                              onChange={(e) => setEditNameInput(e.target.value)}
+                              className={`h-8 w-48 text-sm bg-gray-800 ${editNameInput.length === 40 ? 'border-red-500 focus:border-red-500' : 'border-gray-700 focus:border-blue-500'} focus:ring-blue-500`}
+                              placeholder="Enter routine name"
+                              maxLength={40}
+                              autoFocus
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') updateRoutineName(routine.id);
+                                if (e.key === 'Escape') setEditingRoutineId(null);
+                              }}
+                            />
+                            <div className="flex items-center gap-1">
+                              <button
+                                onClick={() => updateRoutineName(routine.id)}
+                                disabled={isSavingName}
+                                className="p-1.5 hover:bg-green-500/20 rounded-lg text-green-400 transition-colors"
+                              >
+                                {isSavingName ? (
+                                  <RefreshCw className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  <Save className="w-4 h-4" />
+                                )}
+                              </button>
+                              <button
+                                onClick={() => setEditingRoutineId(null)}
+                                disabled={isSavingName}
+                                className="p-1.5 hover:bg-red-500/20 rounded-lg text-red-400 transition-colors"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+                          <span className={`text-[10px] ml-1 ${editNameInput.length === 40 ? 'text-red-500 font-medium' : 'text-gray-500'}`}>
+                            {editNameInput.length === 40 ? '40 characters max (limit reached)' : '40 characters max'}
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2 group/name">
+                          <h3 className="font-semibold text-lg">
+                            {routine.routineName || (session?.user?.name
+                              ? `${session.user.name.split(' ')[0].charAt(0).toUpperCase() + session.user.name.split(' ')[0].slice(1).toLowerCase()}'s Routine #${routine.routineNumber}`
+                              : `Routine #${routine.routineNumber}`)}
+                          </h3>
+                          <button
+                            onClick={() => {
+                              setEditingRoutineId(routine.id);
+                              setEditNameInput(routine.routineName || (session?.user?.name
+                                ? `${session.user.name.split(' ')[0].charAt(0).toUpperCase() + session.user.name.split(' ')[0].slice(1).toLowerCase()}'s Routine #${routine.routineNumber}`
+                                : `Routine #${routine.routineNumber}`));
+                            }}
+                            className="p-1 opacity-0 group-hover/name:opacity-100 hover:bg-gray-800 rounded-lg text-gray-400 transition-all duration-200"
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
                     {/* Routine ID as copyable code subtitle */}
                     <button
                       onClick={async () => {
