@@ -441,8 +441,8 @@ const MergeRoutinesPage = () => {
                         value={input.friendName}
                         onChange={(e) => updateRoutineInput(input.id, 'friendName', e.target.value)}
                         className={`bg-white dark:bg-gray-800 text-gray-900 dark:text-white ${validationErrors[input.id]?.friendName
-                            ? 'border-red-500 dark:border-red-500 border-2 focus:ring-red-500 focus:border-red-500'
-                            : 'border-gray-300 dark:border-gray-600'
+                          ? 'border-red-500 dark:border-red-500 border-2 focus:ring-red-500 focus:border-red-500'
+                          : 'border-gray-300 dark:border-gray-600'
                           }`}
                       />
                     </div>
@@ -456,8 +456,8 @@ const MergeRoutinesPage = () => {
                           value={input.routineId}
                           onChange={(e) => updateRoutineInput(input.id, 'routineId', e.target.value)}
                           className={`flex-1 bg-white dark:bg-gray-800 text-gray-900 dark:text-white ${hasDuplicateRoutineId(input.routineId) || validationErrors[input.id]?.routineId
-                              ? 'border-red-500 dark:border-red-500 border-2 focus:ring-red-500 focus:border-red-500'
-                              : 'border-gray-300 dark:border-gray-600'
+                            ? 'border-red-500 dark:border-red-500 border-2 focus:ring-red-500 focus:border-red-500'
+                            : 'border-gray-300 dark:border-gray-600'
                             }`}
                         />
                         {input.routineId && (
@@ -494,7 +494,9 @@ const MergeRoutinesPage = () => {
                                 {(() => {
                                   const matched = userSavedRoutines.find(r => r.id === input.routineId.trim());
                                   return matched ? (
-                                    <span className="font-medium text-blue-600 dark:text-blue-400">Routine #{matched.routineNumber}</span>
+                                    <span className="font-medium text-blue-600 dark:text-blue-400">
+                                      {matched.routineName || `Routine #${matched.routineNumber}`}
+                                    </span>
                                   ) : (
                                     <span className="text-muted-foreground">Select Saved Routine</span>
                                   );
@@ -512,7 +514,7 @@ const MergeRoutinesPage = () => {
                                   className="flex flex-col items-start gap-0.5 cursor-pointer focus:bg-gray-100 dark:focus:bg-gray-800"
                                 >
                                   <span className={`text-sm font-medium ${input.routineId === routine.id ? 'text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-200'}`}>
-                                    Routine #{routine.routineNumber}
+                                    {routine.routineName || `Routine #${routine.routineNumber}`}
                                   </span>
                                   <span className="text-[10px] text-gray-500 dark:text-gray-400">
                                     {new Date(Number(routine.createdAt) * 1000).toLocaleString(undefined, {
