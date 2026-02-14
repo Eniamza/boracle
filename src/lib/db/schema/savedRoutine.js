@@ -6,6 +6,7 @@ import { userinfo } from './userinfo.js';
 export const savedRoutine = pgTable('savedroutine', {
   routineId: uuid('routineid').primaryKey().defaultRandom(),
   routineStr: text('routinestr').notNull(),
+  routineName: text('routinename'),
   email: text('email').notNull().references(() => userinfo.email, { onDelete: 'cascade', onUpdate: 'cascade' }),
   createdAt: bigint('createdat', { mode: 'number' }),
   semester: text('semester').notNull(),
