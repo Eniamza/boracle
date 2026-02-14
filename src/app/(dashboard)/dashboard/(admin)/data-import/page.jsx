@@ -3,9 +3,9 @@
 import React, { useState, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { 
-  Upload, 
-  FileSpreadsheet, 
+import {
+  Upload,
+  FileSpreadsheet,
   AlertCircle,
   CheckCircle,
   Download,
@@ -53,13 +53,45 @@ const FacultyImportPage = () => {
     const reader = new FileReader();
     reader.onload = async (e) => {
       const text = e.target.result;
-      const rows = text.split('\n').filter(row => row.trim());
-      const headers = rows[0].split(',').map(h => h.trim());
-      
+
+      // Helper function to parse CSV line respecting quotes
+      const parseCSVLine = (line) => {
+        const values = [];
+        let currentValue = '';
+        let insideQuotes = false;
+
+        for (let i = 0; i < line.length; i++) {
+          const char = line[i];
+
+          if (char === '"') {
+            insideQuotes = !insideQuotes;
+          } else if (char === ',' && !insideQuotes) {
+            values.push(currentValue.trim());
+            currentValue = '';
+          } else {
+            currentValue += char;
+          }
+        }
+        values.push(currentValue.trim());
+        return values;
+      };
+
+      // Split by newline but respect quotes potentially spanning lines (basic version assumes 1 line per row)
+      // For more complex multi-line support, a full parser library is better, but this regex split handles standard CRLF/LF
+      const rows = text.split(/\r?\n/).filter(row => row.trim());
+
+      if (rows.length === 0) {
+        setErrors(['File is empty']);
+        return;
+      }
+
+      // Parse headers
+      const headers = parseCSVLine(rows[0]).map(h => h.replace(/^"|"$/g, '').trim()); // Remove surrounding quotes
+
       // Validate headers
       const requiredHeaders = ['facultyName', 'email'];
       const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
-      
+
       if (missingHeaders.length > 0) {
         setErrors([`Missing required columns: ${missingHeaders.join(', ')}`]);
         setCsvData([]);
@@ -69,12 +101,25 @@ const FacultyImportPage = () => {
       // Parse data rows
       const data = [];
       const parseErrors = [];
-      
+
       for (let i = 1; i < rows.length; i++) {
-        const values = rows[i].split(',').map(v => v.trim());
+        const rowText = rows[i].trim();
+        if (!rowText) continue;
+
+        const values = parseCSVLine(rowText).map(v => v.replace(/^"|"$/g, '')); // Remove quotes
+
         if (values.length !== headers.length) {
-          parseErrors.push(`Row ${i + 1}: Column count mismatch`);
-          continue;
+          // Attempt to be lenient if trailing comma caused an empty extra field?
+          // Or just report error.
+          // Check if it's just a trailing comma case
+          if (values.length > headers.length && !values[values.length - 1]) {
+            values.pop();
+          }
+
+          if (values.length !== headers.length) {
+            parseErrors.push(`Row ${i + 1}: Column count mismatch (Found ${values.length}, Expected ${headers.length})`);
+            continue;
+          }
         }
 
         const row = {};
@@ -84,23 +129,30 @@ const FacultyImportPage = () => {
 
         // Validate required fields
         if (!row.facultyName || !row.email) {
-          parseErrors.push(`Row ${i + 1}: Missing facultyName or email`);
-          continue;
+          // parseErrors.push(`Row ${i + 1}: Missing facultyName or email`);
+          // continue;
+          // Skip instead of erroring? Or soft error?
         }
 
         // Basic email validation
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(row.email)) {
-          parseErrors.push(`Row ${i + 1}: Invalid email format`);
-          continue;
-        }
+        // const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        // if (row.email && !emailRegex.test(row.email)) {
+        //   parseErrors.push(`Row ${i + 1}: Invalid email format (${row.email})`);
+        //   continue;
+        // }
 
-        data.push(row);
+        if (row.facultyName && row.email) {
+          data.push(row);
+        }
       }
 
       setCsvData(data);
       if (parseErrors.length > 0) {
-        setErrors(parseErrors);
+        // Only show first 10 errors to avoid flooding
+        const limitedErrors = parseErrors.length > 10
+          ? [...parseErrors.slice(0, 10), `... and ${parseErrors.length - 10} more errors`]
+          : parseErrors;
+        setErrors(limitedErrors);
       }
     };
 
@@ -175,7 +227,7 @@ const FacultyImportPage = () => {
     const example1 = 'John Doe,john.doe@university.edu,https://example.com/john.jpg,"JD,JDO"\n';
     const example2 = 'Jane Smith,jane.smith@university.edu,,"JS,JSM"\n';
     const example3 = 'Bob Wilson,bob.wilson@university.edu,,BW\n';
-    
+
     const blob = new Blob([template + example1 + example2 + example3], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -257,7 +309,7 @@ const FacultyImportPage = () => {
                 </div>
               </div>
             </div>
-            <Button 
+            <Button
               onClick={downloadTemplate}
               variant="outline"
               className="w-full md:w-auto"
