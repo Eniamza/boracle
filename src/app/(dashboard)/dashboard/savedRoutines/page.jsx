@@ -927,7 +927,7 @@ const SavedRoutinesPage = () => {
                             <Input
                               value={editNameInput}
                               onChange={(e) => setEditNameInput(e.target.value)}
-                              className={`h-8 w-48 text-sm bg-gray-800 ${editNameInput.length === 40 ? 'border-red-500 focus:border-red-500' : 'border-gray-700 focus:border-blue-500'} focus:ring-blue-500`}
+                              className={`h-8 w-48 text-sm bg-gray-50 dark:bg-gray-800 ${editNameInput.length === 40 ? 'border-red-500 focus:border-red-500' : 'border-gray-300 dark:border-gray-700 focus:border-blue-500'} focus:ring-blue-500 text-gray-900 dark:text-white`}
                               placeholder="Enter routine name"
                               maxLength={40}
                               autoFocus
@@ -975,7 +975,7 @@ const SavedRoutinesPage = () => {
                                 ? `${session.user.name.split(' ')[0].charAt(0).toUpperCase() + session.user.name.split(' ')[0].slice(1).toLowerCase()}'s Routine #${routine.routineNumber}`
                                 : `Routine #${routine.routineNumber}`));
                             }}
-                            className="p-1 opacity-0 group-hover/name:opacity-100 hover:bg-gray-800 rounded-lg text-gray-400 transition-all duration-200"
+                              className="p-1 opacity-0 group-hover/name:opacity-100 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg text-gray-500 dark:text-gray-400 transition-all duration-200"
                           >
                             <Pencil className="w-3.5 h-3.5" />
                           </button>
