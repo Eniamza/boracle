@@ -783,11 +783,11 @@ const PreRegistrationPage = () => {
       {/* Filter Modal */}
       {showFilterModal && (
         <div
-          className="fixed inset-0 bg-black/50 dark:bg-black/75 flex items-center justify-center z-50 p-4"
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[60] p-4"
           onClick={() => setShowFilterModal(false)}
         >
           <div
-            className="bg-white dark:bg-[#0f172a] border border-gray-200 dark:border-blue-800/50 rounded-lg max-w-md w-full shadow-xl"
+            className="bg-white dark:bg-[#0f172a] border border-gray-200 dark:border-blue-800/50 rounded-lg max-w-md w-full shadow-xl z-[70]"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
@@ -997,8 +997,8 @@ const PreRegistrationPage = () => {
 
       {/* Routine Modal */}
       {showRoutineModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-900 rounded-lg p-6 w-full max-w-[95vw] max-h-[95vh] overflow-hidden flex flex-col shadow-xl">
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-lg p-6 w-full max-w-[95vw] max-h-[95vh] overflow-hidden flex flex-col shadow-xl z-[70]">
             <div className="flex justify-between items-center mb-4">
               <div>
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white">My Routine</h2>
