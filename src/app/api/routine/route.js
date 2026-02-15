@@ -10,7 +10,7 @@ export async function GET(request) {
     // Get authenticated user session
     const session = await auth();
     console.log("Routine List API accessed by:", session?.user?.email);
-    
+
     if (!session || !session.user?.email) {
       return NextResponse.json(
         { error: "Unauthorized" },
@@ -26,6 +26,7 @@ export async function GET(request) {
         email: savedRoutine.email,
         createdAt: savedRoutine.createdAt,
         semester: savedRoutine.semester,
+        routineName: savedRoutine.routineName,
       })
       .from(savedRoutine)
       .where(eq(savedRoutine.email, session.user.email))
@@ -40,7 +41,8 @@ export async function GET(request) {
         routineStr: routine.routineStr,
         email: routine.email,
         createdAt: routine.createdAt,
-        semester: routine.semester
+        semester: routine.semester,
+        routineName: routine.routineName
       }))
     });
 
@@ -60,10 +62,10 @@ export async function POST(request) {
     console.log("Routine Save API accessed by:", session?.user?.email);
     if (!session || !session.user?.email) {
 
-          return NextResponse.json(
-      { error: "Unauthorized" },
-      { status: 401 }
-    );
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
     }
 
     const { routineStr, email } = await request.json();
@@ -87,9 +89,9 @@ export async function POST(request) {
       })
       .returning({ routineId: savedRoutine.routineId });
 
-    return NextResponse.json({ 
-      success: true, 
-      routineId: result[0].routineId 
+    return NextResponse.json({
+      success: true,
+      routineId: result[0].routineId
     });
 
   } catch (error) {

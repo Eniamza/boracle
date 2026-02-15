@@ -1017,7 +1017,7 @@ const PreRegistrationPage = () => {
                   <Save className="w-4 h-4" />
                   {savingRoutine ? 'Saving...' : 'Save Routine'}
                 </button>
-                <ExportRoutinePNG selectedCourses={enrichedSelectedCourses} routineRef={routineRef} />
+                <ExportRoutinePNG courses={enrichedSelectedCourses} routineRef={routineRef} filename="routine" />
                 <button
                   onClick={() => setShowRoutineModal(false)}
                   className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
