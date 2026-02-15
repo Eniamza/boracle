@@ -12,9 +12,13 @@ export default async function RandomQuote() {
     const author = data[0].a;
 
     return (
-        <div className=" p-4">
-            <p className="text-gray-700 dark:text-gray-300">{quote}</p>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">— {author}</p>
+        <div className="text-center px-4">
+            <p className="text-base sm:text-lg italic text-gray-600 dark:text-gray-300 leading-relaxed">
+                "{quote}"
+            </p>
+            <p className="mt-3 text-sm font-medium text-blue-600 dark:text-blue-400">
+                — {author}
+            </p>
         </div>
     );
 }
