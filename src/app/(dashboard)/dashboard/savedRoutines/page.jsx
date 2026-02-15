@@ -464,11 +464,11 @@ const SavedRoutinesPage = () => {
       <>
         {/* Blurred backdrop overlay */}
         <div
-          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 transition-opacity duration-300"
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[60] transition-opacity duration-300"
           onClick={onClose}
         />
         {/* Centered modal */}
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 pointer-events-none">
           <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border border-gray-200 dark:border-gray-700/60 rounded-2xl p-6 max-w-md w-full shadow-2xl pointer-events-auto animate-in fade-in zoom-in-95 duration-200">
             {/* Header */}
             <div className="flex items-center justify-between mb-5">
@@ -1248,14 +1248,14 @@ const SavedRoutinesPage = () => {
       {/* Backdrop overlay when floating menu is open */}
       {showFloatingOptions && (
         <div
-          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 transition-opacity duration-300"
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[60] transition-opacity duration-300"
           onClick={() => setShowFloatingOptions(false)}
         />
       )}
 
       {/* Centered Action Sheet */}
       {showFloatingOptions && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
+        <div className="fixed inset-0 z-[70] flex items-center justify-center pointer-events-none">
           <div className="floating-action-sheet pointer-events-auto flex flex-col gap-3 w-80 animate-in fade-in zoom-in-95 duration-200">
             {/* Build a Routine */}
             <button
