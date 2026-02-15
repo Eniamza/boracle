@@ -1,4 +1,4 @@
-"use client"
+
 
 import { Geist, Geist_Mono } from "next/font/google";
 import "@/app/globals.css";
@@ -7,7 +7,7 @@ import NavigationBar from "@/components/navbar/navigation-bar";
 import { SessionProvider } from "next-auth/react";
 import { ModeToggle } from "@/components/light-toggle";
 import { Description } from "@radix-ui/react-dialog";
-import { image } from "html2canvas/dist/types/css/types/image";
+
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
