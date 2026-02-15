@@ -351,8 +351,8 @@ const CourseSwapPage = () => {
           
           <div className="flex flex-wrap gap-3 items-center">
             {session?.user?.email && (
-              <label className="flex items-center gap-2 cursor-pointer bg-gray-100 dark:bg-gray-800 px-3 py-2 rounded-lg">
-                <span className="text-xs md:text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">My Swaps</span>
+              <label className="flex items-center gap-2 cursor-pointer bg-blue-50 dark:bg-gray-800 border border-blue-200 dark:border-gray-700 px-3 py-2 rounded-lg">
+                <span className="text-xs md:text-sm font-medium text-blue-700 dark:text-gray-300 whitespace-nowrap">My Swaps</span>
                 <button
                   type="button"
                   role="switch"
