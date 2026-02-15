@@ -114,12 +114,24 @@ const SharedRoutinePage = () => {
             const originalRoutineSegment = routineRef.current;
             const scrolledWidth = 1800;
 
+            // ? Detect current theme mode by checking if 'dark' class exists on html element
+            const isDarkMode = document.documentElement.classList.contains('dark');
+            
+            // ! Use appropriate background color based on current theme
+            const backgroundColor = isDarkMode ? '#111827' : '#f9fafb'; // gray-900 vs gray-50
+
             const container = document.createElement('div');
             container.style.position = 'absolute';
             container.style.top = '-9999px';
             container.style.left = '-9999px';
             container.style.width = scrolledWidth + 'px';
             container.style.zoom = 0.5;
+            
+            // ! Apply theme class to container so dark: variants work correctly
+            if (isDarkMode) {
+                container.classList.add('dark');
+            }
+            
             document.body.appendChild(container);
 
             const clonedRoutine = originalRoutineSegment.cloneNode(true);
@@ -133,7 +145,7 @@ const SharedRoutinePage = () => {
             const dataUrl = await htmlToImage.toPng(clonedRoutine, {
                 quality: 0.95,
                 pixelRatio: 3,
-                backgroundColor: '#111827',
+                backgroundColor: backgroundColor,
                 width: scrolledWidth,
                 height: clonedRoutine.scrollHeight,
             });

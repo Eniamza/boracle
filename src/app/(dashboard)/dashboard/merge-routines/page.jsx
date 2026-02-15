@@ -386,12 +386,23 @@ const MergeRoutinesPage = () => {
 
     const scrolledWidth = 1800; // ! FORCE a standard desktop width- Change to increase downloaded image's width
 
+    // ? Detect current theme mode by checking if 'dark' class exists on html element
+    const isDarkMode = document.documentElement.classList.contains('dark');
+    
+    // ! Use appropriate background color based on current theme
+    const backgroundColor = isDarkMode ? '#111827' : '#f9fafb'; // gray-900 vs gray-50
+
     // ? Hidden container for the cloned routine segment
     const container = document.createElement('div');
     container.style.position = 'absolute';
     container.style.top = '-9999px';
     container.style.left = '-9999px';
     container.style.width = scrolledWidth + 'px';
+
+    // ! Apply theme class to container so dark: variants work correctly
+    if (isDarkMode) {
+      container.classList.add('dark');
+    }
 
     container.style.zoom = 0.5;
 
@@ -415,7 +426,7 @@ const MergeRoutinesPage = () => {
       const dataUrl = await htmlToImage.toPng(clonedRoutine, {
         quality: 0.95,
         pixelRatio: 3, // ! Higher number -> Higher resolution -> Larger file size (Maybe add a slider on client side for them to adjust this in the future?) 
-        backgroundColor: '#111827',
+        backgroundColor: backgroundColor,
         width: scrolledWidth,
         height: clonedRoutine.scrollHeight,
       });

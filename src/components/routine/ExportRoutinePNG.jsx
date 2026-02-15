@@ -15,23 +15,37 @@ const ExportRoutinePNG = ({ selectedCourses, routineRef, displayToast }) => {
     if (!routineRef?.current) {
       toast.error('Routine table not found');
       return;
-      return;
-    }
-
-    if (!routineRef?.current) {
-      toast.error('Routine table not found');
-      return;
     }
 
     try {
+      // ? Detect current theme mode by checking if 'dark' class exists on html element
+      const isDarkMode = document.documentElement.classList.contains('dark');
+      
+      // ! Use appropriate background color based on current theme
+      const backgroundColor = isDarkMode ? '#111827' : '#f9fafb'; // gray-900 vs gray-50
+
       // Using html-to-image to capture the actual visible routine table
       const dataUrl = await htmlToImage.toPng(routineRef.current, {
         quality: 0.95,
         pixelRatio: 2,
-        backgroundColor: '#111827',
+        backgroundColor: backgroundColor,
         style: {
           transform: 'scale(1)',
           transformOrigin: 'top left',
+        },
+        // ? Filter function to ensure theme classes are preserved on cloned elements
+        filter: (node) => {
+          // Include all nodes
+          return true;
+        },
+        // ! Apply computed styles to handle dark: variant classes properly
+        onclone: (clonedDoc, element) => {
+          // Force the same theme class on the cloned document
+          if (isDarkMode) {
+            clonedDoc.documentElement.classList.add('dark');
+          } else {
+            clonedDoc.documentElement.classList.remove('dark');
+          }
         }
       });
       
