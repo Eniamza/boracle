@@ -67,7 +67,8 @@ const CreateSwapModal = ({ courses, onSwapCreated }) => {
   return (
     <Dialog open={modalOpen} onOpenChange={setModalOpen}>
       <DialogTrigger asChild>
-        <div className="px-4 py-2 bg-black dark:text-black text-white rounded-lg cursor-pointer transition-all flex items-center gap-2 font-medium shadow-md dark:bg-white/90">
+        <div className="flex items-center gap-2 px-4 py-2 bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 rounded-lg font-medium shadow-sm transition-all hover:opacity-90 cursor-pointer">
+        {/* <div className="px-4 py-2 bg-black dark:text-black text-white rounded-lg cursor-pointer transition-all flex items-center gap-2 font-medium shadow-md dark:bg-white/90 hover:brightness-110 hover:dark:bg-white/90 hover:bg-gray-900"> */}
           <Plus className="w-4 h-4" />
           Create Swap
         </div>
@@ -103,7 +104,7 @@ const CreateSwapModal = ({ courses, onSwapCreated }) => {
           <Button 
             onClick={handleSubmit}
             disabled={submitting || !givingSection || askingSections.length === 0}
-            className="bg-green-600 hover:bg-green-700 px-8"
+            className="bg-green-600 hover:bg-green-700 px-8 transition-all hover:scale-105 hover:shadow-lg disabled:hover:scale-100 disabled:hover:shadow-none"
           >
             {submitting ? (
               <>
