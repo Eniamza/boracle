@@ -998,10 +998,10 @@ const SavedRoutinesPage = () => {
                         : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400'
                         }`}
                     >
-                      <code className={`px-2 py-0.5 rounded font-mono ${copiedRoutineId === routine.id
+                      <code className={`px-2 py-0.5 rounded font-mono text-left ${copiedRoutineId === routine.id
                         ? 'bg-green-100 dark:bg-green-900/50 text-green-600 dark:text-green-400'
                         : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
-                        }`}>{routine.id}</code>
+                        }`}>{routine.id.substring(0, 4)}...{routine.id.substring(32, 36)}</code>
                       <span className="flex items-center gap-1">
                         {copiedRoutineId === routine.id ? 'Copied' : 'Copy'}
                         {copiedRoutineId === routine.id ? (
@@ -1126,10 +1126,10 @@ const SavedRoutinesPage = () => {
                             : 'text-gray-600 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400'
                             }`}
                         >
-                          <code className={`px-2 py-0.5 rounded font-mono ${copiedMergedRoutineId === routine.id
+                          <code className={`px-2 py-0.5 rounded font-mono text-left ${copiedMergedRoutineId === routine.id
                             ? 'bg-green-100 dark:bg-green-900/50 text-green-600 dark:text-green-400'
                             : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
-                            }`}>{routine.id}</code>
+                            }`}>{routine.id.substring(0, 4)}...{routine.id.substring(32, 36)}</code>
                           <span className="flex items-center gap-1">
                             {copiedMergedRoutineId === routine.id ? 'Copied' : 'Copy'}
                             {copiedMergedRoutineId === routine.id ? (
