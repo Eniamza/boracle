@@ -149,7 +149,7 @@ const RoutineTableGrid = ({
                                 onMouseLeave={() => setHoveredCourse(null)}
                               >
                                 <div className="font-semibold text-base">
-                                  {course.courseCode}{isLab && 'L'}-{course.sectionName}-{course.roomName || course.roomNumber || 'TBA'}
+                                  {course.courseCode}{isLab && 'L'}-{course.sectionName}-{isLab ? course.labRoomName || course.labRoomNumber || 'TBA' : course.roomName || course.roomNumber || 'TBA'}
                                 </div>
                                 {course.faculties && (
                                   <div className="text-gray-600 dark:text-gray-400 truncate text-sm mt-1">
