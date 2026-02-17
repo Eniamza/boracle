@@ -117,25 +117,52 @@ const CourseHoverTooltip = ({ course, position, courseTitle, extraFields = [] })
                 )}
 
                 {/* Faculty Information */}
-                <div className="bg-gray-50 dark:bg-gray-700/30 rounded-lg p-3 space-y-1.5 border border-gray-100 dark:border-gray-700">
-                    <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Faculty Information</div>
-                    <div className="text-sm">
-                        <span className="text-gray-500 dark:text-gray-400 block text-xs">Initial</span>
-                        <span className="font-medium text-gray-900 dark:text-gray-200">{course.faculties || 'TBA'}</span>
+                <div className="bg-gray-50 dark:bg-gray-700/30 rounded-lg p-3 border border-gray-100 dark:border-gray-700 flex gap-4 items-start">
+                    <div className="space-y-1.5 flex-1 min-w-0">
+                        <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Faculty Information</div>
+                        <div className="text-sm">
+                            <span className="text-gray-500 dark:text-gray-400 block text-xs">Initial</span>
+                            <span className="font-medium text-gray-900 dark:text-gray-200">{course.faculties || 'TBA'}</span>
+                        </div>
+                        {course.employeeName && (
+                            <div className="text-sm">
+                                <span className="text-gray-500 dark:text-gray-400 block text-xs">Name</span>
+                                <span className="font-medium text-gray-900 dark:text-gray-200 truncate block" title={course.employeeName}>
+                                    {course.employeeName}
+                                </span>
+                            </div>
+                        )}
+                        {course.employeeEmail && (
+                            <div className="text-sm">
+                                <a href={`mailto:${course.employeeEmail}`} className="text-blue-600 dark:text-blue-400 hover:underline break-all block">
+                                    {course.employeeEmail}
+                                </a>
+                            </div>
+                        )}
                     </div>
-                    {course.employeeName && (
-                        <div className="text-sm">
-                            <span className="text-gray-500 dark:text-gray-400 block text-xs">Name</span>
-                            <span className="font-medium text-gray-900 dark:text-gray-200">{course.employeeName}</span>
+
+                    {/* Faculty Image */}
+                    <div className="shrink-0 pt-1">
+                        {course.imgUrl && course.imgUrl !== 'N/A' && !course.imageError ? (
+                            <img
+                                src={course.imgUrl}
+                                alt={course.faculties || 'Faculty'}
+                                className="w-16 h-16 rounded-full object-cover border-2 border-blue-200 dark:border-blue-800"
+                                onError={(e) => {
+                                    e.target.style.display = 'none';
+                                    e.target.nextSibling.style.display = 'flex';
+                                }}
+                            />
+                        ) : null}
+                        <div
+                            className="w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center border-2 border-blue-200 dark:border-blue-800"
+                            style={{ display: course.imgUrl && course.imgUrl !== 'N/A' && !course.imageError ? 'none' : 'flex' }}
+                        >
+                            <svg className="w-8 h-8 text-blue-400 dark:text-blue-300" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                            </svg>
                         </div>
-                    )}
-                    {course.employeeEmail && (
-                        <div className="text-sm">
-                            <a href={`mailto:${course.employeeEmail}`} className="text-blue-600 dark:text-blue-400 hover:underline break-all">
-                                {course.employeeEmail}
-                            </a>
-                        </div>
-                    )}
+                    </div>
                 </div>
 
                 {/* Class Schedule */}
