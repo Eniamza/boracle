@@ -65,6 +65,25 @@ const CourseHoverTooltip = ({ course, position, courseTitle, extraFields = [] })
     }
 
     // console.log("Course Title", courseTitle);
+    const formatDay = (day) => {
+        if (!day) return '';
+        return day.charAt(0).toUpperCase() + day.slice(1).toLowerCase();
+    };
+
+    const formatTime = (time) => {
+        if (!time) return '';
+        // If already has AM/PM, return as is
+        if (time.includes('AM') || time.includes('PM')) return time;
+
+        const [hours, minutes] = time.split(':');
+        const hour = parseInt(hours, 10);
+        if (isNaN(hour)) return time;
+
+        const ampm = hour >= 12 ? 'PM' : 'AM';
+        const displayHour = hour % 12 || 12;
+        return `${displayHour}:${minutes} ${ampm}`;
+    };
+
     const displayTitle = courseTitle || `${course.courseCode}`;
 
     return (
