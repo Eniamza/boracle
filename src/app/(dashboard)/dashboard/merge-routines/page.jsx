@@ -88,6 +88,7 @@ const MergeRoutinesPage = () => {
                 ...course,
                 employeeName: facultyInfo?.facultyName || null,
                 employeeEmail: facultyInfo?.email || null,
+                imgUrl: facultyInfo?.imgUrl || null,
               };
             }));
           }
@@ -318,7 +319,8 @@ const MergeRoutinesPage = () => {
                   friendColor: input.color,
                   originalRoutineId: trimmedRoutineId,
                   employeeName: facultyMap[course.faculties?.split(',')[0]?.trim().toUpperCase()]?.facultyName || null,
-                  employeeEmail: facultyMap[course.faculties?.split(',')[0]?.trim().toUpperCase()]?.email || null
+                  employeeEmail: facultyMap[course.faculties?.split(',')[0]?.trim().toUpperCase()]?.email || null,
+                  imgUrl: facultyMap[course.faculties?.split(',')[0]?.trim().toUpperCase()]?.imgUrl || null
                 };
               }
               return null;
@@ -814,7 +816,7 @@ const MergedRoutineGrid = ({ courses, friends }) => {
                                   </div>
                                   {course.roomName && (
                                     <div className="text-gray-500 text-xs">
-                                      { isLab ? course.labRoomName || course.labRoomNumber || 'TBA' : course.roomName || course.roomNumber || 'TBA' }
+                                      {isLab ? course.labRoomName || course.labRoomNumber || 'TBA' : course.roomName || course.roomNumber || 'TBA'}
                                     </div>
                                   )}
                                 </div>
