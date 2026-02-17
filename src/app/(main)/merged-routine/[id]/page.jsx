@@ -358,7 +358,7 @@ const SharedMergedRoutinePage = () => {
 
             {/* Routine Grid - Matching MergedRoutineTableModal exactly */}
             <div className="max-w-7xl mx-auto">
-                <div ref={routineRef} className="bg-gray-900 p-4 rounded-lg">
+                <div ref={routineRef} className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 p-4 rounded-lg">
                     {/* Friend Legend - same as modal */}
                     <div className="mb-4 flex flex-wrap gap-3">
                         {friends.map(friend => (
@@ -367,7 +367,7 @@ const SharedMergedRoutinePage = () => {
                                     className="w-4 h-4 rounded-full"
                                     style={{ backgroundColor: friend.color }}
                                 />
-                                <span className="text-sm text-gray-400">{friend.friendName}</span>
+                                <span className="text-sm text-gray-600 dark:text-gray-400">{friend.friendName}</span>
                             </div>
                         ))}
                     </div>
@@ -375,10 +375,10 @@ const SharedMergedRoutinePage = () => {
                     <div className="overflow-x-auto">
                         <table className="w-full border-collapse">
                             <thead>
-                                <tr className="border-b border-gray-700">
-                                    <th className="text-left py-4 px-4 text-sm font-medium text-gray-400 w-36">Time/Day</th>
+                                <tr className="border-b border-gray-200 dark:border-gray-700">
+                                    <th className="text-left py-4 px-4 text-sm font-medium text-gray-600 dark:text-gray-400 w-36">Time/Day</th>
                                     {days.map(day => (
-                                        <th key={day} className="text-center py-4 px-3 text-sm font-medium text-gray-400">
+                                        <th key={day} className="text-center py-4 px-3 text-sm font-medium text-gray-600 dark:text-gray-400">
                                             {day}
                                         </th>
                                     ))}
@@ -386,15 +386,15 @@ const SharedMergedRoutinePage = () => {
                             </thead>
                             <tbody>
                                 {timeSlots.map(timeSlot => (
-                                    <tr key={timeSlot} className="border-b border-gray-800">
-                                        <td className="py-3 px-4 text-sm font-medium text-gray-400 whitespace-nowrap">
+                                    <tr key={timeSlot} className="border-b border-gray-100 dark:border-gray-800">
+                                        <td className="py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400 whitespace-nowrap">
                                             {timeSlot}
                                         </td>
                                         {days.map(day => {
                                             const slotCourses = getCoursesForSlot(day, timeSlot);
 
                                             return (
-                                                <td key={`${day}-${timeSlot}`} className="p-2 border-l border-gray-800 relative">
+                                                <td key={`${day}-${timeSlot}`} className="p-2 border-l border-gray-100 dark:border-gray-800 relative">
                                                     {slotCourses.length > 0 && (
                                                         <div className="space-y-1">
                                                             {slotCourses.map((course, idx) => {
@@ -433,11 +433,11 @@ const SharedMergedRoutinePage = () => {
                                                                         <div className="font-semibold">
                                                                             {course.courseCode}{isLab && 'L'}-{course.sectionName}
                                                                         </div>
-                                                                        <div className="text-gray-400 text-xs mt-0.5">
+                                                                        <div className="text-gray-600 dark:text-gray-400 text-xs mt-0.5">
                                                                             {course.friendName}
                                                                         </div>
                                                                         {course.roomName && (
-                                                                            <div className="text-gray-500 text-xs">
+                                                                            <div className="text-gray-500 dark:text-gray-500 text-xs">
                                                                                 {course.roomName}
                                                                             </div>
                                                                         )}
@@ -463,7 +463,7 @@ const SharedMergedRoutinePage = () => {
                     />
 
                     {/* Watermark */}
-                    <div className="text-center py-3 text-gray-600 text-xs">
+                    <div className="text-center py-3 text-gray-500 dark:text-gray-600 text-xs">
                         Made with 💖 from https://oracle.eniamza.com
                     </div>
                 </div>

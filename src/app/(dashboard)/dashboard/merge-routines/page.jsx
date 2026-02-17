@@ -373,9 +373,15 @@ const MergeRoutinesPage = () => {
       return;
     }
 
+    if (!mergedRoutineRef?.current) {
+      toast.error('Routine table not found');
+      return;
+    }
+
     await exportRoutineToPNG({
       routineRef: mergedRoutineRef,
       filename: 'merged-routine',
+      showToast: true,
     });
   };
 

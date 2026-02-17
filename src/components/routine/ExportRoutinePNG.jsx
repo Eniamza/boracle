@@ -9,9 +9,14 @@ const DEFAULT_EXPORT_OPTIONS = {
   width: 1800,           // ? Desktop width for consistent exports
   pixelRatio: 3,         // ? Higher = better quality, larger file
   quality: 0.95,
-  backgroundColor: '#111827',
   zoom: 0.5,
   waitTime: 100,         // ? Wait for styles to apply
+};
+
+// ! Helper to detect current theme and return appropriate background color
+const getThemeAwareBackgroundColor = () => {
+  const isDarkMode = document.documentElement.classList.contains('dark');
+  return isDarkMode ? '#111827' : '#f9fafb'; // gray-900 vs gray-50
 };
 
 // ! Core export function - handles all the PNG export logic
@@ -25,7 +30,7 @@ export const exportRoutineToPNG = async ({
   width = DEFAULT_EXPORT_OPTIONS.width,
   pixelRatio = DEFAULT_EXPORT_OPTIONS.pixelRatio,
   quality = DEFAULT_EXPORT_OPTIONS.quality,
-  backgroundColor = DEFAULT_EXPORT_OPTIONS.backgroundColor,
+  backgroundColor, // ? If not provided, will auto-detect based on current theme
   zoom = DEFAULT_EXPORT_OPTIONS.zoom,
   waitTime = DEFAULT_EXPORT_OPTIONS.waitTime,
   onSuccess,
@@ -37,6 +42,10 @@ export const exportRoutineToPNG = async ({
     return false;
   }
 
+  // ? Auto-detect theme if backgroundColor not explicitly provided
+  const resolvedBackgroundColor = backgroundColor ?? getThemeAwareBackgroundColor();
+  const isDarkMode = document.documentElement.classList.contains('dark');
+
   const originalRoutineSegment = routineRef.current;
 
   // ? Hidden container for the cloned routine segment
@@ -46,6 +55,12 @@ export const exportRoutineToPNG = async ({
   container.style.left = '-9999px';
   container.style.width = `${width}px`;
   container.style.zoom = zoom;
+  
+  // ! Apply theme class to container so dark: variants work correctly
+  if (isDarkMode) {
+    container.classList.add('dark');
+  }
+  
   document.body.appendChild(container);
 
   // ? Cloning the Routine Segment
@@ -65,7 +80,7 @@ export const exportRoutineToPNG = async ({
     const dataUrl = await htmlToImage.toPng(clonedRoutine, {
       quality,
       pixelRatio, // ! Higher number -> Higher resolution -> Larger file size
-      backgroundColor,
+      backgroundColor: resolvedBackgroundColor,
       width,
       height: clonedRoutine.scrollHeight,
     });

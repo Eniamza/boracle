@@ -342,31 +342,31 @@ const CourseSwapPage = () => {
   return (
     <div className="min-h-screen">
       <div className="container mx-auto px-4 py-8">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+        <div className="flex flex-col gap-4 mb-8">
           <div>
-            <h1 className="text-4xl font-bold text-white">
+            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">
               Swap Arena
             </h1>
           </div>
           
-          <div className="flex gap-3 items-center">
+          <div className="flex flex-wrap gap-3 items-center">
             {session?.user?.email && (
-              <label className="flex items-center gap-3 cursor-pointer">
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">My Swaps Only</span>
+              <label className="flex items-center gap-2 cursor-pointer bg-blue-50 dark:bg-gray-800 border border-blue-200 dark:border-gray-700 px-3 py-2 rounded-lg">
+                <span className="text-xs md:text-sm font-medium text-blue-700 dark:text-gray-300 whitespace-nowrap">My Swaps</span>
                 <button
                   type="button"
                   role="switch"
                   aria-checked={showMySwapsOnly}
                   onClick={handleMySwapsToggle}
-                  className={`relative inline-flex h-[24px] w-[44px] items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-opacity-75 ${
+                  className={`relative inline-flex h-[22px] w-[40px] shrink-0 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-opacity-75 ${
                     showMySwapsOnly ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'
                   }`}
                 >
                   <span className="sr-only">Toggle my swaps only</span>
                   <span
                     className={`${
-                      showMySwapsOnly ? 'translate-x-[22px]' : 'translate-x-[2px]'
-                    } pointer-events-none inline-block h-[20px] w-[20px] transform rounded-full bg-white shadow-lg ring-0 transition-transform duration-200 ease-in-out`}
+                      showMySwapsOnly ? 'translate-x-[20px]' : 'translate-x-[2px]'
+                    } pointer-events-none inline-block h-[18px] w-[18px] transform rounded-full bg-white shadow-lg ring-0 transition-transform duration-200 ease-in-out`}
                   />
                 </button>
               </label>
@@ -387,7 +387,7 @@ const CourseSwapPage = () => {
 
         {loading ? (
           <div className="text-center py-16">
-            <Loader2 className="h-12 w-12 animate-spin mx-auto text-white" />
+            <Loader2 className="h-12 w-12 animate-spin mx-auto text-blue-600 dark:text-blue-400" />
             <p className="mt-4 text-gray-600 dark:text-gray-400">Loading swaps...</p>
           </div>
         ) : filteredSwaps.length === 0 ? (
@@ -413,7 +413,7 @@ const CourseSwapPage = () => {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             {filteredSwaps.map((swap) => (
               <SwapCard 
                 key={swap.swapId} 

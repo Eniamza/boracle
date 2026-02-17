@@ -694,7 +694,13 @@ const PreRegistrationPage = () => {
                     <tr
                       key={course.sectionId}
                       ref={isLast && displayCount < filteredCourses.length ? lastCourseRef : null}
-                      className={`border-b border-gray-200 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-800/50 transition-colors ${isSelected ? 'bg-green-50 dark:bg-green-900/20' : ''}`}
+                      className={`
+                        border-b border-gray-200 dark:border-gray-800 transition-colors
+                        ${isSelected 
+                          ? 'bg-green-200 dark:bg-green-500/30 hover:bg-green-300 dark:hover:bg-green-500/40' 
+                          : 'hover:bg-gray-100 dark:hover:bg-gray-800/50'
+                        }
+                      `}
                     >
                       <td className="py-3 px-2 text-sm font-medium text-gray-900 dark:text-gray-100">
                         {course.courseCode}-[{course.sectionName}]
@@ -777,11 +783,11 @@ const PreRegistrationPage = () => {
       {/* Filter Modal */}
       {showFilterModal && (
         <div
-          className="fixed inset-0 bg-black/50 dark:bg-black/75 flex items-center justify-center z-50 p-4"
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[60] p-4"
           onClick={() => setShowFilterModal(false)}
         >
           <div
-            className="bg-white dark:bg-[#0f172a] border border-gray-200 dark:border-blue-800/50 rounded-lg max-w-md w-full shadow-xl"
+            className="bg-white dark:bg-[#0f172a] border border-gray-200 dark:border-blue-800/50 rounded-lg max-w-md w-full shadow-xl z-[70]"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
@@ -923,7 +929,7 @@ const PreRegistrationPage = () => {
                               <div
                                 key={initial}
                                 data-index={index}
-                                className={`flex items-center px-3 py-2.5 cursor-pointer transition-colors ${isHighlighted ? 'bg-blue-600 text-white' : isSelected ? 'bg-blue-100 dark:bg-blue-800/40' : 'hover:bg-gray-100 dark:hover:bg-[#1e3a5f]'
+                                className={`flex items-center px-3 py-2.5 cursor-pointer transition-colors ${isHighlighted ? 'bg-blue-600 text-white' : isSelected ? 'bg-blue-300/60 dark:bg-blue-800/40' : 'hover:bg-gray-100 dark:hover:bg-[#1e3a5f]'
                                   }`}
                                 onClick={() => {
                                   if (isSelected) {
@@ -991,8 +997,8 @@ const PreRegistrationPage = () => {
 
       {/* Routine Modal */}
       {showRoutineModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-900 rounded-lg p-6 w-full max-w-[95vw] max-h-[95vh] overflow-hidden flex flex-col shadow-xl">
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-lg p-6 w-full max-w-[95vw] max-h-[95vh] overflow-hidden flex flex-col shadow-xl z-[70]">
             <div className="flex justify-between items-center mb-4">
               <div>
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white">My Routine</h2>

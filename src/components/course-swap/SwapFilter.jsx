@@ -97,9 +97,9 @@ const SwapFilter = ({ courses = [], swaps = [], onFilterChange }) => {
       </div>
 
       {open && (
-        <div className="absolute z-[200] mt-2 w-80 rounded-lg border bg-white dark:bg-gray-950 shadow-xl" 
+        <div className="absolute z-[200] mt-2 w-80 rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 shadow-2xl shadow-gray-400/30 dark:shadow-black/50" 
              style={{ maxHeight: '400px', overflow: 'hidden' }}>
-          <div className="p-3 border-b">
+          <div className="p-3 border-b border-gray-200 dark:border-gray-800">
             <Input
               placeholder="Search courses to filter..."
               value={search}
@@ -111,28 +111,28 @@ const SwapFilter = ({ courses = [], swaps = [], onFilterChange }) => {
           </div>
           
           {selectedCourses.length > 0 && (
-            <div className="p-3 border-b bg-gray-50 dark:bg-gray-900">
+            <div className="p-3 border-b border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium">Selected Filters</span>
+                <span className="text-sm font-semibold text-blue-700 dark:text-blue-300">Selected Filters ({selectedCourses.length})</span>
                 <button
                   onClick={clearFilters}
-                  className="text-xs text-red-600 hover:text-red-700"
+                  className="text-xs font-medium text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
                 >
                   Clear all
                 </button>
               </div>
-              <div className="flex flex-wrap gap-1">
+              <div className="flex flex-wrap gap-1.5">
                 {selectedCourses.map(sectionId => {
                   const course = getCourseBySection(sectionId);
                   return (
-                    <Badge key={sectionId} variant="secondary" className="text-xs">
+                    <Badge key={sectionId} className="text-xs bg-blue-600 hover:bg-blue-700 text-white border-0">
                       {course ? formatCourse(course) : `Section ${sectionId}`}
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           toggleCourse(sectionId);
                         }}
-                        className="ml-1 hover:text-red-500"
+                        className="ml-1.5 hover:text-red-200"
                       >
                         <X className="h-3 w-3" />
                       </button>
@@ -143,36 +143,51 @@ const SwapFilter = ({ courses = [], swaps = [], onFilterChange }) => {
             </div>
           )}
 
-          <div className="max-h-[250px] overflow-y-auto">
-            {filteredCourses.length === 0 ? (
-              <div className="py-6 text-center text-sm text-gray-500">No courses found</div>
-            ) : (
-              filteredCourses.map((course) => {
-                const isSelected = selectedCourses.includes(course.sectionId);
-                return (
-                  <div
-                    key={course.sectionId}
-                    className={cn(
-                      "flex items-center px-3 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors",
-                      isSelected && "bg-purple-50 dark:bg-purple-950/20"
-                    )}
-                    onClick={() => toggleCourse(course.sectionId)}
-                  >
-                    <Check
+          <div className="relative">
+            <div className="max-h-[250px] overflow-y-auto">
+              {filteredCourses.length === 0 ? (
+                <div className="py-6 text-center text-sm text-gray-500 dark:text-gray-400">No courses found</div>
+              ) : (
+                filteredCourses.map((course) => {
+                  const isSelected = selectedCourses.includes(course.sectionId);
+                  return (
+                    <div
+                      key={course.sectionId}
                       className={cn(
-                        "mr-2 h-4 w-4 text-purple-600",
-                        isSelected ? "opacity-100" : "opacity-0"
+                        "flex items-center px-3 py-2.5 cursor-pointer transition-colors border-l-3",
+                        isSelected 
+                          ? "bg-blue-50 dark:bg-blue-950/40 border-l-blue-600 dark:border-l-blue-400" 
+                          : "hover:bg-gray-100 dark:hover:bg-gray-800 border-l-transparent"
                       )}
-                    />
-                    <div className="flex-1">
-                      <div className="font-medium text-sm">{formatCourse(course)}</div>
-                      <div className="text-xs text-gray-500">
-                        {course.faculties || 'TBA'}
+                      onClick={() => toggleCourse(course.sectionId)}
+                    >
+                      <div
+                        className={cn(
+                          "mr-3 h-4 w-4 rounded border-2 flex items-center justify-center transition-colors",
+                          isSelected 
+                            ? "bg-blue-600 border-blue-600 dark:bg-blue-500 dark:border-blue-500" 
+                            : "border-gray-300 dark:border-gray-600"
+                        )}
+                      >
+                        {isSelected && <Check className="h-3 w-3 text-white" />}
+                      </div>
+                      <div className="flex-1">
+                        <div className={cn(
+                          "font-medium text-sm",
+                          isSelected ? "text-blue-700 dark:text-blue-300" : "text-gray-900 dark:text-gray-100"
+                        )}>{formatCourse(course)}</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                          {course.faculties || 'TBA'}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })
+                  );
+                })
+              )}
+            </div>
+            {/* Bottom fade gradient to indicate more content */}
+            {filteredCourses.length > 5 && (
+              <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-white dark:from-gray-950 to-transparent pointer-events-none" />
             )}
           </div>
         </div>

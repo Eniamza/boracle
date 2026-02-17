@@ -500,30 +500,30 @@ const SavedRoutinesPage = () => {
       <>
         {/* Blurred backdrop overlay */}
         <div
-          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 transition-opacity duration-300"
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[60] transition-opacity duration-300"
           onClick={onClose}
         />
         {/* Centered modal */}
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 pointer-events-none">
           <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border border-gray-200 dark:border-gray-700/60 rounded-2xl p-6 max-w-md w-full shadow-2xl pointer-events-auto animate-in fade-in zoom-in-95 duration-200">
             {/* Header */}
             <div className="flex items-center justify-between mb-5">
               <div className="flex items-center gap-2">
-                <Share2 className="w-5 h-5 text-blue-400" />
-                <h2 className="text-lg font-semibold text-white">Share Routine</h2>
+                <Share2 className="w-5 h-5 text-blue-500 dark:text-blue-400" />
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Share Routine</h2>
               </div>
-              <button onClick={onClose} className="p-1.5 hover:bg-gray-800 rounded-lg transition-colors">
-                <X className="w-4 h-4 text-gray-400" />
+              <button onClick={onClose} className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">
+                <X className="w-4 h-4 text-gray-500 dark:text-gray-400" />
               </button>
             </div>
 
             {/* Copiable Link */}
             <div className="mb-5">
-              <label className="text-xs font-medium text-gray-400 mb-1.5 block">Shareable Link</label>
+              <label className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5 block">Shareable Link</label>
               <div className="flex items-center gap-2">
-                <div className="flex-1 flex items-center gap-2 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2.5 min-w-0">
-                  <Link className="w-4 h-4 text-gray-500 flex-shrink-0" />
-                  <span className="text-sm text-gray-300 truncate font-mono">{shareUrl}</span>
+                <div className="flex-1 flex items-center gap-2 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2.5 min-w-0">
+                  <Link className="w-4 h-4 text-gray-400 dark:text-gray-500 flex-shrink-0" />
+                  <span className="text-sm text-gray-700 dark:text-gray-300 truncate font-mono">{shareUrl}</span>
                 </div>
                 <button
                   onClick={copyLink}
@@ -540,7 +540,7 @@ const SavedRoutinesPage = () => {
 
             {/* Social Media Icons */}
             <div>
-              <label className="text-xs font-medium text-gray-400 mb-3 block">Share via</label>
+              <label className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-3 block">Share via</label>
               <div className="flex items-center justify-center gap-4">
                 {/* Messenger */}
                 <button
@@ -553,7 +553,7 @@ const SavedRoutinesPage = () => {
                       <path d="M12 2C6.36 2 2 6.13 2 11.7c0 2.91 1.2 5.42 3.15 7.2.15.14.25.36.22.58l-.04 1.78c-.02.58.56.98 1.08.74l1.98-.87c.17-.07.36-.09.54-.05.92.25 1.9.39 2.93.39h.14c5.64 0 10.02-4.13 10.02-9.7C22 6.13 17.64 2 12 2zm5.85 7.65l-2.85 4.53c-.46.73-1.44.9-2.1.37l-2.27-1.7a.6.6 0 00-.72 0l-3.06 2.32c-.41.31-.94-.2-.67-.65l2.85-4.53c.46-.73 1.44-.9 2.1-.37l2.27 1.7a.6.6 0 00.72 0l3.06-2.32c.41-.31.94.2.67.65z" />
                     </svg>
                   </div>
-                  <span className="text-xs text-gray-400 group-hover:text-gray-300">Messenger</span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300">Messenger</span>
                 </button>
 
                 {/* WhatsApp */}
@@ -567,7 +567,7 @@ const SavedRoutinesPage = () => {
                       <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
                     </svg>
                   </div>
-                  <span className="text-xs text-gray-400 group-hover:text-gray-300">WhatsApp</span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300">WhatsApp</span>
                 </button>
 
                 {/* Discord */}
@@ -581,7 +581,7 @@ const SavedRoutinesPage = () => {
                       <path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.8732.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189z" />
                     </svg>
                   </div>
-                  <span className="text-xs text-gray-400 group-hover:text-gray-300">Discord</span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300">Discord</span>
                 </button>
               </div>
             </div>
@@ -601,17 +601,23 @@ const SavedRoutinesPage = () => {
         return;
       }
 
+      if (!routineRef?.current) {
+        toast.error('Routine table not found');
+        return;
+      }
+
       await exportRoutineToPNG({
         routineRef,
         filename: 'saved-routine',
+        showToast: true,
       });
     };
 
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
-        <div className="bg-gray-900 rounded-lg max-w-[95vw] max-h-[95vh] w-full overflow-hidden flex flex-col">
-          <div className="flex items-center justify-between p-4 border-b border-gray-700">
-            <h2 className="text-xl font-semibold text-white">Saved Routine</h2>
+      <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
+        <div className="bg-white dark:bg-gray-900 rounded-lg max-w-[95vw] max-h-[95vh] w-full overflow-hidden flex flex-col shadow-xl z-[70]">
+          <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Saved Routine</h2>
             <div className="flex items-center gap-2">
               <button
                 onClick={exportToPNG}
@@ -624,7 +630,7 @@ const SavedRoutinesPage = () => {
               </button>
               <button
                 onClick={onClose}
-                className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors text-gray-600 dark:text-gray-300"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -712,17 +718,23 @@ const SavedRoutinesPage = () => {
         return;
       }
 
+      if (!routineRef?.current) {
+        toast.error('Routine table not found');
+        return;
+      }
+
       await exportRoutineToPNG({
         routineRef,
         filename: 'merged-routine',
+        showToast: true,
       });
     };
 
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
-        <div className="bg-gray-900 rounded-lg max-w-[95vw] max-h-[95vh] w-full overflow-hidden flex flex-col">
-          <div className="flex items-center justify-between p-4 border-b border-gray-700">
-            <h2 className="text-xl font-semibold text-white">Merged Routine</h2>
+      <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
+        <div className="bg-white dark:bg-gray-900 rounded-lg max-w-[95vw] max-h-[95vh] w-full overflow-hidden flex flex-col shadow-xl z-[70]">
+          <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Merged Routine</h2>
             <div className="flex items-center gap-2">
               <button
                 onClick={exportToPNG}
@@ -735,14 +747,14 @@ const SavedRoutinesPage = () => {
               </button>
               <button
                 onClick={onClose}
-                className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors text-gray-600 dark:text-gray-300"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
           </div>
           <div className="flex-1 overflow-auto p-4" ref={routineRef}>
-            <div className="bg-gray-900 p-4 rounded-lg">
+            <div className="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg">
               {/* Friend Legend */}
               <div className="mb-4 flex flex-wrap gap-3">
                 {friends.map(friend => (
@@ -751,18 +763,18 @@ const SavedRoutinesPage = () => {
                       className="w-4 h-4 rounded-full"
                       style={{ backgroundColor: friend.color }}
                     />
-                    <span className="text-sm text-gray-400">{friend.friendName}</span>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">{friend.friendName}</span>
                   </div>
                 ))}
               </div>
 
               <div className="overflow-x-auto">
-                <table className="w-full border-collapse">
+                <table className="w-full border-collapse border border-gray-200 dark:border-gray-700">
                   <thead>
-                    <tr className="border-b border-gray-700">
-                      <th className="text-left py-4 px-4 text-sm font-medium text-gray-400 w-36">Time/Day</th>
+                    <tr className="border-b border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800">
+                      <th className="text-left py-4 px-4 text-sm font-medium text-gray-600 dark:text-gray-400 w-36 border-r border-gray-200 dark:border-gray-700">Time/Day</th>
                       {days.map(day => (
-                        <th key={day} className="text-center py-4 px-3 text-sm font-medium text-gray-400">
+                        <th key={day} className="text-center py-4 px-3 text-sm font-medium text-gray-600 dark:text-gray-400 border-r border-gray-200 dark:border-gray-700 last:border-r-0">
                           {day}
                         </th>
                       ))}
@@ -770,15 +782,15 @@ const SavedRoutinesPage = () => {
                   </thead>
                   <tbody>
                     {timeSlots.map(timeSlot => (
-                      <tr key={timeSlot} className="border-b border-gray-800">
-                        <td className="py-3 px-4 text-sm font-medium text-gray-400 whitespace-nowrap">
+                      <tr key={timeSlot} className="border-b border-gray-200 dark:border-gray-800">
+                        <td className="py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400 whitespace-nowrap border-r border-gray-200 dark:border-gray-700">
                           {timeSlot}
                         </td>
                         {days.map(day => {
                           const slotCourses = getCoursesForSlot(day, timeSlot);
 
                           return (
-                            <td key={`${day}-${timeSlot}`} className="p-2 border-l border-gray-800 relative">
+                            <td key={`${day}-${timeSlot}`} className="p-2 border-l border-gray-200 dark:border-gray-800 relative">
                               {slotCourses.length > 0 && (
                                 <div className="space-y-1">
                                   {slotCourses.map((course, idx) => {
@@ -814,14 +826,14 @@ const SavedRoutinesPage = () => {
                                         }}
                                         onMouseLeave={() => setHoveredCourse(null)}
                                       >
-                                        <div className="font-semibold">
+                                        <div className="font-semibold text-gray-900 dark:text-white">
                                           {course.courseCode}{isLab && 'L'}-{course.sectionName}
                                         </div>
-                                        <div className="text-gray-400 text-xs mt-0.5">
+                                        <div className="text-gray-600 dark:text-gray-400 text-xs mt-0.5">
                                           {course.friendName}
                                         </div>
                                         {course.roomName && (
-                                          <div className="text-gray-500 text-xs">
+                                          <div className="text-gray-500 dark:text-gray-500 text-xs">
                                             {course.roomName}
                                           </div>
                                         )}
@@ -871,13 +883,13 @@ const SavedRoutinesPage = () => {
   }, []);
 
   return (
-    <div className="min-h-screen  text-white p-8">
-      <h1 className="text-3xl font-bold mb-8 text-center">Saved Routines</h1>
+    <div className="min-h-screen text-gray-900 dark:text-white p-8">
+      <h1 className="text-3xl font-bold mb-8 text-center text-gray-900 dark:text-white">Saved Routines</h1>
       {/* sonner toast handles notifications globally */}
       {loading ? (
         <div className="flex flex-col items-center justify-center py-24">
           <RefreshCw className="w-8 h-8 animate-spin text-blue-400 mb-4" />
-          <p className="text-gray-400">Loading saved routines...</p>
+          <p className="text-gray-500 dark:text-gray-400">Loading saved routines...</p>
         </div>
       ) : routines.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-24">
@@ -898,13 +910,13 @@ const SavedRoutinesPage = () => {
           {routines.map((routine, index) => (
             <div
               key={routine.id}
-              className="bg-gray-900 border border-gray-800 rounded-lg p-6 hover:border-gray-700 transition-colors"
+              className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-6 hover:border-gray-300 dark:hover:border-gray-700 transition-colors shadow-sm"
             >
               {/* Routine Header */}
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-blue-600/20 rounded-lg">
-                    <Calendar className="w-5 h-5 text-blue-400" />
+                  <div className="p-2 bg-blue-100 dark:bg-blue-600/20 rounded-lg">
+                    <Calendar className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                   </div>
                   <div className="flex flex-col">
                     {/* User's First name with routine number */}
@@ -915,7 +927,7 @@ const SavedRoutinesPage = () => {
                             <Input
                               value={editNameInput}
                               onChange={(e) => setEditNameInput(e.target.value)}
-                              className={`h-8 w-48 text-sm bg-gray-800 ${editNameInput.length === 40 ? 'border-red-500 focus:border-red-500' : 'border-gray-700 focus:border-blue-500'} focus:ring-blue-500`}
+                              className={`h-8 w-48 text-sm bg-gray-50 dark:bg-gray-800 ${editNameInput.length === 40 ? 'border-red-500 focus:border-red-500' : 'border-gray-300 dark:border-gray-700 focus:border-blue-500'} focus:ring-blue-500 text-gray-900 dark:text-white`}
                               placeholder="Enter routine name"
                               maxLength={40}
                               autoFocus
@@ -963,7 +975,7 @@ const SavedRoutinesPage = () => {
                                 ? `${session.user.name.split(' ')[0].charAt(0).toUpperCase() + session.user.name.split(' ')[0].slice(1).toLowerCase()}'s Routine #${routine.routineNumber}`
                                 : `Routine #${routine.routineNumber}`));
                             }}
-                            className="p-1 opacity-0 group-hover/name:opacity-100 hover:bg-gray-800 rounded-lg text-gray-400 transition-all duration-200"
+                              className="p-1 opacity-0 group-hover/name:opacity-100 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg text-gray-500 dark:text-gray-400 transition-all duration-200"
                           >
                             <Pencil className="w-3.5 h-3.5" />
                           </button>
@@ -982,14 +994,14 @@ const SavedRoutinesPage = () => {
                         }
                       }}
                       className={`flex items-center gap-1.5 mt-1 text-xs transition-colors ${copiedRoutineId === routine.id
-                        ? 'text-green-400'
-                        : 'text-gray-300 hover:text-blue-400'
+                        ? 'text-green-600 dark:text-green-400'
+                        : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400'
                         }`}
                     >
-                      <code className={`px-2 py-0.5 rounded font-mono ${copiedRoutineId === routine.id
-                        ? 'bg-green-900/50 text-green-400'
-                        : 'bg-gray-800'
-                        }`}>{routine.id}</code>
+                      <code className={`px-2 py-0.5 rounded font-mono text-left ${copiedRoutineId === routine.id
+                        ? 'bg-green-100 dark:bg-green-900/50 text-green-600 dark:text-green-400'
+                        : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
+                        }`}>{routine.id.substring(0, 4)}...{routine.id.substring(32, 36)}</code>
                       <span className="flex items-center gap-1">
                         {copiedRoutineId === routine.id ? 'Copied' : 'Copy'}
                         {copiedRoutineId === routine.id ? (
@@ -1009,12 +1021,12 @@ const SavedRoutinesPage = () => {
                         {routine.createdAt ? new Date(Number(routine.createdAt) * 1000).toLocaleString() : 'N/A'}
                       </p>
                       {routine.semester && (
-                        <span className="inline-block bg-blue-800/80 text-blue-100 text-[10px] font-semibold px-2 py-0.5 rounded">
+                        <span className="inline-block bg-blue-100 dark:bg-blue-800/80 text-blue-700 dark:text-blue-100 text-[10px] font-semibold px-2 py-0.5 rounded">
                           {routine.semester}
                         </span>
                       )}
                     </div>
-                    <p className="text-sm text-gray-400">
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
                       {parseRoutineString(routine.routineStr)} courses
                     </p>
                   </div>
@@ -1033,14 +1045,14 @@ const SavedRoutinesPage = () => {
                 </button>
                 <button
                   onClick={() => { setSharingRoutineId(routine.id); setSharingRoutineType('routine'); }}
-                  className="px-3 py-2 hover:bg-gray-700 rounded-lg flex items-center justify-center gap-2 text-sm transition-colors"
+                  className="px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg flex items-center justify-center gap-2 text-sm transition-colors text-gray-600 dark:text-gray-300"
                   title="Share routine"
                 >
                   <Share2 className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => deleteRoutine(routine.id)}
-                  className="px-3 py-2 hover:bg-red-700 rounded-lg flex items-center justify-center gap-2 text-sm transition-colors"
+                  className="px-3 py-2 hover:bg-red-100 dark:hover:bg-red-700 text-red-600 dark:text-red-400 rounded-lg flex items-center justify-center gap-2 text-sm transition-colors"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
@@ -1052,15 +1064,15 @@ const SavedRoutinesPage = () => {
 
       {/* Merged Routines Section */}
       <div className="mt-12">
-        <h2 className="text-2xl font-bold mb-6 text-center flex items-center justify-center gap-2">
-          <Users className="w-6 h-6 text-purple-400" />
+        <h2 className="text-2xl font-bold mb-6 text-center flex items-center justify-center gap-2 text-gray-900 dark:text-white">
+          <Users className="w-6 h-6 text-purple-500 dark:text-purple-400" />
           Merged Routines
         </h2>
 
         {loadingMerged ? (
           <div className="flex flex-col items-center justify-center py-24">
             <RefreshCw className="w-6 h-6 animate-spin text-purple-400 mb-4" />
-            <p className="text-gray-400">Loading merged routines...</p>
+            <p className="text-gray-500 dark:text-gray-400">Loading merged routines...</p>
           </div>
         ) : mergedRoutines.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24">
@@ -1083,17 +1095,17 @@ const SavedRoutinesPage = () => {
               return (
                 <div
                   key={routine.id}
-                  className="bg-gray-900 border border-purple-800/50 rounded-lg p-6 hover:border-purple-600/50 transition-colors"
+                  className="bg-white dark:bg-gray-900 border border-purple-200 dark:border-purple-800/50 rounded-lg p-6 hover:border-purple-300 dark:hover:border-purple-600/50 transition-colors shadow-sm"
                 >
                   {/* Routine Header */}
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-3">
-                      <div className="p-2 bg-purple-600/20 rounded-lg">
-                        <Users className="w-5 h-5 text-purple-400" />
+                      <div className="p-2 bg-purple-100 dark:bg-purple-600/20 rounded-lg">
+                        <Users className="w-5 h-5 text-purple-600 dark:text-purple-400" />
                       </div>
                       <div className="flex flex-col">
                         {/* Merged Routine title with number */}
-                        <h3 className="font-semibold text-lg text-purple-100">
+                        <h3 className="font-semibold text-lg text-purple-700 dark:text-purple-100">
                           {session?.user?.name
                             ? `${session.user.name.split(' ')[0].charAt(0).toUpperCase() + session.user.name.split(' ')[0].slice(1).toLowerCase()}'s Merged Routine #${routine.routineNumber}`
                             : `Merged Routine #${routine.routineNumber}`}
@@ -1110,14 +1122,14 @@ const SavedRoutinesPage = () => {
                             }
                           }}
                           className={`flex items-center gap-1.5 mt-1 text-xs transition-colors ${copiedMergedRoutineId === routine.id
-                            ? 'text-green-400'
-                            : 'text-gray-300 hover:text-purple-400'
+                            ? 'text-green-600 dark:text-green-400'
+                            : 'text-gray-600 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400'
                             }`}
                         >
-                          <code className={`px-2 py-0.5 rounded font-mono ${copiedMergedRoutineId === routine.id
-                            ? 'bg-green-900/50 text-green-400'
-                            : 'bg-gray-800'
-                            }`}>{routine.id}</code>
+                          <code className={`px-2 py-0.5 rounded font-mono text-left ${copiedMergedRoutineId === routine.id
+                            ? 'bg-green-100 dark:bg-green-900/50 text-green-600 dark:text-green-400'
+                            : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
+                            }`}>{routine.id.substring(0, 4)}...{routine.id.substring(32, 36)}</code>
                           <span className="flex items-center gap-1">
                             {copiedMergedRoutineId === routine.id ? 'Copied' : 'Copy'}
                             {copiedMergedRoutineId === routine.id ? (
@@ -1137,7 +1149,7 @@ const SavedRoutinesPage = () => {
                             {routine.createdAt ? new Date(Number(routine.createdAt) * 1000).toLocaleString() : 'N/A'}
                           </p>
                           {routine.semester && (
-                            <span className="inline-block bg-purple-800/80 text-purple-100 text-[10px] font-semibold px-2 py-0.5 rounded">
+                            <span className="inline-block bg-purple-100 dark:bg-purple-800/80 text-purple-700 dark:text-purple-100 text-[10px] font-semibold px-2 py-0.5 rounded">
                               {routine.semester}
                             </span>
                           )}
@@ -1148,14 +1160,14 @@ const SavedRoutinesPage = () => {
                             {friendNames.map((name, idx) => (
                               <span
                                 key={idx}
-                                className="inline-block bg-purple-900/50 text-purple-200 text-xs px-2 py-0.5 rounded"
+                                className="inline-block bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-200 text-xs px-2 py-0.5 rounded"
                               >
                                 {name}
                               </span>
                             ))}
                           </div>
                         )}
-                        <p className="text-sm text-gray-400 mt-1">
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                           {totalCourses} courses • {friendNames.length} {friendNames.length === 1 ? 'friend' : 'friends'}
                         </p>
                       </div>
@@ -1174,14 +1186,14 @@ const SavedRoutinesPage = () => {
                     </button>
                     <button
                       onClick={() => { setSharingRoutineId(routine.id); setSharingRoutineType('merged-routine'); }}
-                      className="px-3 py-2 hover:bg-gray-700 rounded-lg flex items-center justify-center gap-2 text-sm transition-colors"
+                      className="px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg flex items-center justify-center gap-2 text-sm transition-colors text-gray-600 dark:text-gray-300"
                       title="Share routine"
                     >
                       <Share2 className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => deleteMergedRoutine(routine.id)}
-                      className="px-3 py-2 hover:bg-red-700 rounded-lg flex items-center justify-center gap-2 text-sm transition-colors"
+                      className="px-3 py-2 hover:bg-red-100 dark:hover:bg-red-700 text-red-600 dark:text-red-400 rounded-lg flex items-center justify-center gap-2 text-sm transition-colors"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -1213,14 +1225,14 @@ const SavedRoutinesPage = () => {
       {/* Backdrop overlay when floating menu is open */}
       {showFloatingOptions && (
         <div
-          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 transition-opacity duration-300"
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[60] transition-opacity duration-300"
           onClick={() => setShowFloatingOptions(false)}
         />
       )}
 
       {/* Centered Action Sheet */}
       {showFloatingOptions && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
+        <div className="fixed inset-0 z-[70] flex items-center justify-center pointer-events-none">
           <div className="floating-action-sheet pointer-events-auto flex flex-col gap-3 w-80 animate-in fade-in zoom-in-95 duration-200">
             {/* Build a Routine */}
             <button

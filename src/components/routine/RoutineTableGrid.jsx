@@ -177,6 +177,24 @@ const RoutineTableGrid = ({
         {/* Single global tooltip */}
         <CourseHoverTooltip course={hoveredCourse} position={tooltipPosition} />
 
+        {/* Color Legend - inside the export area so it's included in PNG */}
+        {selectedCourses.length > 0 && (
+          <div className="mt-4 flex gap-4 text-sm">
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 bg-blue-100 dark:bg-blue-900/50 border border-blue-400 dark:border-blue-600 rounded"></div>
+              <span className="text-gray-600 dark:text-gray-400">Class</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 bg-purple-100 dark:bg-purple-900/50 border border-purple-400 dark:border-purple-600 rounded"></div>
+              <span className="text-gray-600 dark:text-gray-400">Lab</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 bg-red-100 dark:bg-red-900/50 border border-red-400 dark:border-red-600 rounded"></div>
+              <span className="text-gray-600 dark:text-gray-400">Conflict</span>
+            </div>
+          </div>
+        )}
+
         <div className="mt-4 text-center text-sm text-gray-500">
           Made with ❤️ from https://oracle.eniamza.com
         </div>
@@ -185,23 +203,6 @@ const RoutineTableGrid = ({
       {selectedCourses.length === 0 && (
         <div className="text-center py-12 text-gray-500">
           No courses selected. Add courses from the list to see them in your routine.
-        </div>
-      )}
-
-      {selectedCourses.length > 0 && (
-        <div className="mt-4 flex gap-4 text-sm">
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-blue-100 dark:bg-blue-900/50 border border-blue-400 dark:border-blue-600 rounded"></div>
-            <span className="text-gray-600 dark:text-gray-400">Class</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-purple-100 dark:bg-purple-900/50 border border-purple-400 dark:border-purple-600 rounded"></div>
-            <span className="text-gray-600 dark:text-gray-400">Lab</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-red-100 dark:bg-red-900/50 border border-red-400 dark:border-red-600 rounded"></div>
-            <span className="text-gray-600 dark:text-gray-400">Conflict</span>
-          </div>
         </div>
       )}
     </div>

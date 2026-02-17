@@ -17,7 +17,7 @@ export default async function Welcome() {
             </div>
 
             {/* Dashboard stats section */}
-            <div className="w-1/3 flex justify-center">
+            <div className="w-full max-w-xl px-4">
                 <RandomQuote />
             </div>
         </div>

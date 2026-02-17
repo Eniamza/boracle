@@ -129,7 +129,7 @@ export default function UserStats() {
                 <div className="text-2xl font-bold text-gray-900 dark:text-blue-300 mb-1">
                   {stat.value.toLocaleString()}
                 </div>
-                <p className="text-xs text-gray-200 dark:text-gray-200">
+                <p className="text-xs text-gray-900 dark:text-gray-200">
                   {stat.description}
                 </p>
               </CardContent>
