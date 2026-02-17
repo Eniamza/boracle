@@ -32,7 +32,7 @@ const CourseHoverTooltip = ({ course, position, courseTitle, extraFields = [] })
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
     const tooltipWidth = 384; // w-96 = 384px
-    
+
     // Clamp horizontal position to keep within viewport
     // We assume the caller has already decided whether to place it left or right of the cursor/element
     // and passed the appropriate 'x' coordinate (left edge of the tooltip).
@@ -138,6 +138,49 @@ const CourseHoverTooltip = ({ course, position, courseTitle, extraFields = [] })
                     )}
                 </div>
 
+                {/* Class Schedule */}
+                <div className="space-y-2">
+                    {/* Theory Schedule */}
+                    {course.sectionSchedule?.classSchedules?.length > 0 && (
+                        <div className="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-2.5 border border-orange-200 dark:border-orange-800/30">
+                            <div className="flex justify-between items-center mb-1.5">
+                                <span className="text-xs font-bold text-orange-700 dark:text-orange-400 uppercase tracking-wider">Class Schedule</span>
+                                <span className="text-xs font-bold text-orange-700 dark:text-orange-300 bg-white dark:bg-orange-900/40 px-2 py-0.5 rounded border border-orange-200 dark:border-orange-800/50 shadow-sm">
+                                    Room: {course.roomName || 'TBA'}
+                                </span>
+                            </div>
+                            <div className="space-y-1">
+                                {course.sectionSchedule.classSchedules.map((sched, idx) => (
+                                    <div key={`cls-${idx}`} className="flex justify-between text-xs">
+                                        <span className="font-bold text-gray-900 dark:text-gray-100 w-16">{formatDay(sched.day)}</span>
+                                        <span className="font-mono font-medium text-gray-900 dark:text-gray-200 text-right flex-1">{formatTime(sched.startTime)} - {formatTime(sched.endTime)}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Lab Schedule */}
+                    {course.labSchedules?.length > 0 && (
+                        <div className="bg-teal-50 dark:bg-teal-900/20 rounded-lg p-2.5 border border-teal-200 dark:border-teal-800/30">
+                            <div className="flex justify-between items-center mb-1.5">
+                                <span className="text-xs font-bold text-teal-700 dark:text-teal-400 uppercase tracking-wider">Lab Schedule</span>
+                                <span className="text-xs font-bold text-teal-700 dark:text-teal-300 bg-white dark:bg-teal-900/40 px-2 py-0.5 rounded border border-teal-200 dark:border-teal-800/50 shadow-sm">
+                                    Room: {course.labRoomName || 'TBA'}
+                                </span>
+                            </div>
+                            <div className="space-y-1">
+                                {course.labSchedules.map((sched, idx) => (
+                                    <div key={`lab-${idx}`} className="flex justify-between text-xs">
+                                        <span className="font-bold text-gray-900 dark:text-gray-100 w-16">{formatDay(sched.day)}</span>
+                                        <span className="font-mono font-medium text-gray-900 dark:text-gray-200 text-right flex-1">{formatTime(sched.startTime)} - {formatTime(sched.endTime)}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
+
                 {/* Details Grid */}
                 <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
                     <div>
@@ -152,16 +195,6 @@ const CourseHoverTooltip = ({ course, position, courseTitle, extraFields = [] })
                         <span className="text-gray-500 dark:text-gray-400 text-xs block">Prerequisites</span>
                         <span className="text-gray-900 dark:text-gray-200">{course.prerequisiteCourses || 'None'}</span>
                     </div>
-                    <div>
-                        <span className="text-gray-500 dark:text-gray-400 text-xs block">Room</span>
-                        <span className="text-gray-900 dark:text-gray-200">{course.roomName || 'TBA'}</span>
-                    </div>
-                    {course.labCourseCode && (
-                        <div>
-                            <span className="text-gray-500 dark:text-gray-400 text-xs block">Lab Room</span>
-                            <span className="text-gray-900 dark:text-gray-200">{course.labRoomName || 'TBA'}</span>
-                        </div>
-                    )}
                 </div>
 
                 {/* Schedule Info */}
