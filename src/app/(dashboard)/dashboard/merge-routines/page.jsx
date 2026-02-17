@@ -809,7 +809,7 @@ const MergedRoutineGrid = ({ courses, friends }) => {
                                   </div>
                                   {course.roomName && (
                                     <div className="text-gray-500 text-xs">
-                                      {course.roomName}
+                                      { isLab ? course.labRoomName || course.labRoomNumber || 'TBA' : course.roomName || course.roomNumber || 'TBA' }
                                     </div>
                                   )}
                                 </div>
