@@ -126,10 +126,10 @@ const RoutineTableGrid = ({
                               <div
                                 key={course.sectionId}
                                 className={`p-3 rounded text-sm ${conflict
-                                    ? 'bg-red-100 dark:bg-red-900/50 border border-red-400 dark:border-red-600 text-red-900 dark:text-red-100'
-                                    : isLab
-                                      ? 'bg-purple-100 dark:bg-purple-900/50 border border-purple-400 dark:border-purple-600 text-purple-900 dark:text-purple-100'
-                                      : 'bg-blue-100 dark:bg-blue-900/50 border border-blue-400 dark:border-blue-600 text-blue-900 dark:text-blue-100'
+                                  ? 'bg-red-100 dark:bg-red-900/50 border border-red-400 dark:border-red-600 text-red-900 dark:text-red-100'
+                                  : isLab
+                                    ? 'bg-purple-100 dark:bg-purple-900/50 border border-purple-400 dark:border-purple-600 text-purple-900 dark:text-purple-100'
+                                    : 'bg-blue-100 dark:bg-blue-900/50 border border-blue-400 dark:border-blue-600 text-blue-900 dark:text-blue-100'
                                   } hover:opacity-80 transition-opacity ${onRemoveCourse ? 'cursor-pointer' : ''} group relative`}
                                 onClick={() => onRemoveCourse?.(course)}
                                 onMouseEnter={(e) => {
@@ -148,10 +148,10 @@ const RoutineTableGrid = ({
                                     showLeft: shouldShowLeft
                                   });
                                 }}
-                                  onMouseLeave={() => {
-                                    setHoveredCourse(null);
-                                    setHoveredCourseTitle(null);
-                                  }}
+                                onMouseLeave={() => {
+                                  setHoveredCourse(null);
+                                  setHoveredCourseTitle(null);
+                                }}
                               >
                                 <div className="font-semibold text-base">
                                   {course.courseCode}{isLab && 'L'}-{course.sectionName}-{isLab ? course.labRoomName || course.labRoomNumber || 'TBA' : course.roomName || course.roomNumber || 'TBA'}

@@ -82,6 +82,7 @@ const SavedRoutinesPage = () => {
                 ...course,
                 employeeName: facultyInfo?.facultyName || null,
                 employeeEmail: facultyInfo?.email || null,
+                imgUrl: facultyInfo?.imgUrl || null,
               };
             }));
 
@@ -93,6 +94,7 @@ const SavedRoutinesPage = () => {
                 ...course,
                 employeeName: facultyInfo?.facultyName || null,
                 employeeEmail: facultyInfo?.email || null,
+                imgUrl: facultyInfo?.imgUrl || null,
               };
             }));
           }
@@ -394,6 +396,7 @@ const SavedRoutinesPage = () => {
           ...course,
           employeeName: facultyInfo?.facultyName || null,
           employeeEmail: facultyInfo?.email || null,
+          imgUrl: facultyInfo?.imgUrl || null,
         };
       }));
 
@@ -449,6 +452,7 @@ const SavedRoutinesPage = () => {
             friendColor: friend?.color || '#6B7280',
             employeeName: facultyInfo?.facultyName || null,
             employeeEmail: facultyInfo?.email || null,
+            imgUrl: facultyInfo?.imgUrl || null,
           };
         });
 
@@ -979,7 +983,7 @@ const SavedRoutinesPage = () => {
                                 ? `${session.user.name.split(' ')[0].charAt(0).toUpperCase() + session.user.name.split(' ')[0].slice(1).toLowerCase()}'s Routine #${routine.routineNumber}`
                                 : `Routine #${routine.routineNumber}`));
                             }}
-                              className="p-1 opacity-0 group-hover/name:opacity-100 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg text-gray-500 dark:text-gray-400 transition-all duration-200"
+                            className="p-1 opacity-0 group-hover/name:opacity-100 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg text-gray-500 dark:text-gray-400 transition-all duration-200"
                           >
                             <Pencil className="w-3.5 h-3.5" />
                           </button>
