@@ -31,82 +31,84 @@ export default function NavigationBar() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-  
+
   const handleSignIn = () => {
-    signIn("google", { callbackUrl: "/dashboard" }); 
+    signIn("google", { callbackUrl: "/dashboard" });
   };
-  
+
   return (
-    <header className={`sticky top-0 z-50 transition-all duration-300 ${
-      scrolled 
-        ? 'bg-white/95 dark:bg-gray-900/95 backdrop-blur-md shadow-md' 
+    <header className={`sticky top-0 z-50 transition-all duration-300 ${scrolled
+        ? 'bg-white/95 dark:bg-gray-900/95 backdrop-blur-md shadow-md'
         : 'bg-white dark:bg-gray-900'
-    }`}>
+      }`}>
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
-          
-          {/* Mobile Menu Button */}
-          <div className="md:hidden">
-            <Sheet open={isOpen} onOpenChange={setIsOpen}>
-              <SheetTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="icon"
-                  className="hover:bg-blue-50 dark:hover:bg-blue-900/30"
-                >
-                  <Menu className="h-5 w-5 text-gray-700 dark:text-gray-200" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="left" className="w-[280px] p-0 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800">
-                <SheetHeader className="p-4 border-b border-gray-200 dark:border-gray-800">
-                  <SheetTitle className="flex items-center gap-2">
-                    <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
-                      <span className="text-white font-bold text-sm">O</span>
-                    </div>
-                    <span className="font-bold text-lg text-gray-900 dark:text-white">O.R.A.C.L.E</span>
-                  </SheetTitle>
-                </SheetHeader>
-                <nav className="flex flex-col py-2">
-                  {navbarItems.filter(item => item.enabled !== false).map((item, index) => (
-                    <Link 
-                      key={index}
-                      href={item.href || "#"}
-                      className="flex items-center justify-between px-4 py-3 text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
-                      onClick={() => setIsOpen(false)}
-                    >
-                      <span className="font-medium">{item.title}</span>
-                      <ChevronRight className="w-4 h-4 text-gray-400" />
-                    </Link>
-                  ))}
-                  {isLoggedIn && (
-                    <Link 
-                      href="/dashboard"
-                      className="flex items-center justify-between px-4 py-3 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors font-medium"
-                      onClick={() => setIsOpen(false)}
-                    >
-                      <span>Dashboard</span>
-                      <ChevronRight className="w-4 h-4" />
-                    </Link>
-                  )}
-                </nav>
-              </SheetContent>
-            </Sheet>
+        <div className="flex items-center justify-between h-16 relative">
+
+          {/* Left Side: Mobile Menu & Logo */}
+          <div className="flex items-center gap-2 md:gap-4">
+            {/* Mobile Menu Button */}
+            <div className="md:hidden">
+              <Sheet open={isOpen} onOpenChange={setIsOpen}>
+                <SheetTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="hover:bg-blue-50 dark:hover:bg-blue-900/30"
+                  >
+                    <Menu className="h-5 w-5 text-gray-700 dark:text-gray-200" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="left" className="w-[280px] p-0 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800">
+                  <SheetHeader className="p-4 border-b border-gray-200 dark:border-gray-800">
+                    <SheetTitle className="flex items-center gap-2">
+                      <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+                        <span className="text-white font-bold text-sm">O</span>
+                      </div>
+                      <span className="font-bold text-lg text-gray-900 dark:text-white">O.R.A.C.L.E</span>
+                    </SheetTitle>
+                  </SheetHeader>
+                  <nav className="flex flex-col py-2">
+                    {navbarItems.filter(item => item.enabled !== false).map((item, index) => (
+                      <Link
+                        key={index}
+                        href={item.href || "#"}
+                        className="flex items-center justify-between px-4 py-3 text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
+                        onClick={() => setIsOpen(false)}
+                      >
+                        <span className="font-medium">{item.title}</span>
+                        <ChevronRight className="w-4 h-4 text-gray-400" />
+                      </Link>
+                    ))}
+                    {isLoggedIn && (
+                      <Link
+                        href="/dashboard"
+                        className="flex items-center justify-between px-4 py-3 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors font-medium"
+                        onClick={() => setIsOpen(false)}
+                      >
+                        <span>Dashboard</span>
+                        <ChevronRight className="w-4 h-4" />
+                      </Link>
+                    )}
+                  </nav>
+                </SheetContent>
+              </Sheet>
+            </div>
+
+            {/* Logo */}
+            <Link href="/" className="flex items-center gap-2 group">
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
+                <span className="text-white font-bold text-sm">O</span>
+              </div>
+              <span className="font-bold text-lg text-gray-900 dark:text-white hidden sm:block">
+                O.R.A.C.L.E
+              </span>
+            </Link>
           </div>
 
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 group">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
-              <span className="text-white font-bold text-sm">O</span>
-            </div>
-            <span className="font-bold text-lg text-gray-900 dark:text-white hidden sm:block">
-              O.R.A.C.L.E
-            </span>
-          </Link>
-
-          {/* Desktop Navigation - Center */}
-          <nav className="hidden md:flex items-center gap-1">
+          {/* Desktop Navigation - Absolute Center */}
+          <nav className="hidden md:flex items-center gap-1 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
             {navbarItems.filter(item => item.enabled !== false).map((item, index) => (
-              <Link 
+              <Link
                 key={index}
                 href={item.href || "#"}
                 className="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-all duration-200"
@@ -121,7 +123,7 @@ export default function NavigationBar() {
             {isLoggedIn ? (
               <ProfileDropdown />
             ) : (
-              <Button 
+              <Button
                 onClick={handleSignIn}
                 className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-2"
               >
