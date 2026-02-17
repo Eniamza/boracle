@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { exportRoutineToPNG } from '@/components/routine/ExportRoutinePNG';
+import { set } from 'mongoose';
 
 const SavedRoutinesPage = () => {
   const { data: session } = useSession();
@@ -653,6 +654,7 @@ const SavedRoutinesPage = () => {
     const routineRef = useRef(null);
     const [hoveredCourse, setHoveredCourse] = useState(null);
     const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
+    const [hoveredCourseTitle, setHoveredCourseTitle] = useState(null);
 
     const timeSlots = [
       '08:00 AM-09:20 AM',
@@ -814,6 +816,7 @@ const SavedRoutinesPage = () => {
                                         }}
                                         onMouseEnter={(e) => {
                                           setHoveredCourse(course);
+                                          setHoveredCourseTitle(`${course.courseCode}${isLab ? 'L' : ''}`);
                                           const rect = e.currentTarget.getBoundingClientRect();
                                           const viewportWidth = window.innerWidth;
                                           const tooltipWidth = 384; // w-96 = 384px
@@ -855,6 +858,7 @@ const SavedRoutinesPage = () => {
               <CourseHoverTooltip
                 course={hoveredCourse}
                 position={tooltipPosition}
+                courseTitle={hoveredCourseTitle}
                 extraFields={hoveredCourse ? [{ label: 'Friend', value: hoveredCourse.friendName }] : []}
               />
             </div>
