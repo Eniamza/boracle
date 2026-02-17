@@ -57,9 +57,10 @@ const CourseSwapPage = () => {
       return {
         facultyName: facultyInfo.facultyName,
         facultyEmail: facultyInfo.email,
+        imgUrl: facultyInfo.imgUrl,
       };
     }
-    return { facultyName: null, facultyEmail: null };
+    return { facultyName: null, facultyEmail: null, imgUrl: null };
   }, [facultyMap]);
 
   // Enrich courses with faculty details
@@ -70,6 +71,7 @@ const CourseSwapPage = () => {
         ...course,
         employeeName: facultyName,
         employeeEmail: facultyEmail,
+        imgUrl: getFacultyDetails(course.faculties).imgUrl,
       };
     });
   }, [getFacultyDetails]);
@@ -126,12 +128,12 @@ const CourseSwapPage = () => {
   const fetchBackupCourses = async (semester) => {
     const normalizedSem = normalizeSemester(semester);
     console.log(`Fetching backup for semester: ${semester} (normalized: ${normalizedSem})`);
-    
+
     if (!normalizedSem || !backupIndex?.backups) {
       console.log('No normalized semester or backup index');
       return null;
     }
-    
+
     // Check cache first
     if (semesterCoursesCache[normalizedSem]) {
       console.log(`Using cached courses for ${normalizedSem}`);
@@ -142,9 +144,9 @@ const CourseSwapPage = () => {
     const backups = backupIndex.backups
       .filter(b => normalizeSemester(b.semester) === normalizedSem)
       .sort((a, b) => new Date(b.backupTime) - new Date(a.backupTime));
-    
+
     console.log(`Found ${backups.length} backups for ${normalizedSem}:`, backups.map(b => b.cdnLink));
-    
+
     if (backups.length === 0) return null;
 
     try {
@@ -152,15 +154,15 @@ const CourseSwapPage = () => {
       const response = await fetch(backups[0].cdnLink);
       const data = await response.json();
       const sections = data.sections || [];
-      
+
       console.log(`Loaded ${sections.length} sections for ${normalizedSem}`);
-      
+
       // Cache the result
       setSemesterCoursesCache(prev => ({
         ...prev,
         [normalizedSem]: sections
       }));
-      
+
       return sections;
     } catch (error) {
       console.error(`Error fetching backup for ${normalizedSem}:`, error);
@@ -171,7 +173,7 @@ const CourseSwapPage = () => {
   // Get courses for a specific swap (current or backup based on semester)
   const getCoursesForSwap = (swap) => {
     const swapSemester = normalizeSemester(swap.semester);
-    
+
     let courses;
     // If no semester info or matches current semester, use current courses
     if (!swapSemester || swapSemester === normalizedCurrentSemester) {
@@ -186,7 +188,7 @@ const CourseSwapPage = () => {
         courses = currentCourses;
       }
     }
-    
+
     // Enrich courses with faculty details
     return enrichCoursesWithFaculty(courses);
   };
@@ -197,7 +199,7 @@ const CourseSwapPage = () => {
 
     const loadBackupCourses = async () => {
       const semestersToLoad = new Set();
-      
+
       swaps.forEach(swap => {
         const swapSemester = normalizeSemester(swap.semester);
         if (swapSemester && swapSemester !== normalizedCurrentSemester && !semesterCoursesCache[swapSemester]) {
@@ -308,7 +310,7 @@ const CourseSwapPage = () => {
       const response = await fetch(`/api/swap/${swapId}`, {
         method: 'DELETE',
       });
-      
+
       if (response.ok) {
         toast.success('Swap deleted successfully');
         fetchSwaps();
@@ -326,7 +328,7 @@ const CourseSwapPage = () => {
       const response = await fetch(`/api/swap/${swapId}`, {
         method: 'PATCH',
       });
-      
+
       if (response.ok) {
         toast.success('Swap marked as complete');
         fetchSwaps();
@@ -348,7 +350,7 @@ const CourseSwapPage = () => {
               Swap Arena
             </h1>
           </div>
-          
+
           <div className="flex flex-wrap gap-3 items-center">
             {session?.user?.email && (
               <label className="flex items-center gap-2 cursor-pointer bg-blue-50 dark:bg-gray-800 border border-blue-200 dark:border-gray-700 px-3 py-2 rounded-lg">
@@ -358,28 +360,26 @@ const CourseSwapPage = () => {
                   role="switch"
                   aria-checked={showMySwapsOnly}
                   onClick={handleMySwapsToggle}
-                  className={`relative inline-flex h-[22px] w-[40px] shrink-0 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-opacity-75 ${
-                    showMySwapsOnly ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'
-                  }`}
+                  className={`relative inline-flex h-[22px] w-[40px] shrink-0 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-opacity-75 ${showMySwapsOnly ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'
+                    }`}
                 >
                   <span className="sr-only">Toggle my swaps only</span>
                   <span
-                    className={`${
-                      showMySwapsOnly ? 'translate-x-[20px]' : 'translate-x-[2px]'
-                    } pointer-events-none inline-block h-[18px] w-[18px] transform rounded-full bg-white shadow-lg ring-0 transition-transform duration-200 ease-in-out`}
+                    className={`${showMySwapsOnly ? 'translate-x-[20px]' : 'translate-x-[2px]'
+                      } pointer-events-none inline-block h-[18px] w-[18px] transform rounded-full bg-white shadow-lg ring-0 transition-transform duration-200 ease-in-out`}
                   />
                 </button>
               </label>
             )}
             {swaps.length > 0 && (
-              <SwapFilter 
+              <SwapFilter
                 courses={allAvailableCourses}
                 swaps={swaps}
                 onFilterChange={handleFilterChange}
               />
             )}
-            <CreateSwapModal 
-              courses={currentCourses} 
+            <CreateSwapModal
+              courses={currentCourses}
               onSwapCreated={fetchSwaps}
             />
           </div>
@@ -397,10 +397,10 @@ const CourseSwapPage = () => {
                 <ArrowLeftRight className="h-12 w-12 text-purple-600 dark:text-purple-400" />
               </div>
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                {showMySwapsOnly 
-                  ? 'You have no active swap requests' 
-                  : selectedFilters.length > 0 
-                    ? 'No matching swaps found' 
+                {showMySwapsOnly
+                  ? 'You have no active swap requests'
+                  : selectedFilters.length > 0
+                    ? 'No matching swaps found'
                     : 'No swap requests available'}
               </h3>
               <p className="text-gray-600 dark:text-gray-400">
@@ -415,9 +415,9 @@ const CourseSwapPage = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             {filteredSwaps.map((swap) => (
-              <SwapCard 
-                key={swap.swapId} 
-                swap={{...swap, email: swap.uEmail}} 
+              <SwapCard
+                key={swap.swapId}
+                swap={{ ...swap, email: swap.uEmail }}
                 courses={getCoursesForSwap(swap)}
                 onDelete={handleDeleteSwap}
                 onMarkComplete={handleMarkComplete}
