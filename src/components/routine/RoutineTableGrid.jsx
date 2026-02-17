@@ -12,6 +12,7 @@ const RoutineTableGrid = ({
 }) => {
   const routineRef = useRef(null);
   const [hoveredCourse, setHoveredCourse] = useState(null);
+  const [hoveredCourseTitle, setHoveredCourseTitle] = useState(null);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0, showLeft: false });
 
   const timeSlots = [
@@ -133,6 +134,7 @@ const RoutineTableGrid = ({
                                 onClick={() => onRemoveCourse?.(course)}
                                 onMouseEnter={(e) => {
                                   setHoveredCourse(course);
+                                  setHoveredCourseTitle(`${course.courseCode}${isLab ? 'L' : ''}`);
                                   const rect = e.currentTarget.getBoundingClientRect();
                                   const viewportWidth = window.innerWidth;
                                   const tooltipWidth = 384; // w-96 = 384px
@@ -146,7 +148,10 @@ const RoutineTableGrid = ({
                                     showLeft: shouldShowLeft
                                   });
                                 }}
-                                onMouseLeave={() => setHoveredCourse(null)}
+                                  onMouseLeave={() => {
+                                    setHoveredCourse(null);
+                                    setHoveredCourseTitle(null);
+                                  }}
                               >
                                 <div className="font-semibold text-base">
                                   {course.courseCode}{isLab && 'L'}-{course.sectionName}-{isLab ? course.labRoomName || course.labRoomNumber || 'TBA' : course.roomName || course.roomNumber || 'TBA'}
@@ -175,7 +180,7 @@ const RoutineTableGrid = ({
         </table>
 
         {/* Single global tooltip */}
-        <CourseHoverTooltip course={hoveredCourse} position={tooltipPosition} />
+        <CourseHoverTooltip course={hoveredCourse} position={tooltipPosition} courseTitle={hoveredCourseTitle} />
 
         {/* Color Legend - inside the export area so it's included in PNG */}
         {selectedCourses.length > 0 && (

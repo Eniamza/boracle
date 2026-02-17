@@ -668,6 +668,7 @@ const MergeRoutinesPage = () => {
 const MergedRoutineGrid = ({ courses, friends }) => {
   const [hoveredCourse, setHoveredCourse] = useState(null);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
+  const [hoveredCourseTitle, setHoveredCourseTitle] = useState(null);
 
   const timeSlots = [
     '08:00 AM-09:20 AM',
@@ -789,6 +790,7 @@ const MergedRoutineGrid = ({ courses, friends }) => {
                                   }}
                                   onMouseEnter={(e) => {
                                     setHoveredCourse(course);
+                                    setHoveredCourseTitle(`${course.courseCode}${isLab ? 'L' : ''}`);
                                     const rect = e.currentTarget.getBoundingClientRect();
                                     const viewportWidth = window.innerWidth;
                                     const tooltipWidth = 384; // w-96 = 384px
@@ -799,7 +801,10 @@ const MergedRoutineGrid = ({ courses, friends }) => {
                                       y: rect.top
                                     });
                                   }}
-                                  onMouseLeave={() => setHoveredCourse(null)}
+                                  onMouseLeave={() => {
+                                    setHoveredCourse(null);
+                                    setHoveredCourseTitle(null);
+                                  }}
                                 >
                                   <div className="font-semibold">
                                     {course.courseCode}{isLab && 'L'}-{course.sectionName}
@@ -830,6 +835,7 @@ const MergedRoutineGrid = ({ courses, friends }) => {
         <CourseHoverTooltip
           course={hoveredCourse}
           position={tooltipPosition}
+          courseTitle={hoveredCourseTitle}
           extraFields={hoveredCourse ? [{ label: 'Friend', value: hoveredCourse.friendName }] : []}
         />
 

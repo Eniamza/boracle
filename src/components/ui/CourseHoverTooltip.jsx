@@ -9,7 +9,7 @@ import React, { useEffect, useState, useRef, useLayoutEffect } from 'react';
  * @param {{ x: number, y: number }} position - Screen coordinates for tooltip positioning (viewport relative)
  * @param {Array<{ label: string, value: any }>} [extraFields] - Optional additional rows to display (e.g. Friend name)
  */
-const CourseHoverTooltip = ({ course, position, extraFields = [] }) => {
+const CourseHoverTooltip = ({ course, position, courseTitle, extraFields = [] }) => {
     // Hydration fix: ensure window usage is safe
     const [mounted, setMounted] = useState(false);
     const tooltipRef = useRef(null);
@@ -32,7 +32,7 @@ const CourseHoverTooltip = ({ course, position, extraFields = [] }) => {
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
     const tooltipWidth = 384; // w-96 = 384px
-
+    
     // Clamp horizontal position to keep within viewport
     // We assume the caller has already decided whether to place it left or right of the cursor/element
     // and passed the appropriate 'x' coordinate (left edge of the tooltip).
@@ -64,6 +64,9 @@ const CourseHoverTooltip = ({ course, position, extraFields = [] }) => {
         style.bottom = 'auto';
     }
 
+    // console.log("Course Title", courseTitle);
+    const displayTitle = courseTitle || `${course.courseCode}`;
+
     return (
         <div
             ref={tooltipRef}
@@ -74,7 +77,7 @@ const CourseHoverTooltip = ({ course, position, extraFields = [] }) => {
                 {/* Header */}
                 <div>
                     <div className="font-bold text-lg text-gray-900 dark:text-gray-100 flex items-center justify-between">
-                        <span>{course.courseCode} - {course.sectionName}</span>
+                        <span>{displayTitle} - {course.sectionName}</span>
                         {/* Credits Badge */}
                         <span className="text-xs px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full font-medium">
                             {course.courseCredit || 0} Credits
@@ -120,7 +123,7 @@ const CourseHoverTooltip = ({ course, position, extraFields = [] }) => {
                 <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
                     <div>
                         <span className="text-gray-500 dark:text-gray-400 text-xs block">Type</span>
-                        <span className="text-gray-900 dark:text-gray-200">{course.sectionType === 'OTHER' ? 'THEORY' : course.sectionType}</span>
+                        <span className="text-gray-900 dark:text-gray-200">{displayTitle.endsWith('L') ? 'LAB' : course.sectionType === 'OTHER' ? 'THEORY' : course.sectionType}</span>
                     </div>
                     <div>
                         <span className="text-gray-500 dark:text-gray-400 text-xs block">Capacity</span>
