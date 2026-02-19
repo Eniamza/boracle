@@ -425,6 +425,7 @@ const CourseSwapPage = () => {
                 onDelete={handleDeleteSwap}
                 onMarkComplete={handleMarkComplete}
                 onCourseClick={(course) => isMobile && setBottomSheetCourse(course)}
+                isMobile={isMobile}
               />
             ))}
           </div>
