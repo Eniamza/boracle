@@ -10,6 +10,7 @@ const MobileCourseCard = ({
     course,
     isSelected,
     onToggle,
+    onCardTap,
     formatTime,
     formatSchedule,
 }) => {
@@ -28,10 +29,11 @@ const MobileCourseCard = ({
 
     return (
         <div
-            className={`rounded-xl border p-3.5 transition-all ${isSelected
-                    ? 'bg-green-50 dark:bg-green-900/20 border-green-400 dark:border-green-600'
-                    : 'bg-white dark:bg-gray-800/50 border-gray-200 dark:border-gray-700'
+            className={`rounded-xl border p-3.5 transition-all active:scale-[0.98] ${isSelected
+                ? 'bg-green-50 dark:bg-green-900/20 border-green-400 dark:border-green-600'
+                : 'bg-white dark:bg-gray-800/50 border-gray-200 dark:border-gray-700'
                 }`}
+            onClick={() => onCardTap?.(course)}
         >
             {/* Top Row: Course code + Seat badge */}
             <div className="flex items-start justify-between gap-2">
@@ -78,10 +80,10 @@ const MobileCourseCard = ({
                 </div>
 
                 <button
-                    onClick={() => onToggle(course)}
+                    onClick={(e) => { e.stopPropagation(); onToggle(course); }}
                     className={`p-2 rounded-lg transition-colors ${isSelected
-                            ? 'bg-red-600 hover:bg-red-700 text-white'
-                            : 'border border-gray-400 dark:border-gray-500 text-gray-700 dark:text-white hover:bg-green-600 hover:border-green-600 hover:text-white'
+                        ? 'bg-red-600 hover:bg-red-700 text-white'
+                        : 'border border-gray-400 dark:border-gray-500 text-gray-700 dark:text-white hover:bg-green-600 hover:border-green-600 hover:text-white'
                         }`}
                 >
                     {isSelected ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}

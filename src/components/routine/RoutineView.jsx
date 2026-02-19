@@ -13,36 +13,58 @@ const RoutineView = ({
     isSaving = false,
     onRemoveCourse,
     showRemoveButtons = false,
-    headerExtras, // Slot for extra header content (e.g. credits count)
-    isModal = true, // Whether to render as a modal or inline
-    isOwner = false, // If true, shows save/edit controls generally (can be refined)
+    headerExtras,
+    isModal = true,
+    isOpen = true, // When false, animate out then call onClose
+    isOwner = false,
 }) => {
     const routineRef = useRef(null);
-    const exportRef = useRef(null); // Hidden desktop table for PNG export on mobile
+    const exportRef = useRef(null);
     const isMobile = useIsMobile();
     const [isVisible, setIsVisible] = useState(false);
     const [mounted, setMounted] = useState(false);
+    const [shouldRender, setShouldRender] = useState(isOpen);
 
     // Wait one frame before rendering modal content so useIsMobile resolves
     useEffect(() => {
         requestAnimationFrame(() => setMounted(true));
     }, []);
 
-    // Animate in on mount (same pattern as CourseBottomSheet)
+    // Handle isOpen changes — animate in/out
     useEffect(() => {
-        if (isModal && isMobile && mounted) {
-            requestAnimationFrame(() => setIsVisible(true));
-            document.body.style.overflow = 'hidden';
+        if (isOpen) {
+            setShouldRender(true);
+            if (isModal && isMobile && mounted) {
+                requestAnimationFrame(() => setIsVisible(true));
+                document.body.style.overflow = 'hidden';
+            }
+        } else if (shouldRender) {
+            // Animate out
+            setIsVisible(false);
+            if (isMobile && isModal) {
+                const timer = setTimeout(() => {
+                    setShouldRender(false);
+                    document.body.style.overflow = '';
+                    onClose?.();
+                }, 250);
+                return () => clearTimeout(timer);
+            } else {
+                setShouldRender(false);
+                onClose?.();
+            }
         }
         return () => {
             document.body.style.overflow = '';
         };
-    }, [isModal, isMobile, mounted]);
+    }, [isOpen, isModal, isMobile, mounted]);
 
     const handleClose = () => {
         if (isMobile && isModal) {
             setIsVisible(false);
-            setTimeout(() => onClose?.(), 250);
+            setTimeout(() => {
+                setShouldRender(false);
+                onClose?.();
+            }, 250);
         } else {
             onClose?.();
         }
@@ -208,12 +230,11 @@ const RoutineView = ({
     );
 
     if (!isModal) {
-        // Inline mode: always desktop style, no modal wrapper
         return DesktopContent;
     }
 
     // Don't render modal until mounted (prevents desktop flash on mobile)
-    if (!mounted) return null;
+    if (!mounted || !shouldRender) return null;
 
     if (isMobile) {
         return MobileContent;

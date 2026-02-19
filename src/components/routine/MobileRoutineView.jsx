@@ -138,8 +138,8 @@ const MobileRoutineView = ({
 
     return (
         <div className="w-full">
-            {/* Day Tabs */}
-            <div className="flex overflow-x-auto gap-1.5 pb-3 pt-2 px-1 scrollbar-hide">
+            {/* Day Tabs - sticky at top */}
+            <div className="flex overflow-x-auto gap-1.5 pb-3 pt-2 px-1 scrollbar-hide sticky top-0 z-10 bg-white dark:bg-gray-900">
                 {days.map((day, idx) => {
                     const isSelected = selectedDay === day;
                     const count = coursesPerDay[day];

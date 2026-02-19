@@ -13,27 +13,45 @@ import { X } from 'lucide-react';
  */
 const CourseBottomSheet = ({ course, onClose, courseTitle, extraFields = [] }) => {
     const [isVisible, setIsVisible] = useState(false);
+    const [displayCourse, setDisplayCourse] = useState(null);
+    const [activeTitle, setActiveTitle] = useState(null);
 
     useEffect(() => {
         if (course) {
-            // Small delay to trigger CSS transition
-            requestAnimationFrame(() => setIsVisible(true));
-            // Prevent body scroll
+            setDisplayCourse(course);
+            setActiveTitle(courseTitle);
+            // Small timeout ensures browser paints translate-y-full before we animate in
+            const timer = setTimeout(() => setIsVisible(true), 20);
             document.body.style.overflow = 'hidden';
-        } else {
+            return () => clearTimeout(timer);
+        } else if (displayCourse) {
+            // Animate out first, then clear
             setIsVisible(false);
+            const timer = setTimeout(() => {
+                setDisplayCourse(null);
+                setActiveTitle(null);
+                document.body.style.overflow = '';
+            }, 200);
+            return () => clearTimeout(timer);
         }
         return () => {
             document.body.style.overflow = '';
         };
-    }, [course]);
+    }, [course, courseTitle]);
 
     const handleClose = () => {
         setIsVisible(false);
-        setTimeout(() => onClose?.(), 200); // Wait for slide-down animation
+        setTimeout(() => {
+            setDisplayCourse(null);
+            setActiveTitle(null);
+            document.body.style.overflow = '';
+            onClose?.();
+        }, 200);
     };
 
-    if (!course) return null;
+    if (!displayCourse) return null;
+
+    const activeCourse = displayCourse;
 
     const formatDay = (day) => {
         if (!day) return '';
@@ -51,7 +69,7 @@ const CourseBottomSheet = ({ course, onClose, courseTitle, extraFields = [] }) =
         return `${displayHour}:${minutes} ${ampm}`;
     };
 
-    const displayTitle = courseTitle || `${course.courseCode}`;
+    const displayTitle = activeTitle || `${activeCourse.courseCode}`;
 
     return (
         <>
@@ -83,9 +101,9 @@ const CourseBottomSheet = ({ course, onClose, courseTitle, extraFields = [] }) =
                     {/* Header */}
                     <div>
                         <div className="font-bold text-lg text-gray-900 dark:text-gray-100 flex items-center justify-between pr-8">
-                            <span>{displayTitle} - {course.sectionName}</span>
+                            <span>{displayTitle} - {activeCourse.sectionName}</span>
                             <span className="text-xs px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full font-medium">
-                                {course.courseCredit || 0} Credits
+                                {activeCourse.courseCredit || 0} Credits
                             </span>
                         </div>
                     </div>
@@ -108,18 +126,18 @@ const CourseBottomSheet = ({ course, onClose, courseTitle, extraFields = [] }) =
                             <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Faculty Information</div>
                             <div className="text-sm">
                                 <span className="text-gray-500 dark:text-gray-400 block text-xs">Initial</span>
-                                <span className="font-medium text-gray-900 dark:text-gray-200">{course.faculties || 'TBA'}</span>
+                                <span className="font-medium text-gray-900 dark:text-gray-200">{activeCourse.faculties || 'TBA'}</span>
                             </div>
-                            {course.employeeName && (
+                            {activeCourse.employeeName && (
                                 <div className="text-sm">
                                     <span className="text-gray-500 dark:text-gray-400 block text-xs">Name</span>
-                                    <span className="font-medium text-gray-900 dark:text-gray-200">{course.employeeName}</span>
+                                    <span className="font-medium text-gray-900 dark:text-gray-200">{activeCourse.employeeName}</span>
                                 </div>
                             )}
-                            {course.employeeEmail && (
+                            {activeCourse.employeeEmail && (
                                 <div className="text-sm">
-                                    <a href={`mailto:${course.employeeEmail}`} className="text-blue-600 dark:text-blue-400 hover:underline break-all block">
-                                        {course.employeeEmail}
+                                    <a href={`mailto:${activeCourse.employeeEmail}`} className="text-blue-600 dark:text-blue-400 hover:underline break-all block">
+                                        {activeCourse.employeeEmail}
                                     </a>
                                 </div>
                             )}
@@ -127,10 +145,10 @@ const CourseBottomSheet = ({ course, onClose, courseTitle, extraFields = [] }) =
 
                         {/* Faculty Image */}
                         <div className="shrink-0 pt-1">
-                            {course.imgUrl && course.imgUrl !== 'N/A' && !course.imageError ? (
+                            {activeCourse.imgUrl && activeCourse.imgUrl !== 'N/A' && !activeCourse.imageError ? (
                                 <img
-                                    src={course.imgUrl}
-                                    alt={course.faculties || 'Faculty'}
+                                    src={activeCourse.imgUrl}
+                                    alt={activeCourse.faculties || 'Faculty'}
                                     className="w-16 h-16 rounded-full object-cover border-2 border-blue-200 dark:border-blue-800"
                                     onError={(e) => {
                                         e.target.style.display = 'none';
@@ -140,7 +158,7 @@ const CourseBottomSheet = ({ course, onClose, courseTitle, extraFields = [] }) =
                             ) : null}
                             <div
                                 className="w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center border-2 border-blue-200 dark:border-blue-800"
-                                style={{ display: course.imgUrl && course.imgUrl !== 'N/A' && !course.imageError ? 'none' : 'flex' }}
+                                style={{ display: activeCourse.imgUrl && activeCourse.imgUrl !== 'N/A' && !activeCourse.imageError ? 'none' : 'flex' }}
                             >
                                 <svg className="w-8 h-8 text-blue-400 dark:text-blue-300" fill="currentColor" viewBox="0 0 24 24">
                                     <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
@@ -151,16 +169,16 @@ const CourseBottomSheet = ({ course, onClose, courseTitle, extraFields = [] }) =
 
                     {/* Class Schedule */}
                     <div className="space-y-2">
-                        {course.sectionSchedule?.classSchedules?.length > 0 && (
+                        {activeCourse.sectionSchedule?.classSchedules?.length > 0 && (
                             <div className="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-2.5 border border-orange-200 dark:border-orange-800/30">
                                 <div className="flex justify-between items-center mb-1.5">
                                     <span className="text-xs font-bold text-orange-700 dark:text-orange-400 uppercase tracking-wider">Class Schedule</span>
                                     <span className="text-xs font-bold text-orange-700 dark:text-orange-300 bg-white dark:bg-orange-900/40 px-2 py-0.5 rounded border border-orange-200 dark:border-orange-800/50 shadow-sm">
-                                        Room: {course.roomName || 'TBA'}
+                                        Room: {activeCourse.roomName || 'TBA'}
                                     </span>
                                 </div>
                                 <div className="space-y-1">
-                                    {course.sectionSchedule.classSchedules.map((sched, idx) => (
+                                    {activeCourse.sectionSchedule.classSchedules.map((sched, idx) => (
                                         <div key={`cls-${idx}`} className="flex justify-between text-xs">
                                             <span className="font-bold text-gray-900 dark:text-gray-100 w-16">{formatDay(sched.day)}</span>
                                             <span className="font-mono font-medium text-gray-900 dark:text-gray-200 text-right flex-1">{formatTime(sched.startTime)} - {formatTime(sched.endTime)}</span>
@@ -170,16 +188,16 @@ const CourseBottomSheet = ({ course, onClose, courseTitle, extraFields = [] }) =
                             </div>
                         )}
 
-                        {course.labSchedules?.length > 0 && (
+                        {activeCourse.labSchedules?.length > 0 && (
                             <div className="bg-teal-50 dark:bg-teal-900/20 rounded-lg p-2.5 border border-teal-200 dark:border-teal-800/30">
                                 <div className="flex justify-between items-center mb-1.5">
                                     <span className="text-xs font-bold text-teal-700 dark:text-teal-400 uppercase tracking-wider">Lab Schedule</span>
                                     <span className="text-xs font-bold text-teal-700 dark:text-teal-300 bg-white dark:bg-teal-900/40 px-2 py-0.5 rounded border border-teal-200 dark:border-teal-800/50 shadow-sm">
-                                        Room: {course.labRoomName || 'TBA'}
+                                        Room: {activeCourse.labRoomName || 'TBA'}
                                     </span>
                                 </div>
                                 <div className="space-y-1">
-                                    {course.labSchedules.map((sched, idx) => (
+                                    {activeCourse.labSchedules.map((sched, idx) => (
                                         <div key={`lab-${idx}`} className="flex justify-between text-xs">
                                             <span className="font-bold text-gray-900 dark:text-gray-100 w-16">{formatDay(sched.day)}</span>
                                             <span className="font-mono font-medium text-gray-900 dark:text-gray-200 text-right flex-1">{formatTime(sched.startTime)} - {formatTime(sched.endTime)}</span>
@@ -194,15 +212,15 @@ const CourseBottomSheet = ({ course, onClose, courseTitle, extraFields = [] }) =
                     <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
                         <div>
                             <span className="text-gray-500 dark:text-gray-400 text-xs block">Type</span>
-                            <span className="text-gray-900 dark:text-gray-200">{displayTitle.endsWith('L') ? 'LAB' : course.sectionType === 'OTHER' ? 'THEORY' : course.sectionType}</span>
+                            <span className="text-gray-900 dark:text-gray-200">{displayTitle.endsWith('L') ? 'LAB' : activeCourse.sectionType === 'OTHER' ? 'THEORY' : activeCourse.sectionType}</span>
                         </div>
                         <div>
                             <span className="text-gray-500 dark:text-gray-400 text-xs block">Capacity</span>
-                            <span className="text-gray-900 dark:text-gray-200">{course.consumedSeat || 0} / {course.capacity || 0}</span>
+                            <span className="text-gray-900 dark:text-gray-200">{activeCourse.consumedSeat || 0} / {activeCourse.capacity || 0}</span>
                         </div>
                         <div className="col-span-2">
                             <span className="text-gray-500 dark:text-gray-400 text-xs block">Prerequisites</span>
-                            <span className="text-gray-900 dark:text-gray-200">{course.prerequisiteCourses || 'None'}</span>
+                            <span className="text-gray-900 dark:text-gray-200">{activeCourse.prerequisiteCourses || 'None'}</span>
                         </div>
                     </div>
 
@@ -210,16 +228,16 @@ const CourseBottomSheet = ({ course, onClose, courseTitle, extraFields = [] }) =
                     <div className="grid grid-cols-2 gap-2 text-xs bg-blue-50 dark:bg-blue-900/20 p-2 rounded border border-blue-100 dark:border-blue-800/30">
                         <div>
                             <span className="text-blue-600 dark:text-blue-400 font-medium block">Mid Exam</span>
-                            <span className="text-gray-700 dark:text-gray-300">{course.sectionSchedule?.midExamDetail || 'TBA'}</span>
+                            <span className="text-gray-700 dark:text-gray-300">{activeCourse.sectionSchedule?.midExamDetail || 'TBA'}</span>
                         </div>
                         <div>
                             <span className="text-blue-600 dark:text-blue-400 font-medium block">Final Exam</span>
-                            <span className="text-gray-700 dark:text-gray-300">{course.sectionSchedule?.finalExamDetail || 'TBA'}</span>
+                            <span className="text-gray-700 dark:text-gray-300">{activeCourse.sectionSchedule?.finalExamDetail || 'TBA'}</span>
                         </div>
                     </div>
 
                     <div className="text-xs text-center text-gray-400 dark:text-gray-500 pt-1">
-                        {course.sectionSchedule?.classStartDate} to {course.sectionSchedule?.classEndDate}
+                        {activeCourse.sectionSchedule?.classStartDate} to {activeCourse.sectionSchedule?.classEndDate}
                     </div>
                 </div>
             </div>

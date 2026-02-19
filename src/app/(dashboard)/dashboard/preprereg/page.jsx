@@ -7,6 +7,7 @@ import RoutineView from '@/components/routine/RoutineView';
 import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
 import MobileCourseCard from '@/components/ui/MobileCourseCard';
+import CourseBottomSheet from '@/components/ui/CourseBottomSheet';
 
 
 
@@ -40,6 +41,8 @@ const PreRegistrationPage = () => {
   const [facultyImageError, setFacultyImageError] = useState(false);
   const [filterDropdownOpen, setFilterDropdownOpen] = useState(false);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
+  const [bottomSheetCourse, setBottomSheetCourse] = useState(null);
+  const [showSelectedDrawer, setShowSelectedDrawer] = useState(false);
   const isMobile = useIsMobile();
   const observerRef = useRef();
   const lastCourseRef = useRef();
@@ -69,11 +72,12 @@ const PreRegistrationPage = () => {
   // Enrich selected courses with faculty details
   const enrichedSelectedCourses = useMemo(() => {
     return selectedCourses.map(course => {
-      const { facultyName, facultyEmail } = getFacultyDetails(course.faculties);
+      const { facultyName, facultyEmail, imgUrl } = getFacultyDetails(course.faculties);
       return {
         ...course,
         employeeName: facultyName,
         employeeEmail: facultyEmail,
+        imgUrl,
       };
     });
   }, [selectedCourses, getFacultyDetails]);
@@ -270,6 +274,25 @@ const PreRegistrationPage = () => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // Back button/gesture handler — close modals instead of navigating away
+  useEffect(() => {
+    const handlePopState = () => {
+      if (bottomSheetCourse) {
+        setBottomSheetCourse(null); // CourseBottomSheet handles its own out transition
+      } else if (showRoutineModal) {
+        setShowRoutineModal(false); // RoutineView handles its own out transition via isOpen
+      }
+    };
+
+    // Push state when a modal opens
+    if (showRoutineModal || bottomSheetCourse) {
+      window.history.pushState({ modal: true }, '');
+    }
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [showRoutineModal, bottomSheetCourse]);
 
   // Reset highlighted index when search changes
   useEffect(() => {
@@ -600,22 +623,52 @@ const PreRegistrationPage = () => {
 
           {/* Selected Courses Tags */}
           {selectedCourses.length > 0 && (
-            <div className="flex flex-wrap gap-2 mt-3">
-              {selectedCourses.map(course => (
-                <span
-                  key={course.sectionId}
-                  className="px-3 py-1.5 bg-blue-100 dark:bg-blue-500/20 border border-blue-300 dark:border-blue-500/50 rounded-full text-sm flex items-center gap-2 text-blue-700 dark:text-blue-300"
+            isMobile ? (
+              <div className="mt-3">
+                <button
+                  onClick={() => setShowSelectedDrawer(!showSelectedDrawer)}
+                  className="w-full flex items-center justify-between px-3 py-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg text-sm text-blue-700 dark:text-blue-300"
                 >
-                  {course.courseCode}-[{course.sectionName}]-{course.faculties || 'TBA'}
-                  <button
-                    onClick={() => addToRoutine(course)}
-                    className="hover:text-blue-500 dark:hover:text-blue-200 transition-colors"
+                  <span className="font-medium">{selectedCourses.length} course{selectedCourses.length > 1 ? 's' : ''} selected</span>
+                  <ChevronDown className={`w-4 h-4 transition-transform ${showSelectedDrawer ? 'rotate-180' : ''}`} />
+                </button>
+                <div className={`overflow-hidden transition-all duration-200 ease-in-out ${showSelectedDrawer ? 'max-h-60 opacity-100 mt-2' : 'max-h-0 opacity-0'}`}>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedCourses.map(course => (
+                      <span
+                        key={course.sectionId}
+                        className="px-3 py-1.5 bg-blue-100 dark:bg-blue-500/20 border border-blue-300 dark:border-blue-500/50 rounded-full text-sm flex items-center gap-2 text-blue-700 dark:text-blue-300"
+                      >
+                        {course.courseCode}-[{course.sectionName}]
+                        <button
+                          onClick={() => addToRoutine(course)}
+                          className="hover:text-blue-500 dark:hover:text-blue-200 transition-colors"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-wrap gap-2 mt-3">
+                {selectedCourses.map(course => (
+                  <span
+                    key={course.sectionId}
+                    className="px-3 py-1.5 bg-blue-100 dark:bg-blue-500/20 border border-blue-300 dark:border-blue-500/50 rounded-full text-sm flex items-center gap-2 text-blue-700 dark:text-blue-300"
                   >
-                    <X className="w-3 h-3" />
-                  </button>
-                </span>
-              ))}
-            </div>
+                    {course.courseCode}-[{course.sectionName}]-{course.faculties || 'TBA'}
+                    <button
+                      onClick={() => addToRoutine(course)}
+                      className="hover:text-blue-500 dark:hover:text-blue-200 transition-colors"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )
           )}
         </div>
       </div>
@@ -640,6 +693,16 @@ const PreRegistrationPage = () => {
                     course={course}
                     isSelected={isSelected}
                     onToggle={addToRoutine}
+                    onCardTap={(c) => {
+                      // Enrich with faculty data before showing bottom sheet
+                      const { facultyName, facultyEmail, imgUrl } = getFacultyDetails(c.faculties);
+                      setBottomSheetCourse({
+                        ...c,
+                        employeeName: facultyName,
+                        employeeEmail: facultyEmail,
+                        imgUrl,
+                      });
+                    }}
                     formatTime={formatTime}
                     formatSchedule={formatSchedule}
                   />
@@ -1035,25 +1098,24 @@ const PreRegistrationPage = () => {
         </div>
       )}
 
-      {/* Routine Modal */}
-      {showRoutineModal && (
-        <RoutineView
-          title="My Routine"
-          courses={enrichedSelectedCourses}
-          onClose={() => setShowRoutineModal(false)}
-          onSave={saveRoutine}
-          isSaving={savingRoutine}
-          onRemoveCourse={addToRoutine}
-          showRemoveButtons={true}
-          headerExtras={
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Total Credits: <span className={`font-bold ${totalCredits > 15 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
-                {totalCredits}/15
-              </span>
-            </p>
-          }
-        />
-      )}
+      {/* Routine Modal — always rendered, uses isOpen for animated transitions */}
+      <RoutineView
+        title="My Routine"
+        courses={enrichedSelectedCourses}
+        isOpen={showRoutineModal}
+        onClose={() => setShowRoutineModal(false)}
+        onSave={saveRoutine}
+        isSaving={savingRoutine}
+        onRemoveCourse={addToRoutine}
+        showRemoveButtons={true}
+        headerExtras={
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Total Credits: <span className={`font-bold ${totalCredits > 15 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
+              {totalCredits}/15
+            </span>
+          </p>
+        }
+      />
 
       {/* Faculty Hover Tooltip */}
       {hoveredFaculty && (
@@ -1102,10 +1164,16 @@ const PreRegistrationPage = () => {
         </div>
       )}
 
+      {/* Mobile Course Bottom Sheet */}
+      <CourseBottomSheet
+        course={bottomSheetCourse}
+        onClose={() => setBottomSheetCourse(null)}
+      />
+
       {/* Floating Routine Button */}
       <button
         onClick={() => setShowRoutineModal(true)}
-        className="fixed bottom-6 right-6 px-5 py-3 bg-blue-600 hover:bg-blue-700 rounded-full shadow-lg transition-all hover:scale-105 z-40 flex items-center gap-3"
+        className={`fixed bottom-6 z-40 flex items-center gap-3 px-5 py-3 bg-blue-600 hover:bg-blue-700 rounded-full shadow-lg transition-all hover:scale-105 ${isMobile ? 'left-1/2 -translate-x-1/2' : 'right-6'}`}
       >
         <div className="relative">
           <Calendar className="w-5 h-5" />
@@ -1115,7 +1183,7 @@ const PreRegistrationPage = () => {
             </span>
           )}
         </div>
-        <span className="text-sm font-medium">Click to View Your Routine</span>
+        <span className="text-sm font-medium">View Routine</span>
       </button>
     </div>
   );
