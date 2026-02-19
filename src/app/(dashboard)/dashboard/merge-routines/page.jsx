@@ -34,6 +34,7 @@ import { ChevronDown } from 'lucide-react';
 
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import CourseHoverTooltip from '@/components/ui/CourseHoverTooltip';
+import { getRoutineTimings, REGULAR_TIMINGS } from '@/constants/routineTimings';
 
 const MergeRoutinesPage = () => {
   const { data: session } = useSession();
@@ -670,15 +671,7 @@ const MergedRoutineGrid = ({ courses, friends }) => {
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
   const [hoveredCourseTitle, setHoveredCourseTitle] = useState(null);
 
-  const timeSlots = [
-    '08:00 AM-09:20 AM',
-    '09:30 AM-10:50 AM',
-    '11:00 AM-12:20 PM',
-    '12:30 PM-01:50 PM',
-    '02:00 PM-03:20 PM',
-    '03:30 PM-04:50 PM',
-    '05:00 PM-06:20 PM'
-  ];
+  const timeSlots = getRoutineTimings();
 
   const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
@@ -813,39 +806,52 @@ const MergedRoutineGrid = ({ courses, friends }) => {
                                     {course.friendName}
                                   </div>
                                   {course.roomName && (
-                                    <div className="text-gray-500 text-xs">
-                                      { isLab ? course.labRoomName || course.labRoomNumber || 'TBA' : course.roomName || course.roomNumber || 'TBA' }
-                                    </div>
-                                  )}
-                                </div>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </td>
-                    );
-                  })}
-                </tr>
-              ))}
-            </tbody>
+                                    <tbody>
+                                      {timeSlots.map((timeSlot, index) => {
+                                        const matchSlot = REGULAR_TIMINGS[index];
+                                        return (
+                                          <tr key={timeSlot} className="border-b border-gray-200 dark:border-gray-800">
+                                            <td className="py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400 whitespace-nowrap border-r border-gray-200 dark:border-gray-700">
+                                              {timeSlot}
+                                            </td>
+                                            {days.map(day => {
+                                              const slotCourses = getCoursesForSlot(day, matchSlot);
+
+                                              return (
+                                                <td key={`${day}-${timeSlot}`} className="p-2 border-l border-gray-200 dark:border-gray-800 relative">
+                                                  {slotCourses.length > 0 && (
+                                                    <div className="space-y-1">
+                                                      {slotCourses.map((course, idx) => {
+                                                        // Check if this specific time slot is for a lab
+                                                        const isLab = course.labSchedules?.some(s => {
+                                                          if (s.day !== day.toUpperCase()) return false;
+                                                          const scheduleStart = timeToMinutes(formatTime(s.startTime));
+                                                          const scheduleEnd = timeToMinutes(formatTime(s.endTime));
+                                                          const slotStartMin = timeToMinutes(matchSlot.split('-')[0]);
+                                                          const slotEndMin = timeToMinutes(matchSlot.split('-')[1]);
+                                                          return scheduleStart < slotEndMin && scheduleEnd > slotStartMin;
+                                                        });
+                  );
+                })}
+                                                    </tbody>
           </table>
         </div>
 
-        {/* Tooltip */}
-        <CourseHoverTooltip
-          course={hoveredCourse}
-          position={tooltipPosition}
-          courseTitle={hoveredCourseTitle}
-          extraFields={hoveredCourse ? [{ label: 'Friend', value: hoveredCourse.friendName }] : []}
-        />
+        {/* Tooltip */ }
+                                        <CourseHoverTooltip
+                                          course={hoveredCourse}
+                                          position={tooltipPosition}
+                                          courseTitle={hoveredCourseTitle}
+                                          extraFields={hoveredCourse ? [{ label: 'Friend', value: hoveredCourse.friendName }] : []}
+                                        />
 
-        {/* Footer */}
-        <div className="mt-4 text-center text-sm text-gray-500">
-          Made with 💖 from https://oracle.eniamza.com
-        </div>
+                                        {/* Footer */ }
+                                        <div className="mt-4 text-center text-sm text-gray-500">
+                                          Made with 💖 from https://oracle.eniamza.com
+                                        </div>
       </div>
     </div>
-  );
-};
+                              );
+                            };
 
-export default MergeRoutinesPage;
+                            export default MergeRoutinesPage;

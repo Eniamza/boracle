@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { exportRoutineToPNG } from '@/components/routine/ExportRoutinePNG';
+import { getRoutineTimings, REGULAR_TIMINGS } from '@/constants/routineTimings';
 import { set } from 'mongoose';
 
 const SavedRoutinesPage = () => {
@@ -656,15 +657,7 @@ const SavedRoutinesPage = () => {
     const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
     const [hoveredCourseTitle, setHoveredCourseTitle] = useState(null);
 
-    const timeSlots = [
-      '08:00 AM-09:20 AM',
-      '09:30 AM-10:50 AM',
-      '11:00 AM-12:20 PM',
-      '12:30 PM-01:50 PM',
-      '02:00 PM-03:20 PM',
-      '03:30 PM-04:50 PM',
-      '05:00 PM-06:20 PM'
-    ];
+    const timeSlots = getRoutineTimings();
 
     const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
@@ -783,73 +776,77 @@ const SavedRoutinesPage = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {timeSlots.map(timeSlot => (
-                      <tr key={timeSlot} className="border-b border-gray-200 dark:border-gray-800">
-                        <td className="py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400 whitespace-nowrap border-r border-gray-200 dark:border-gray-700">
-                          {timeSlot}
-                        </td>
-                        {days.map(day => {
-                          const slotCourses = getCoursesForSlot(day, timeSlot);
+                    {timeSlots.map((timeSlot, index) => {
+                      const matchSlot = REGULAR_TIMINGS[index];
+                      return (
+                        <tr key={timeSlot} className="border-b border-gray-200 dark:border-gray-800">
+                          <td className="py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400 whitespace-nowrap border-r border-gray-200 dark:border-gray-700">
+                            {timeSlot}
+                          </td>
+                          {days.map(day => {
+                            const slotCourses = getCoursesForSlot(day, matchSlot);
 
-                          return (
-                            <td key={`${day}-${timeSlot}`} className="p-2 border-l border-gray-200 dark:border-gray-800 relative">
-                              {slotCourses.length > 0 && (
-                                <div className="space-y-1">
-                                  {slotCourses.map((course, idx) => {
-                                    // Check if this specific time slot is for a lab
-                                    const isLab = course.labSchedules?.some(s => {
-                                      if (s.day !== day.toUpperCase()) return false;
-                                      const scheduleStart = timeToMinutes(formatTime(s.startTime));
-                                      const scheduleEnd = timeToMinutes(formatTime(s.endTime));
-                                      const slotStartMin = timeToMinutes(timeSlot.split('-')[0]);
-                                      const slotEndMin = timeToMinutes(timeSlot.split('-')[1]);
-                                      return scheduleStart < slotEndMin && scheduleEnd > slotStartMin;
-                                    });
+                            return (
+                              <td key={`${day}-${timeSlot}`} className="p-2 border-l border-gray-200 dark:border-gray-800 relative">
+                                {slotCourses.length > 0 && (
+                                  <div className="space-y-1">
+                                    {slotCourses.map((course, idx) => {
+                                      // Check if this specific time slot is for a lab
+                                      const isLab = course.labSchedules?.some(s => {
+                                        if (s.day !== day.toUpperCase()) return false;
+                                        const scheduleStart = timeToMinutes(formatTime(s.startTime));
+                                        const scheduleEnd = timeToMinutes(formatTime(s.endTime));
+                                        const slotStartMin = timeToMinutes(matchSlot.split('-')[0]);
+                                        const slotEndMin = timeToMinutes(matchSlot.split('-')[1]);
+                                        return scheduleStart < slotEndMin && scheduleEnd > slotStartMin;
+                                      });
 
-                                    return (
-                                      <div
-                                        key={`${course.sectionId}-${idx}`}
-                                        className="p-2 rounded text-xs transition-opacity hover:opacity-90 cursor-pointer"
-                                        style={{
-                                          backgroundColor: `${course.friendColor}30`,
-                                          borderLeft: `3px solid ${course.friendColor}`
-                                        }}
-                                        onMouseEnter={(e) => {
-                                          setHoveredCourse(course);
-                                          setHoveredCourseTitle(`${course.courseCode}${isLab ? 'L' : ''}`);
-                                          const rect = e.currentTarget.getBoundingClientRect();
-                                          const viewportWidth = window.innerWidth;
-                                          const tooltipWidth = 384; // w-96 = 384px
-                                          const shouldShowLeft = rect.right + tooltipWidth + 10 > viewportWidth;
+                                      return (
+                                        <div
+                                          key={`${course.sectionId}-${idx}`}
+                                          className="p-2 rounded text-xs transition-opacity hover:opacity-90 cursor-pointer"
+                                          style={{
+                                            backgroundColor: `${course.friendColor}30`,
+                                            borderLeft: `3px solid ${course.friendColor}`
+                                          }}
+                                          onMouseEnter={(e) => {
+                                            setHoveredCourse(course);
+                                            setHoveredCourseTitle(`${course.courseCode}${isLab ? 'L' : ''}`);
+                                            const rect = e.currentTarget.getBoundingClientRect();
+                                            const viewportWidth = window.innerWidth;
+                                            const tooltipWidth = 384; // w-96 = 384px
+                                            const shouldShowLeft = rect.right + tooltipWidth + 10 > viewportWidth;
 
-                                          setTooltipPosition({
-                                            x: shouldShowLeft ? rect.left - tooltipWidth - 10 : rect.right + 10,
-                                            y: rect.top
-                                          });
-                                        }}
-                                        onMouseLeave={() => setHoveredCourse(null)}
-                                      >
-                                        <div className="font-semibold text-gray-900 dark:text-white">
-                                          {course.courseCode}{isLab && 'L'}-{course.sectionName}
-                                        </div>
-                                        <div className="text-gray-600 dark:text-gray-400 text-xs mt-0.5">
-                                          {course.friendName}
-                                        </div>
-                                        {course.roomName && (
-                                          <div className="text-gray-500 dark:text-gray-500 text-xs">
-                                            {course.roomName}
+                                            setTooltipPosition({
+                                              x: shouldShowLeft ? rect.left - tooltipWidth - 10 : rect.right + 10,
+                                              y: rect.top
+                                            });
+                                          }}
+                                          onMouseLeave={() => setHoveredCourse(null)}
+                                        >
+                                          <div className="font-semibold text-gray-900 dark:text-white">
+                                            {course.courseCode}{isLab && 'L'}-{course.sectionName}
                                           </div>
-                                        )}
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              )}
-                            </td>
-                          );
-                        })}
-                      </tr>
-                    ))}
+                                          <div className="text-gray-600 dark:text-gray-400 text-xs mt-0.5">
+                                            {course.friendName}
+                                          </div>
+                                          {course.roomName && (
+                                            <div className="text-gray-500 dark:text-gray-500 text-xs">
+                                              {course.roomName}
+                                            </div>
+                                          )}
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                )}
+                              </td>
+                            );
+                          })}
+                        </tr>
+
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -864,7 +861,7 @@ const SavedRoutinesPage = () => {
             </div>
           </div>
         </div>
-      </div>
+      </div >
     );
   };
 
@@ -979,7 +976,7 @@ const SavedRoutinesPage = () => {
                                 ? `${session.user.name.split(' ')[0].charAt(0).toUpperCase() + session.user.name.split(' ')[0].slice(1).toLowerCase()}'s Routine #${routine.routineNumber}`
                                 : `Routine #${routine.routineNumber}`));
                             }}
-                              className="p-1 opacity-0 group-hover/name:opacity-100 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg text-gray-500 dark:text-gray-400 transition-all duration-200"
+                            className="p-1 opacity-0 group-hover/name:opacity-100 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg text-gray-500 dark:text-gray-400 transition-all duration-200"
                           >
                             <Pencil className="w-3.5 h-3.5" />
                           </button>
