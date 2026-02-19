@@ -15,7 +15,7 @@ import CourseSelector from './CourseSelector';
 import MultiCourseSelector from './MultiCourseSelector';
 import { toast } from 'sonner';
 
-const CreateSwapModal = ({ courses, onSwapCreated }) => {
+const CreateSwapModal = ({ courses, onSwapCreated, isMobile = false }) => {
   const [modalOpen, setModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [givingSection, setGivingSection] = useState("");
@@ -67,10 +67,9 @@ const CreateSwapModal = ({ courses, onSwapCreated }) => {
   return (
     <Dialog open={modalOpen} onOpenChange={setModalOpen}>
       <DialogTrigger asChild>
-        <div className="flex items-center gap-2 px-4 py-2 bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 rounded-lg font-medium shadow-sm transition-all hover:opacity-90 cursor-pointer">
-        {/* <div className="px-4 py-2 bg-black dark:text-black text-white rounded-lg cursor-pointer transition-all flex items-center gap-2 font-medium shadow-md dark:bg-white/90 hover:brightness-110 hover:dark:bg-white/90 hover:bg-gray-900"> */}
-          <Plus className="w-4 h-4" />
-          Create Swap
+        <div className={`flex items-center justify-center gap-2 bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 rounded-lg font-medium shadow-sm transition-all hover:opacity-90 cursor-pointer ${isMobile ? 'px-3 py-2.5' : 'px-4 py-2'}`} title="Create Swap">
+          <Plus className="w-4 h-4 md:w-5 md:h-5" />
+          {!isMobile && <span>Create Swap</span>}
         </div>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[600px]">
@@ -80,7 +79,7 @@ const CreateSwapModal = ({ courses, onSwapCreated }) => {
             Select the section you want to give and the sections you're willing to take in exchange.
           </DialogDescription>
         </DialogHeader>
-        
+
         <div className="grid gap-6 py-4">
           <CourseSelector
             label="You Give"
@@ -101,7 +100,7 @@ const CreateSwapModal = ({ courses, onSwapCreated }) => {
         </div>
 
         <div className="flex justify-center mt-4">
-          <Button 
+          <Button
             onClick={handleSubmit}
             disabled={submitting || !givingSection || askingSections.length === 0}
             className="bg-green-600 hover:bg-green-700 px-8 transition-all hover:scale-105 hover:shadow-lg disabled:hover:scale-100 disabled:hover:shadow-none"

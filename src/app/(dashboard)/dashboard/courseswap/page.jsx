@@ -348,14 +348,8 @@ const CourseSwapPage = () => {
   return (
     <div className="min-h-screen">
       <div className="container mx-auto px-4 py-8">
-        <div className="flex flex-col gap-4 mb-8">
-          <div>
-            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">
-              Swap Arena
-            </h1>
-          </div>
-
-          <div className="flex flex-wrap gap-3 items-center">
+        <div className="flex items-center justify-between mb-8 gap-3">
+          <div className="flex items-center">
             {session?.user?.email && (
               <label className="flex items-center gap-2 cursor-pointer bg-blue-50 dark:bg-gray-800 border border-blue-200 dark:border-gray-700 px-3 py-2 rounded-lg">
                 <span className="text-xs md:text-sm font-medium text-blue-700 dark:text-gray-300 whitespace-nowrap">My Swaps</span>
@@ -375,16 +369,21 @@ const CourseSwapPage = () => {
                 </button>
               </label>
             )}
+          </div>
+
+          <div className="flex items-center gap-2 md:gap-3">
             {swaps.length > 0 && (
               <SwapFilter
                 courses={allAvailableCourses}
                 swaps={swaps}
                 onFilterChange={handleFilterChange}
+                isMobile={isMobile}
               />
             )}
             <CreateSwapModal
               courses={currentCourses}
               onSwapCreated={fetchSwaps}
+              isMobile={isMobile}
             />
           </div>
         </div>

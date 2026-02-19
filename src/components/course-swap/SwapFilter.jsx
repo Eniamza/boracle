@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Check, Filter, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const SwapFilter = ({ courses = [], swaps = [], onFilterChange }) => {
+const SwapFilter = ({ courses = [], swaps = [], onFilterChange, isMobile = false }) => {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [selectedCourses, setSelectedCourses] = useState([]);
@@ -25,8 +25,8 @@ const SwapFilter = ({ courses = [], swaps = [], onFilterChange }) => {
         swap.askingSections.forEach(id => sectionIds.add(id));
       }
     });
-    
-    return courses.filter(course => 
+
+    return courses.filter(course =>
       sectionIds.has(course.sectionId)
     );
   };
@@ -35,9 +35,9 @@ const SwapFilter = ({ courses = [], swaps = [], onFilterChange }) => {
 
   const filterCourses = (searchTerm) => {
     if (!searchTerm) return availableCourses.slice(0, 50);
-    
+
     const search = searchTerm.toLowerCase();
-    return availableCourses.filter(course => 
+    return availableCourses.filter(course =>
       course.courseCode?.toLowerCase().includes(search) ||
       course.sectionName?.toLowerCase().includes(search) ||
       formatCourse(course).toLowerCase().includes(search)
@@ -48,7 +48,7 @@ const SwapFilter = ({ courses = [], swaps = [], onFilterChange }) => {
     const newSelection = selectedCourses.includes(courseId)
       ? selectedCourses.filter(id => id !== courseId)
       : [...selectedCourses, courseId];
-    
+
     setSelectedCourses(newSelection);
     onFilterChange(newSelection);
   };
@@ -85,20 +85,30 @@ const SwapFilter = ({ courses = [], swaps = [], onFilterChange }) => {
     <div className="relative" ref={dropdownRef}>
       <div
         onClick={() => setOpen(!open)}
-        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg cursor-pointer transition-all flex items-center gap-2"
+        className={`bg-blue-600 hover:bg-blue-700 text-white rounded-lg cursor-pointer transition-all flex items-center justify-center gap-2 ${isMobile ? 'px-3 py-2.5' : 'px-4 py-2'}`}
+        title="Filter Swaps"
       >
         <Filter className="w-4 h-4" />
-        <span>Filter Swaps</span>
-        {selectedCourses.length > 0 && (
-          <Badge className="bg-white/20 text-white border-0">
+        {!isMobile && (
+          <>
+            <span>Filter Swaps</span>
+            {selectedCourses.length > 0 && (
+              <Badge className="bg-white/20 text-white border-0 ml-1">
+                {selectedCourses.length}
+              </Badge>
+            )}
+          </>
+        )}
+        {isMobile && selectedCourses.length > 0 && (
+          <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-[10px] flex items-center justify-center text-white border border-white dark:border-gray-900">
             {selectedCourses.length}
-          </Badge>
+          </div>
         )}
       </div>
 
       {open && (
-        <div className="absolute z-[200] mt-2 w-80 rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 shadow-2xl shadow-gray-400/30 dark:shadow-black/50" 
-             style={{ maxHeight: '400px', overflow: 'hidden' }}>
+        <div className="absolute z-[200] mt-2 w-80 rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 shadow-2xl shadow-gray-400/30 dark:shadow-black/50"
+          style={{ maxHeight: '400px', overflow: 'hidden' }}>
           <div className="p-3 border-b border-gray-200 dark:border-gray-800">
             <Input
               placeholder="Search courses to filter..."
@@ -109,7 +119,7 @@ const SwapFilter = ({ courses = [], swaps = [], onFilterChange }) => {
               autoFocus
             />
           </div>
-          
+
           {selectedCourses.length > 0 && (
             <div className="p-3 border-b border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30">
               <div className="flex items-center justify-between mb-2">
@@ -155,8 +165,8 @@ const SwapFilter = ({ courses = [], swaps = [], onFilterChange }) => {
                       key={course.sectionId}
                       className={cn(
                         "flex items-center px-3 py-2.5 cursor-pointer transition-colors border-l-3",
-                        isSelected 
-                          ? "bg-blue-50 dark:bg-blue-950/40 border-l-blue-600 dark:border-l-blue-400" 
+                        isSelected
+                          ? "bg-blue-50 dark:bg-blue-950/40 border-l-blue-600 dark:border-l-blue-400"
                           : "hover:bg-gray-100 dark:hover:bg-gray-800 border-l-transparent"
                       )}
                       onClick={() => toggleCourse(course.sectionId)}
@@ -164,8 +174,8 @@ const SwapFilter = ({ courses = [], swaps = [], onFilterChange }) => {
                       <div
                         className={cn(
                           "mr-3 h-4 w-4 rounded border-2 flex items-center justify-center transition-colors",
-                          isSelected 
-                            ? "bg-blue-600 border-blue-600 dark:bg-blue-500 dark:border-blue-500" 
+                          isSelected
+                            ? "bg-blue-600 border-blue-600 dark:bg-blue-500 dark:border-blue-500"
                             : "border-gray-300 dark:border-gray-600"
                         )}
                       >
