@@ -13,6 +13,7 @@ const RoutineTableGrid = ({
   showRemoveButtons = true,
   className = "",
   forceDesktop = false,
+  mobileAction,
 }) => {
   const routineRef = useRef(null);
   const [hoveredCourse, setHoveredCourse] = useState(null);
@@ -90,6 +91,7 @@ const RoutineTableGrid = ({
           selectedCourses={selectedCourses}
           onRemoveCourse={onRemoveCourse}
           showRemoveButtons={showRemoveButtons}
+          mobileAction={mobileAction}
         />
         {selectedCourses.length === 0 && (
           <div className="text-center py-12 text-gray-500">

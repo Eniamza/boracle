@@ -8,6 +8,8 @@ import { exportRoutineToPNG } from '@/components/routine/ExportRoutinePNG';
 import { getRoutineTimings, REGULAR_TIMINGS } from '@/constants/routineTimings';
 import { copyToClipboard } from '@/lib/utils';
 import { toast } from 'sonner';
+import { useIsMobile } from '@/hooks/use-mobile';
+import MobileMergedRoutineView from '@/components/routine/MobileMergedRoutineView';
 
 const SharedMergedRoutinePage = () => {
     const { id } = useParams();
@@ -21,8 +23,15 @@ const SharedMergedRoutinePage = () => {
     const [importing, setImporting] = useState(false);
     const [imported, setImported] = useState(false);
     const routineRef = useRef(null);
+    const exportRef = useRef(null);
     const [hoveredCourse, setHoveredCourse] = useState(null);
     const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
+    const isMobile = useIsMobile();
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     const colorPalette = [
         '#3B82F6', '#8B5CF6', '#EC4899', '#F59E0B',
@@ -222,10 +231,18 @@ const SharedMergedRoutinePage = () => {
     };
 
     const exportToPNG = async () => {
-        if (!courses || courses.length === 0 || !routineRef?.current) return;
+        if (!courses || courses.length === 0) return;
+
+        // Use hidden exportRef on mobile, otherwise normal routineRef
+        const ref = (isMobile && exportRef.current) ? exportRef : routineRef;
+
+        if (!ref.current) {
+            toast.error('Routine table not found');
+            return;
+        }
 
         await exportRoutineToPNG({
-            routineRef,
+            routineRef: ref,
             filename: `shared-merged-routine-${id.slice(0, 8)}`,
             showToast: false,
         });
@@ -278,15 +295,14 @@ const SharedMergedRoutinePage = () => {
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-gray-50 via-white to-gray-100 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 text-gray-900 dark:text-white p-4 sm:p-8">
-            {/* Header Section */}
             <div className="max-w-7xl mx-auto mb-6">
                 <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-purple-800/50 rounded-xl p-6">
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                        <div className="flex items-center gap-3">
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
+                        <div className="flex flex-col sm:flex-row items-center gap-3">
                             <div className="p-2.5 bg-purple-100 dark:bg-purple-600/20 rounded-lg">
                                 <Users className="w-6 h-6 text-purple-600 dark:text-purple-400" />
                             </div>
-                            <div className="flex flex-col">
+                            <div className="flex flex-col items-center sm:items-start">
                                 <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
                                     {routine?.ownerName
                                         ? `${routine.ownerName.charAt(0).toUpperCase() + routine.ownerName.slice(1).toLowerCase()}'s Merged Routine`
@@ -328,7 +344,7 @@ const SharedMergedRoutinePage = () => {
                         </div>
 
                         {/* Action Buttons */}
-                        <div className="flex items-center gap-2 self-end sm:self-auto">
+                        <div className="flex items-center gap-2 mt-2 sm:mt-0">
                             {session?.user?.email && (
                                 <button
                                     onClick={importRoutine}
@@ -360,120 +376,238 @@ const SharedMergedRoutinePage = () => {
                 </div>
             </div>
 
-            {/* Routine Grid - Matching MergedRoutineTableModal exactly */}
+            {/* Routine Grid */}
             <div className="max-w-7xl mx-auto">
-                <div ref={routineRef} className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 p-4 rounded-lg">
-                    {/* Friend Legend - same as modal */}
-                    <div className="mb-4 flex flex-wrap gap-3">
-                        {friends.map(friend => (
-                            <div key={friend.id} className="flex items-center gap-2">
-                                <div
-                                    className="w-4 h-4 rounded-full"
-                                    style={{ backgroundColor: friend.color }}
-                                />
-                                <span className="text-sm text-gray-600 dark:text-gray-400">{friend.friendName}</span>
-                            </div>
-                        ))}
-                    </div>
+                {mounted && isMobile ? (
+                    <>
+                        {/* Mobile View */}
+                        <div className='bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4'>
+                            <MobileMergedRoutineView
+                                courses={courses}
+                                friends={friends}
+                            />
+                        </div>
 
-                    <div className="overflow-x-auto">
-                        <table className="w-full border-collapse">
-                            <thead>
-                                <tr className="border-b border-gray-200 dark:border-gray-700">
-                                    <th className="text-left py-4 px-4 text-sm font-medium text-gray-600 dark:text-gray-400 w-36">Time/Day</th>
-                                    {days.map(day => (
-                                        <th key={day} className="text-center py-4 px-3 text-sm font-medium text-gray-600 dark:text-gray-400">
-                                            {day}
-                                        </th>
+                        {/* Hidden Desktop Table for Export */}
+                        <div
+                            style={{
+                                position: 'fixed',
+                                left: 0,
+                                top: 0,
+                                width: '1800px',
+                                opacity: 0,
+                                pointerEvents: 'none',
+                                zIndex: -1,
+                                overflow: 'visible',
+                            }}
+                            aria-hidden="true"
+                        >
+                            <div ref={exportRef} className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 p-4 rounded-lg">
+                                {/* Friend Legend */}
+                                <div className="mb-4 flex flex-wrap gap-3">
+                                    {friends.map(friend => (
+                                        <div key={friend.id} className="flex items-center gap-2">
+                                            <div
+                                                className="w-4 h-4 rounded-full"
+                                                style={{ backgroundColor: friend.color }}
+                                            />
+                                            <span className="text-sm text-gray-600 dark:text-gray-400">{friend.friendName}</span>
+                                        </div>
                                     ))}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {timeSlots.map((timeSlot, index) => {
-                                    const matchSlot = REGULAR_TIMINGS[index];
-                                    return (
-                                        <tr key={timeSlot} className="border-b border-gray-100 dark:border-gray-800">
-                                            <td className="py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400 whitespace-nowrap">
-                                                {timeSlot}
-                                            </td>
-                                            {days.map(day => {
-                                                const slotCourses = getCoursesForSlot(day, matchSlot);
+                                </div>
 
+                                <div className="overflow-x-auto">
+                                    <table className="w-full border-collapse">
+                                        <thead>
+                                            <tr className="border-b border-gray-200 dark:border-gray-700">
+                                                <th className="text-left py-4 px-4 text-sm font-medium text-gray-600 dark:text-gray-400 w-36">Time/Day</th>
+                                                {days.map(day => (
+                                                    <th key={day} className="text-center py-4 px-3 text-sm font-medium text-gray-600 dark:text-gray-400">
+                                                        {day}
+                                                    </th>
+                                                ))}
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {timeSlots.map((timeSlot, index) => {
+                                                const matchSlot = REGULAR_TIMINGS[index];
                                                 return (
-                                                    <td key={`${day}-${timeSlot}`} className="p-2 border-l border-gray-100 dark:border-gray-800 relative">
-                                                        {slotCourses.length > 0 && (
-                                                            <div className="space-y-1">
-                                                                {slotCourses.map((course, idx) => {
-                                                                    // Check if this slot is for a lab - matching modal exactly
-                                                                    const isLab = course.labSchedules?.some(s => {
-                                                                        if (s.day !== day.toUpperCase()) return false;
-                                                                        const scheduleStart = timeToMinutes(formatTime(s.startTime));
-                                                                        const scheduleEnd = timeToMinutes(formatTime(s.endTime));
-                                                                        const slotStartMin = timeToMinutes(matchSlot.split('-')[0]);
-                                                                        const slotEndMin = timeToMinutes(matchSlot.split('-')[1]);
-                                                                        return scheduleStart < slotEndMin && scheduleEnd > slotStartMin;
-                                                                    });
+                                                    <tr key={timeSlot} className="border-b border-gray-100 dark:border-gray-800">
+                                                        <td className="py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                                                            {timeSlot}
+                                                        </td>
+                                                        {days.map(day => {
+                                                            const slotCourses = getCoursesForSlot(day, matchSlot);
 
-                                                                    return (
-                                                                        <div
-                                                                            key={`${course.sectionId}-${idx}`}
-                                                                            className="p-2 rounded text-xs transition-opacity hover:opacity-90 cursor-pointer"
-                                                                            style={{
-                                                                                backgroundColor: `${course.friendColor}30`,
-                                                                                borderLeft: `3px solid ${course.friendColor}`
-                                                                            }}
-                                                                            onMouseEnter={(e) => {
-                                                                                setHoveredCourse(course);
-                                                                                const rect = e.currentTarget.getBoundingClientRect();
-                                                                                const viewportWidth = window.innerWidth;
-                                                                                const tooltipWidth = 384; // w-96 = 384px
-                                                                                const shouldShowLeft = rect.right + tooltipWidth + 10 > viewportWidth;
-
-                                                                                setTooltipPosition({
-                                                                                    x: shouldShowLeft ? rect.left - tooltipWidth - 10 : rect.right + 10,
-                                                                                    y: rect.top
+                                                            return (
+                                                                <td key={`${day}-${timeSlot}`} className="p-2 border-l border-gray-100 dark:border-gray-800 relative">
+                                                                    {slotCourses.length > 0 && (
+                                                                        <div className="space-y-1">
+                                                                            {slotCourses.map((course, idx) => {
+                                                                                const isLab = course.labSchedules?.some(s => {
+                                                                                    if (s.day !== day.toUpperCase()) return false;
+                                                                                    const scheduleStart = timeToMinutes(formatTime(s.startTime));
+                                                                                    const scheduleEnd = timeToMinutes(formatTime(s.endTime));
+                                                                                    const slotStartMin = timeToMinutes(matchSlot.split('-')[0]);
+                                                                                    const slotEndMin = timeToMinutes(matchSlot.split('-')[1]);
+                                                                                    return scheduleStart < slotEndMin && scheduleEnd > slotStartMin;
                                                                                 });
-                                                                            }}
-                                                                            onMouseLeave={() => setHoveredCourse(null)}
-                                                                        >
-                                                                            <div className="font-semibold">
-                                                                                {course.courseCode}{isLab && 'L'}-{course.sectionName}
-                                                                            </div>
-                                                                            <div className="text-gray-600 dark:text-gray-400 text-xs mt-0.5">
-                                                                                {course.friendName}
-                                                                            </div>
-                                                                            {course.roomName && (
-                                                                                <div className="text-gray-500 dark:text-gray-500 text-xs">
-                                                                                    {course.roomName}
-                                                                                </div>
-                                                                            )}
+
+                                                                                return (
+                                                                                    <div
+                                                                                        key={`${course.sectionId}-${idx}`}
+                                                                                        className="p-2 rounded text-xs"
+                                                                                        style={{
+                                                                                            backgroundColor: `${course.friendColor}30`,
+                                                                                            borderLeft: `3px solid ${course.friendColor}`
+                                                                                        }}
+                                                                                    >
+                                                                                        <div className="font-semibold">
+                                                                                            {course.courseCode}{isLab && 'L'}-{course.sectionName}
+                                                                                        </div>
+                                                                                        <div className="text-gray-600 dark:text-gray-400 text-xs mt-0.5">
+                                                                                            {course.friendName}
+                                                                                        </div>
+                                                                                        {course.roomName && (
+                                                                                            <div className="text-gray-500 dark:text-gray-500 text-xs">
+                                                                                                {course.roomName}
+                                                                                            </div>
+                                                                                        )}
+                                                                                    </div>
+                                                                                );
+                                                                            })}
                                                                         </div>
-                                                                    );
-                                                                })}
-                                                            </div>
-                                                        )}
-                                                    </td>
+                                                                    )}
+                                                                </td>
+                                                            );
+                                                        })}
+                                                    </tr>
                                                 );
                                             })}
-                                        </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
-                    </div>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                {/* Watermark */}
+                                <div className="text-center py-3 text-gray-500 dark:text-gray-600 text-xs">
+                                    Made with 💖 from https://oracle.eniamza.com
+                                </div>
+                            </div>
+                        </div>
+                    </>
+                ) : (
+                    <div ref={routineRef} className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 p-4 rounded-lg">
+                        {/* Friend Legend - same as modal */}
+                        <div className="mb-4 flex flex-wrap gap-3">
+                            {friends.map(friend => (
+                                <div key={friend.id} className="flex items-center gap-2">
+                                    <div
+                                        className="w-4 h-4 rounded-full"
+                                        style={{ backgroundColor: friend.color }}
+                                    />
+                                    <span className="text-sm text-gray-600 dark:text-gray-400">{friend.friendName}</span>
+                                </div>
+                            ))}
+                        </div>
 
-                    {/* Rich Tooltip - viewport-aware positioning */}
-                    <CourseHoverTooltip
-                        course={hoveredCourse}
-                        position={tooltipPosition}
-                        extraFields={hoveredCourse ? [{ label: 'Friend', value: hoveredCourse.friendName }] : []}
-                    />
+                        <div className="overflow-x-auto">
+                            <table className="w-full border-collapse">
+                                <thead>
+                                    <tr className="border-b border-gray-200 dark:border-gray-700">
+                                        <th className="text-left py-4 px-4 text-sm font-medium text-gray-600 dark:text-gray-400 w-36">Time/Day</th>
+                                        {days.map(day => (
+                                            <th key={day} className="text-center py-4 px-3 text-sm font-medium text-gray-600 dark:text-gray-400">
+                                                {day}
+                                            </th>
+                                        ))}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {timeSlots.map((timeSlot, index) => {
+                                        const matchSlot = REGULAR_TIMINGS[index];
+                                        return (
+                                            <tr key={timeSlot} className="border-b border-gray-100 dark:border-gray-800">
+                                                <td className="py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                                                    {timeSlot}
+                                                </td>
+                                                {days.map(day => {
+                                                    const slotCourses = getCoursesForSlot(day, matchSlot);
 
-                    {/* Watermark */}
-                    <div className="text-center py-3 text-gray-500 dark:text-gray-600 text-xs">
-                        Made with 💖 from https://oracle.eniamza.com
+                                                    return (
+                                                        <td key={`${day}-${timeSlot}`} className="p-2 border-l border-gray-100 dark:border-gray-800 relative">
+                                                            {slotCourses.length > 0 && (
+                                                                <div className="space-y-1">
+                                                                    {slotCourses.map((course, idx) => {
+                                                                        // Check if this slot is for a lab - matching modal exactly
+                                                                        const isLab = course.labSchedules?.some(s => {
+                                                                            if (s.day !== day.toUpperCase()) return false;
+                                                                            const scheduleStart = timeToMinutes(formatTime(s.startTime));
+                                                                            const scheduleEnd = timeToMinutes(formatTime(s.endTime));
+                                                                            const slotStartMin = timeToMinutes(matchSlot.split('-')[0]);
+                                                                            const slotEndMin = timeToMinutes(matchSlot.split('-')[1]);
+                                                                            return scheduleStart < slotEndMin && scheduleEnd > slotStartMin;
+                                                                        });
+
+                                                                        return (
+                                                                            <div
+                                                                                key={`${course.sectionId}-${idx}`}
+                                                                                className="p-2 rounded text-xs transition-opacity hover:opacity-90 cursor-pointer"
+                                                                                style={{
+                                                                                    backgroundColor: `${course.friendColor}30`,
+                                                                                    borderLeft: `3px solid ${course.friendColor}`
+                                                                                }}
+                                                                                onMouseEnter={(e) => {
+                                                                                    setHoveredCourse(course);
+                                                                                    const rect = e.currentTarget.getBoundingClientRect();
+                                                                                    const viewportWidth = window.innerWidth;
+                                                                                    const tooltipWidth = 384; // w-96 = 384px
+                                                                                    const shouldShowLeft = rect.right + tooltipWidth + 10 > viewportWidth;
+
+                                                                                    setTooltipPosition({
+                                                                                        x: shouldShowLeft ? rect.left - tooltipWidth - 10 : rect.right + 10,
+                                                                                        y: rect.top
+                                                                                    });
+                                                                                }}
+                                                                                onMouseLeave={() => setHoveredCourse(null)}
+                                                                            >
+                                                                                <div className="font-semibold">
+                                                                                    {course.courseCode}{isLab && 'L'}-{course.sectionName}
+                                                                                </div>
+                                                                                <div className="text-gray-600 dark:text-gray-400 text-xs mt-0.5">
+                                                                                    {course.friendName}
+                                                                                </div>
+                                                                                {course.roomName && (
+                                                                                    <div className="text-gray-500 dark:text-gray-500 text-xs">
+                                                                                        {course.roomName}
+                                                                                    </div>
+                                                                                )}
+                                                                            </div>
+                                                                        );
+                                                                    })}
+                                                                </div>
+                                                            )}
+                                                        </td>
+                                                    );
+                                                })}
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {/* Rich Tooltip - viewport-aware positioning */}
+                        <CourseHoverTooltip
+                            course={hoveredCourse}
+                            position={tooltipPosition}
+                            extraFields={hoveredCourse ? [{ label: 'Friend', value: hoveredCourse.friendName }] : []}
+                        />
+
+                        {/* Watermark */}
+                        <div className="text-center py-3 text-gray-500 dark:text-gray-600 text-xs">
+                            Made with 💖 from https://oracle.eniamza.com
+                        </div>
                     </div>
-                </div>
+                )}
             </div>
         </div>
     );

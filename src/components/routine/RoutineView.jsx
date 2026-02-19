@@ -17,8 +17,12 @@ const RoutineView = ({
     isModal = true,
     isOpen = true, // When false, animate out then call onClose
     isOwner = false,
+    mobileAction,
+    routineRefProp, // Allow parent to access ref
 }) => {
-    const routineRef = useRef(null);
+    const internalRoutineRef = useRef(null);
+    // Use prop ref if available, otherwise internal
+    const routineRef = routineRefProp || internalRoutineRef;
     const exportRef = useRef(null);
     const isMobile = useIsMobile();
     const [isVisible, setIsVisible] = useState(false);
@@ -121,7 +125,7 @@ const RoutineView = ({
                     <button
                         onClick={handleExport}
                         disabled={courses.length === 0}
-                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg flex items-center gap-2 transition-colors"
+                        className={`px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg flex items-center gap-2 transition-colors ${isMobile ? 'hidden' : ''}`}
                     >
                         <Download className="w-4 h-4" />
                         Save as PNG
@@ -145,6 +149,7 @@ const RoutineView = ({
                     showRemoveButtons={showRemoveButtons}
                     onRemoveCourse={onRemoveCourse}
                     className="h-full"
+                    mobileAction={mobileAction}
                 />
             </div>
         </div>

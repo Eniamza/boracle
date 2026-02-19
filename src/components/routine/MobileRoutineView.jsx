@@ -12,6 +12,7 @@ const MobileRoutineView = ({
     selectedCourses = [],
     onRemoveCourse = null,
     showRemoveButtons = true,
+    mobileAction,
 }) => {
     const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const dayAbbr = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -260,6 +261,19 @@ const MobileRoutineView = ({
                         <div className="w-3 h-3 bg-red-100 dark:bg-red-900/50 border border-red-400 dark:border-red-600 rounded" />
                         <span className="text-gray-500 dark:text-gray-400">Conflict</span>
                     </div>
+                </div>
+            )}
+
+            {/* Mobile Action Button (e.g. Export) */}
+            {mobileAction && (
+                <div className="mt-6 mb-2 flex justify-center sticky bottom-4 z-20">
+                    <button
+                        onClick={mobileAction.onClick}
+                        className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg transition-transform active:scale-95"
+                    >
+                        {mobileAction.icon && <mobileAction.icon className="w-4 h-4" />}
+                        <span className="font-medium">{mobileAction.label}</span>
+                    </button>
                 </div>
             )}
 

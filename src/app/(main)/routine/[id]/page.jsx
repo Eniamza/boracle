@@ -4,8 +4,8 @@ import { Calendar, Download, RefreshCw, AlertCircle, Copy, Check, Save } from 'l
 import { useParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import RoutineView from '@/components/routine/RoutineView';
-import { exportRoutineToPNG } from '@/components/routine/ExportRoutinePNG';
 import { copyToClipboard } from '@/lib/utils';
+import { exportRoutineToPNG } from '@/components/routine/ExportRoutinePNG';
 import { toast } from 'sonner';
 
 const SharedRoutinePage = () => {
@@ -120,6 +120,8 @@ const SharedRoutinePage = () => {
         });
     };
 
+
+
     // Loading state
     if (loading) {
         return (
@@ -173,12 +175,12 @@ const SharedRoutinePage = () => {
             {/* Header Section */}
             <div className="max-w-7xl mx-auto mb-6">
                 <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6">
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                        <div className="flex items-center gap-3">
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
+                        <div className="flex flex-col sm:flex-row items-center gap-3">
                             <div className="p-2.5 bg-blue-100 dark:bg-blue-600/20 rounded-lg">
                                 <Calendar className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                             </div>
-                            <div className="flex flex-col">
+                            <div className="flex flex-col items-center sm:items-start">
                                 <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
                                     {routine?.ownerName
                                         ? `${routine.ownerName.charAt(0).toUpperCase() + routine.ownerName.slice(1).toLowerCase()}'s Routine`
@@ -224,7 +226,7 @@ const SharedRoutinePage = () => {
                         </div>
 
                         {/* Action Buttons */}
-                        <div className="flex items-center gap-2 self-end sm:self-auto">
+                        <div className="flex items-center gap-2 mt-2 sm:mt-0">
                             {/* Import Routine button — only show if logged in */}
                             {session?.user?.email && (
                                 <button
@@ -274,6 +276,7 @@ const SharedRoutinePage = () => {
                         : 'Shared Routine'}`}
                     courses={courses}
                     isModal={false}
+                    routineRefProp={routineRef}
                     headerExtras={
                         <div className="flex items-center gap-2 mt-1">
                             {routine?.createdAt && (

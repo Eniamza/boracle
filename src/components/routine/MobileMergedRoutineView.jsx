@@ -274,6 +274,8 @@ const MobileMergedRoutineView = ({
                 )}
             </div>
 
+
+
             {/* Bottom Sheet */}
             <CourseBottomSheet
                 course={bottomSheetCourse}
