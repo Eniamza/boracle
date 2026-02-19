@@ -36,6 +36,33 @@ const SharedRoutinePage = () => {
         }
     }, [id]);
 
+    const [facultyMap, setFacultyMap] = useState({});
+
+    // Fetch faculty data if user is authenticated
+    useEffect(() => {
+        if (session?.user?.email) {
+            fetch('/api/faculty/lookup')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        setFacultyMap(data.facultyMap);
+                        // Re-enrich existing courses with faculty data
+                        setCourses(prev => prev.map(course => {
+                            const firstInitial = course.faculties?.split(',')[0]?.trim().toUpperCase();
+                            const facultyInfo = data.facultyMap[firstInitial];
+                            return {
+                                ...course,
+                                employeeName: facultyInfo?.facultyName || null,
+                                employeeEmail: facultyInfo?.email || null,
+                                imgUrl: facultyInfo?.imgUrl || null,
+                            };
+                        }));
+                    }
+                })
+                .catch(err => console.error('Error fetching faculty data:', err));
+        }
+    }, [session]);
+
     const fetchRoutine = async () => {
         try {
             setLoading(true);
@@ -67,9 +94,18 @@ const SharedRoutinePage = () => {
             const coursesResponse = await fetch('https://usis-cdn.eniamza.com/connect.json');
             const allCourses = await coursesResponse.json();
 
-            const matchedCourses = allCourses.filter(course =>
-                sectionIds.includes(course.sectionId)
-            );
+            const matchedCourses = allCourses
+                .filter(course => sectionIds.includes(course.sectionId))
+                .map(course => {
+                    const firstInitial = course.faculties?.split(',')[0]?.trim().toUpperCase();
+                    const facultyInfo = facultyMap[firstInitial];
+                    return {
+                        ...course,
+                        employeeName: facultyInfo?.facultyName || null,
+                        employeeEmail: facultyInfo?.email || null,
+                        imgUrl: facultyInfo?.imgUrl || null,
+                    };
+                });
 
             setCourses(matchedCourses);
         } catch (err) {
