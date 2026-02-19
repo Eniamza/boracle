@@ -5,6 +5,8 @@ import { useParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import RoutineView from '@/components/routine/RoutineView';
 import { exportRoutineToPNG } from '@/components/routine/ExportRoutinePNG';
+import { copyToClipboard } from '@/lib/utils';
+import { toast } from 'sonner';
 
 const SharedRoutinePage = () => {
     const { id } = useParams();
@@ -69,12 +71,13 @@ const SharedRoutinePage = () => {
     };
 
     const copyRoutineId = async () => {
-        try {
-            await navigator.clipboard.writeText(id);
+        const success = await copyToClipboard(id);
+        if (success) {
             setCopied(true);
             setTimeout(() => setCopied(false), 3000);
-        } catch (err) {
-            console.error('Failed to copy ID:', err);
+            toast.success('Routine ID copied!');
+        } else {
+            toast.error('Failed to copy ID');
         }
     };
 

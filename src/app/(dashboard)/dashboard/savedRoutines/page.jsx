@@ -16,6 +16,7 @@ import ShareModal from '@/components/savedRoutine/ShareModal';
 import RoutineView from '@/components/routine/RoutineView';
 import { useIsMobile } from '@/hooks/use-mobile';
 import MobileMergedRoutineView from '@/components/routine/MobileMergedRoutineView';
+import { copyToClipboard } from '@/lib/utils';
 
 /**
  * Wrapper that renders children in a mobile bottom-sheet or desktop centered modal.
@@ -982,11 +983,11 @@ const SavedRoutinesPage = () => {
                     {/* Routine ID as copyable code subtitle */}
                     <button
                       onClick={async () => {
-                        try {
-                          await navigator.clipboard.writeText(routine.id.toString());
+                        const success = await copyToClipboard(routine.id.toString());
+                        if (success) {
                           setCopiedRoutineId(routine.id);
                           setTimeout(() => setCopiedRoutineId(null), 3000);
-                        } catch (err) {
+                        } else {
                           toast.error('Failed to copy ID');
                         }
                       }}
@@ -1110,11 +1111,11 @@ const SavedRoutinesPage = () => {
                         {/* Routine ID as copyable code subtitle */}
                         <button
                           onClick={async () => {
-                            try {
-                              await navigator.clipboard.writeText(routine.id.toString());
+                            const success = await copyToClipboard(routine.id.toString());
+                            if (success) {
                               setCopiedMergedRoutineId(routine.id);
                               setTimeout(() => setCopiedMergedRoutineId(null), 3000);
-                            } catch (err) {
+                            } else {
                               toast.error('Failed to copy ID');
                             }
                           }}

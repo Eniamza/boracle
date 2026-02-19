@@ -35,6 +35,7 @@ import { ChevronDown } from 'lucide-react';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import CourseHoverTooltip from '@/components/ui/CourseHoverTooltip';
 import { getRoutineTimings, REGULAR_TIMINGS } from '@/constants/routineTimings';
+import { copyToClipboard } from '@/lib/utils';
 
 const MergeRoutinesPage = () => {
   const { data: session } = useSession();
@@ -174,12 +175,12 @@ const MergeRoutinesPage = () => {
 
   // Copy routine ID to clipboard
   const copyRoutineId = async (routineId) => {
-    try {
-      await navigator.clipboard.writeText(routineId);
+    const success = await copyToClipboard(routineId);
+    if (success) {
       setCopiedId(routineId);
       toast.success('Routine ID copied to clipboard');
       setTimeout(() => setCopiedId(null), 2000);
-    } catch (error) {
+    } else {
       toast.error('Failed to copy routine ID');
     }
   };
