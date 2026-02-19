@@ -326,6 +326,7 @@ const SharedRoutinePage = () => {
                     courses={courses}
                     isModal={false}
                     routineRefProp={routineRef}
+                    showExportButton={false}
                     headerExtras={
                         <div className="flex items-center gap-2 mt-1">
                             {routine?.createdAt && (

@@ -2,6 +2,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { X, Save, Download } from 'lucide-react';
 import RoutineTableGrid from '@/components/routine/RoutineTableGrid';
+import { exportRoutineToPNG } from '@/components/routine/ExportRoutinePNG';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 const RoutineView = ({
@@ -18,10 +19,12 @@ const RoutineView = ({
     isOwner = false,
     mobileAction,
     routineRefProp, // Allow parent to access ref
+    showExportButton = true,
 }) => {
     const internalRoutineRef = useRef(null);
     // Use prop ref if available, otherwise internal
     const routineRef = routineRefProp || internalRoutineRef;
+    const exportRef = useRef(null);
     const isMobile = useIsMobile();
     const [isVisible, setIsVisible] = useState(false);
     const [mounted, setMounted] = useState(false);
@@ -87,6 +90,20 @@ const RoutineView = ({
 
 
 
+    const handleExport = async () => {
+        if (!courses || courses.length === 0) return;
+
+        // On mobile, use the hidden desktop table ref for export
+        const ref = isMobile ? exportRef : routineRef;
+        if (!ref.current) return;
+
+        await exportRoutineToPNG({
+            routineRef: ref,
+            filename: title.toLowerCase().replace(/\s+/g, '-'),
+            showToast: true,
+        });
+    };
+
     // Desktop content (unchanged)
     const DesktopContent = (
         <div className={`${isModal ? 'bg-white dark:bg-gray-900 rounded-lg max-w-[95vw] max-h-[95vh] w-full overflow-hidden flex flex-col shadow-xl' : 'w-full'}`}>
@@ -109,6 +126,17 @@ const RoutineView = ({
                     )}
 
 
+
+                    {showExportButton && (
+                        <button
+                            onClick={handleExport}
+                            disabled={courses.length === 0}
+                            className={`px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg flex items-center gap-2 transition-colors ${isMobile ? 'hidden' : ''}`}
+                        >
+                            <Download className="w-4 h-4" />
+                            Save as PNG
+                        </button>
+                    )}
 
                     {onClose && (
                         <button
@@ -170,7 +198,16 @@ const RoutineView = ({
                                 <Save className="w-4 h-4" />
                             </button>
                         )}
-
+                        {showExportButton && (
+                            <button
+                                onClick={handleExport}
+                                disabled={courses.length === 0}
+                                className="p-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg transition-colors"
+                                title="Save as PNG"
+                            >
+                                <Download className="w-4 h-4" />
+                            </button>
+                        )}
 
 
                         <button
@@ -193,6 +230,31 @@ const RoutineView = ({
                 </div>
             </div>
 
+            {/* Hidden desktop table for PNG export — wrapper is invisible, inner ref is clean */}
+            {showExportButton && (
+                <div
+                    style={{
+                        position: 'fixed',
+                        left: 0,
+                        top: 0,
+                        width: '1800px',
+                        opacity: 0,
+                        pointerEvents: 'none',
+                        zIndex: -1,
+                        overflow: 'visible',
+                    }}
+                    aria-hidden="true"
+                >
+                    <div ref={exportRef}>
+                        <RoutineTableGrid
+                            selectedCourses={courses}
+                            showRemoveButtons={false}
+                            forceDesktop={true}
+                            className=""
+                        />
+                    </div>
+                </div>
+            )}
         </>
     );
 
