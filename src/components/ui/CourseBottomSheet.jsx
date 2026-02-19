@@ -39,7 +39,7 @@ const CourseBottomSheet = ({ course, onClose, courseTitle, extraFields = [] }) =
             const timer = setTimeout(() => setIsVisible(true), 20);
             lockScroll();
             // Push history state when opening
-            window.history.pushState({ modalOpen: true }, '');
+            window.history.pushState({ id: 'CourseBottomSheet' }, '');
             return () => clearTimeout(timer);
         } else if (displayCourse) {
             setIsVisible(false);
@@ -56,8 +56,10 @@ const CourseBottomSheet = ({ course, onClose, courseTitle, extraFields = [] }) =
     useEffect(() => {
         const handlePopState = (event) => {
             if (isVisible) {
-                // Prevent default back navigation if modal is open
-                handleClose();
+                // If the state lacks our ID, it means our state was just popped by the back button!
+                if (event.state?.id !== 'CourseBottomSheet') {
+                    handleClose(false); // pass false so we don't call history.back() inside handleClose since we already navigated
+                }
             }
         };
 
@@ -65,11 +67,10 @@ const CourseBottomSheet = ({ course, onClose, courseTitle, extraFields = [] }) =
         return () => window.removeEventListener('popstate', handlePopState);
     }, [isVisible]);
 
-    const handleClose = () => {
-        // Pop history state if it was pushed
-        if (window.history.state?.modalOpen) {
+    const handleClose = (popHistory = true) => {
+        // Pop history state if it was pushed AND we are allowed to navigate back
+        if (popHistory && window.history.state?.id === 'CourseBottomSheet') {
             window.history.back();
-            // The popstate listener will trigger the actual close logic, but to be safe/smooth:
         }
 
         setIsVisible(false);

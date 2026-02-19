@@ -864,7 +864,10 @@ const SavedRoutinesPage = () => {
 
   // Back button/gesture handler
   useEffect(() => {
-    const handlePopState = () => {
+    const handlePopState = (event) => {
+      // If we are coming back TO this modal level after closing a child, don't close this one!
+      if (event.state?.id === 'savedRoutineModal') return;
+
       if (viewingMergedRoutine) {
         closeMergedRoutineModal();
       } else if (viewingRoutine) {
@@ -873,7 +876,7 @@ const SavedRoutinesPage = () => {
     };
 
     if (viewingRoutine || viewingMergedRoutine) {
-      window.history.pushState({ modal: true }, '');
+      window.history.pushState({ id: 'savedRoutineModal' }, '');
     }
 
     window.addEventListener('popstate', handlePopState);

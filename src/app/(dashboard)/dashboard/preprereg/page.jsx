@@ -276,17 +276,21 @@ const PreRegistrationPage = () => {
 
   // Back button/gesture handler — close modals instead of navigating away
   useEffect(() => {
-    const handlePopState = () => {
+    const handlePopState = (event) => {
+      // If returning to this specific level, do not close!
+      if (event.state?.id === 'prePreregRoutineModal') return;
+
       if (bottomSheetCourse) {
-        setBottomSheetCourse(null); // CourseBottomSheet handles its own out transition
+        // CourseBottomSheet handles its own history now, but if it's open we shouldn't force close the routine modal
+        return;
       } else if (showRoutineModal) {
-        setShowRoutineModal(false); // RoutineView handles its own out transition via isOpen
+        setShowRoutineModal(false);
       }
     };
 
-    // Push state when a modal opens
-    if (showRoutineModal || bottomSheetCourse) {
-      window.history.pushState({ modal: true }, '');
+    // Push state when routine modal opens
+    if (showRoutineModal) {
+      window.history.pushState({ id: 'prePreregRoutineModal' }, '');
     }
 
     window.addEventListener('popstate', handlePopState);
