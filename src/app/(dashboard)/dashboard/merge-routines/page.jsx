@@ -89,6 +89,7 @@ const MergeRoutinesPage = () => {
                 ...course,
                 employeeName: facultyInfo?.facultyName || null,
                 employeeEmail: facultyInfo?.email || null,
+                imgUrl: facultyInfo?.imgUrl || null,
               };
             }));
           }
@@ -319,7 +320,8 @@ const MergeRoutinesPage = () => {
                   friendColor: input.color,
                   originalRoutineId: trimmedRoutineId,
                   employeeName: facultyMap[course.faculties?.split(',')[0]?.trim().toUpperCase()]?.facultyName || null,
-                  employeeEmail: facultyMap[course.faculties?.split(',')[0]?.trim().toUpperCase()]?.email || null
+                  employeeEmail: facultyMap[course.faculties?.split(',')[0]?.trim().toUpperCase()]?.email || null,
+                  imgUrl: facultyMap[course.faculties?.split(',')[0]?.trim().toUpperCase()]?.imgUrl || null
                 };
               }
               return null;
@@ -806,34 +808,21 @@ const MergedRoutineGrid = ({ courses, friends }) => {
                                     {course.friendName}
                                   </div>
                                   {course.roomName && (
-                                    <tbody>
-                                      {timeSlots.map((timeSlot, index) => {
-                                        const matchSlot = REGULAR_TIMINGS[index];
-                                        return (
-                                          <tr key={timeSlot} className="border-b border-gray-200 dark:border-gray-800">
-                                            <td className="py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400 whitespace-nowrap border-r border-gray-200 dark:border-gray-700">
-                                              {timeSlot}
-                                            </td>
-                                            {days.map(day => {
-                                              const slotCourses = getCoursesForSlot(day, matchSlot);
-
-                                              return (
-                                                <td key={`${day}-${timeSlot}`} className="p-2 border-l border-gray-200 dark:border-gray-800 relative">
-                                                  {slotCourses.length > 0 && (
-                                                    <div className="space-y-1">
-                                                      {slotCourses.map((course, idx) => {
-                                                        // Check if this specific time slot is for a lab
-                                                        const isLab = course.labSchedules?.some(s => {
-                                                          if (s.day !== day.toUpperCase()) return false;
-                                                          const scheduleStart = timeToMinutes(formatTime(s.startTime));
-                                                          const scheduleEnd = timeToMinutes(formatTime(s.endTime));
-                                                          const slotStartMin = timeToMinutes(matchSlot.split('-')[0]);
-                                                          const slotEndMin = timeToMinutes(matchSlot.split('-')[1]);
-                                                          return scheduleStart < slotEndMin && scheduleEnd > slotStartMin;
-                                                        });
-                  );
-                })}
-                                                    </tbody>
+                                    <div className="text-gray-500 text-xs">
+                                      {isLab ? course.labRoomName || course.labRoomNumber || 'TBA' : course.roomName || course.roomNumber || 'TBA'}
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
           </table>
         </div>
 

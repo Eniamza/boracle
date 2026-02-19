@@ -4,6 +4,7 @@ import { db, eq, getCurrentEpoch } from '@/lib/db';
 import { userinfo } from '@/lib/db/schema';
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  trustHost: true,
   // Remove the MongoDB adapter since we're using JWT strategy
   providers: [
     Google({
@@ -32,7 +33,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       // Initial sign-in
       if (account && profile) {
         console.log("JWT callback - initial sign-in:", { email: profile.email });
-        
+
         try {
           // Check if user profile already exists by email
           let userProfile = await db
@@ -54,18 +55,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             console.log("Created new UserInfo:", userProfile);
             console.log(`Created new UserInfo for: ${profile.email}`);
           }
-          
+
           token.id = profile.sub;
           token.email = profile.email;
           token.name = profile.name;
           token.userrole = userProfile[0].userRole; // Keep consistent with database column name
           token.createdat = userProfile[0].createdAt;
-          
+
         } catch (error) {
           console.error("Error in JWT callback:", error);
         }
       }
-      
+
       return token;
     },
     async session({ session, token }) {
@@ -76,7 +77,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.user.name = token.name;
         session.user.userrole = token.userrole || 'student';
       }
-      
+
       return session;
     }
   },

@@ -57,6 +57,7 @@ const SharedMergedRoutinePage = () => {
                                 ...course,
                                 employeeName: facultyInfo?.facultyName || null,
                                 employeeEmail: facultyInfo?.email || null,
+                                imgUrl: facultyInfo?.imgUrl || null,
                             };
                         }));
                     }
@@ -166,6 +167,7 @@ const SharedMergedRoutinePage = () => {
                         friendColor: friend?.color || '#6B7280',
                         employeeName: facultyInfo?.facultyName || null,
                         employeeEmail: facultyInfo?.email || null,
+                        imgUrl: facultyInfo?.imgUrl || null,
                     };
                 });
 

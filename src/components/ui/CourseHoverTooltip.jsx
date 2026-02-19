@@ -32,7 +32,7 @@ const CourseHoverTooltip = ({ course, position, courseTitle, extraFields = [] })
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
     const tooltipWidth = 384; // w-96 = 384px
-    
+
     // Clamp horizontal position to keep within viewport
     // We assume the caller has already decided whether to place it left or right of the cursor/element
     // and passed the appropriate 'x' coordinate (left edge of the tooltip).
@@ -65,6 +65,25 @@ const CourseHoverTooltip = ({ course, position, courseTitle, extraFields = [] })
     }
 
     // console.log("Course Title", courseTitle);
+    const formatDay = (day) => {
+        if (!day) return '';
+        return day.charAt(0).toUpperCase() + day.slice(1).toLowerCase();
+    };
+
+    const formatTime = (time) => {
+        if (!time) return '';
+        // If already has AM/PM, return as is
+        if (time.includes('AM') || time.includes('PM')) return time;
+
+        const [hours, minutes] = time.split(':');
+        const hour = parseInt(hours, 10);
+        if (isNaN(hour)) return time;
+
+        const ampm = hour >= 12 ? 'PM' : 'AM';
+        const displayHour = hour % 12 || 12;
+        return `${displayHour}:${minutes} ${ampm}`;
+    };
+
     const displayTitle = courseTitle || `${course.courseCode}`;
 
     return (
@@ -98,23 +117,93 @@ const CourseHoverTooltip = ({ course, position, courseTitle, extraFields = [] })
                 )}
 
                 {/* Faculty Information */}
-                <div className="bg-gray-50 dark:bg-gray-700/30 rounded-lg p-3 space-y-1.5 border border-gray-100 dark:border-gray-700">
-                    <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Faculty Information</div>
-                    <div className="text-sm">
-                        <span className="text-gray-500 dark:text-gray-400 block text-xs">Initial</span>
-                        <span className="font-medium text-gray-900 dark:text-gray-200">{course.faculties || 'TBA'}</span>
-                    </div>
-                    {course.employeeName && (
+                <div className="bg-gray-50 dark:bg-gray-700/30 rounded-lg p-3 border border-gray-100 dark:border-gray-700 flex gap-4 items-start">
+                    <div className="space-y-1.5 flex-1 min-w-0">
+                        <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Faculty Information</div>
                         <div className="text-sm">
-                            <span className="text-gray-500 dark:text-gray-400 block text-xs">Name</span>
-                            <span className="font-medium text-gray-900 dark:text-gray-200">{course.employeeName}</span>
+                            <span className="text-gray-500 dark:text-gray-400 block text-xs">Initial</span>
+                            <span className="font-medium text-gray-900 dark:text-gray-200">{course.faculties || 'TBA'}</span>
+                        </div>
+                        {course.employeeName && (
+                            <div className="text-sm">
+                                <span className="text-gray-500 dark:text-gray-400 block text-xs">Name</span>
+                                <span className="font-medium text-gray-900 dark:text-gray-200 truncate block" title={course.employeeName}>
+                                    {course.employeeName}
+                                </span>
+                            </div>
+                        )}
+                        {course.employeeEmail && (
+                            <div className="text-sm">
+                                <a href={`mailto:${course.employeeEmail}`} className="text-blue-600 dark:text-blue-400 hover:underline break-all block">
+                                    {course.employeeEmail}
+                                </a>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Faculty Image */}
+                    <div className="shrink-0 pt-1">
+                        {course.imgUrl && course.imgUrl !== 'N/A' && !course.imageError ? (
+                            <img
+                                src={course.imgUrl}
+                                alt={course.faculties || 'Faculty'}
+                                className="w-16 h-16 rounded-full object-cover border-2 border-blue-200 dark:border-blue-800"
+                                onError={(e) => {
+                                    e.target.style.display = 'none';
+                                    e.target.nextSibling.style.display = 'flex';
+                                }}
+                            />
+                        ) : null}
+                        <div
+                            className="w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center border-2 border-blue-200 dark:border-blue-800"
+                            style={{ display: course.imgUrl && course.imgUrl !== 'N/A' && !course.imageError ? 'none' : 'flex' }}
+                        >
+                            <svg className="w-8 h-8 text-blue-400 dark:text-blue-300" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Class Schedule */}
+                <div className="space-y-2">
+                    {/* Theory Schedule */}
+                    {course.sectionSchedule?.classSchedules?.length > 0 && (
+                        <div className="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-2.5 border border-orange-200 dark:border-orange-800/30">
+                            <div className="flex justify-between items-center mb-1.5">
+                                <span className="text-xs font-bold text-orange-700 dark:text-orange-400 uppercase tracking-wider">Class Schedule</span>
+                                <span className="text-xs font-bold text-orange-700 dark:text-orange-300 bg-white dark:bg-orange-900/40 px-2 py-0.5 rounded border border-orange-200 dark:border-orange-800/50 shadow-sm">
+                                    Room: {course.roomName || 'TBA'}
+                                </span>
+                            </div>
+                            <div className="space-y-1">
+                                {course.sectionSchedule.classSchedules.map((sched, idx) => (
+                                    <div key={`cls-${idx}`} className="flex justify-between text-xs">
+                                        <span className="font-bold text-gray-900 dark:text-gray-100 w-16">{formatDay(sched.day)}</span>
+                                        <span className="font-mono font-medium text-gray-900 dark:text-gray-200 text-right flex-1">{formatTime(sched.startTime)} - {formatTime(sched.endTime)}</span>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     )}
-                    {course.employeeEmail && (
-                        <div className="text-sm">
-                            <a href={`mailto:${course.employeeEmail}`} className="text-blue-600 dark:text-blue-400 hover:underline break-all">
-                                {course.employeeEmail}
-                            </a>
+
+                    {/* Lab Schedule */}
+                    {course.labSchedules?.length > 0 && (
+                        <div className="bg-teal-50 dark:bg-teal-900/20 rounded-lg p-2.5 border border-teal-200 dark:border-teal-800/30">
+                            <div className="flex justify-between items-center mb-1.5">
+                                <span className="text-xs font-bold text-teal-700 dark:text-teal-400 uppercase tracking-wider">Lab Schedule</span>
+                                <span className="text-xs font-bold text-teal-700 dark:text-teal-300 bg-white dark:bg-teal-900/40 px-2 py-0.5 rounded border border-teal-200 dark:border-teal-800/50 shadow-sm">
+                                    Room: {course.labRoomName || 'TBA'}
+                                </span>
+                            </div>
+                            <div className="space-y-1">
+                                {course.labSchedules.map((sched, idx) => (
+                                    <div key={`lab-${idx}`} className="flex justify-between text-xs">
+                                        <span className="font-bold text-gray-900 dark:text-gray-100 w-16">{formatDay(sched.day)}</span>
+                                        <span className="font-mono font-medium text-gray-900 dark:text-gray-200 text-right flex-1">{formatTime(sched.startTime)} - {formatTime(sched.endTime)}</span>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     )}
                 </div>
@@ -133,16 +222,6 @@ const CourseHoverTooltip = ({ course, position, courseTitle, extraFields = [] })
                         <span className="text-gray-500 dark:text-gray-400 text-xs block">Prerequisites</span>
                         <span className="text-gray-900 dark:text-gray-200">{course.prerequisiteCourses || 'None'}</span>
                     </div>
-                    <div>
-                        <span className="text-gray-500 dark:text-gray-400 text-xs block">Room</span>
-                        <span className="text-gray-900 dark:text-gray-200">{course.roomName || 'TBA'}</span>
-                    </div>
-                    {course.labCourseCode && (
-                        <div>
-                            <span className="text-gray-500 dark:text-gray-400 text-xs block">Lab Room</span>
-                            <span className="text-gray-900 dark:text-gray-200">{course.labRoomName || 'TBA'}</span>
-                        </div>
-                    )}
                 </div>
 
                 {/* Schedule Info */}
