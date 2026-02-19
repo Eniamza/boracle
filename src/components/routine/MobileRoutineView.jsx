@@ -2,7 +2,7 @@
 import React, { useState, useMemo } from 'react';
 import { X } from 'lucide-react';
 import CourseBottomSheet from '@/components/ui/CourseBottomSheet';
-import { getRoutineTimings, REGULAR_TIMINGS } from '@/constants/routineTimings';
+import { getRoutineTimings, REGULAR_TIMINGS, getAdjustedTime } from '@/constants/routineTimings';
 
 /**
  * Mobile day-view for routine grid.
@@ -198,7 +198,7 @@ const MobileRoutineView = ({
                                         ? 'text-purple-600 dark:text-purple-400'
                                         : 'text-blue-600 dark:text-blue-400'
                                     }`}>
-                                    {formatTime(startTime)} – {formatTime(endTime)}
+                                    {getAdjustedTime(formatTime(startTime))} – {getAdjustedTime(formatTime(endTime))}
                                     {hasConflict && <span className="ml-2 text-red-500 font-bold">⚠ Conflict</span>}
                                 </div>
 

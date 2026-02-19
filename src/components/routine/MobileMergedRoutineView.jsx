@@ -1,6 +1,7 @@
 'use client';
 import React, { useState, useMemo } from 'react';
 import CourseBottomSheet from '@/components/ui/CourseBottomSheet';
+import { getAdjustedTime } from '@/constants/routineTimings';
 
 /**
  * Mobile day-view for merged routine grid.
@@ -221,7 +222,7 @@ const MobileMergedRoutineView = ({
                                     className="text-xs font-mono font-medium mb-1.5"
                                     style={{ color: hasConflict ? '#EF4444' : friendColor }}
                                 >
-                                    {formatTime(startTime)} – {formatTime(endTime)}
+                                    {getAdjustedTime(formatTime(startTime))} – {getAdjustedTime(formatTime(endTime))}
                                     {hasConflict && <span className="ml-2 text-red-500 font-bold">⚠ Conflict</span>}
                                 </div>
 

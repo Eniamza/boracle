@@ -1,6 +1,7 @@
 'use client';
 import React, { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
+import { getAdjustedTime } from '@/constants/routineTimings';
 
 /**
  * Mobile bottom-sheet component that slides up from the bottom.
@@ -191,7 +192,7 @@ const CourseBottomSheet = ({ course, onClose, courseTitle, extraFields = [] }) =
                                     {activeCourse.sectionSchedule.classSchedules.map((sched, idx) => (
                                         <div key={`cls-${idx}`} className="flex justify-between text-xs">
                                             <span className="font-bold text-gray-900 dark:text-gray-100 w-16">{formatDay(sched.day)}</span>
-                                            <span className="font-mono font-medium text-gray-900 dark:text-gray-200 text-right flex-1">{formatTime(sched.startTime)} - {formatTime(sched.endTime)}</span>
+                                            <span className="font-mono font-medium text-gray-900 dark:text-gray-200 text-right flex-1">{getAdjustedTime(formatTime(sched.startTime))} - {getAdjustedTime(formatTime(sched.endTime))}</span>
                                         </div>
                                     ))}
                                 </div>
@@ -210,7 +211,7 @@ const CourseBottomSheet = ({ course, onClose, courseTitle, extraFields = [] }) =
                                     {activeCourse.labSchedules.map((sched, idx) => (
                                         <div key={`lab-${idx}`} className="flex justify-between text-xs">
                                             <span className="font-bold text-gray-900 dark:text-gray-100 w-16">{formatDay(sched.day)}</span>
-                                            <span className="font-mono font-medium text-gray-900 dark:text-gray-200 text-right flex-1">{formatTime(sched.startTime)} - {formatTime(sched.endTime)}</span>
+                                            <span className="font-mono font-medium text-gray-900 dark:text-gray-200 text-right flex-1">{getAdjustedTime(formatTime(sched.startTime))} - {getAdjustedTime(formatTime(sched.endTime))}</span>
                                         </div>
                                     ))}
                                 </div>
