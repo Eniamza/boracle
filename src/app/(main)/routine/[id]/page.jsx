@@ -8,6 +8,9 @@ import { copyToClipboard } from '@/lib/utils';
 import { exportRoutineToPNG } from '@/components/routine/ExportRoutinePNG';
 import { toast } from 'sonner';
 
+import { useIsMobile } from '@/hooks/use-mobile';
+import RoutineTableGrid from '@/components/routine/RoutineTableGrid';
+
 const SharedRoutinePage = () => {
     const { id } = useParams();
     const { data: session } = useSession();
@@ -19,6 +22,13 @@ const SharedRoutinePage = () => {
     const [importing, setImporting] = useState(false);
     const [imported, setImported] = useState(false);
     const routineRef = useRef(null);
+    const exportRef = useRef(null);
+    const isMobile = useIsMobile();
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     useEffect(() => {
         if (id) {
@@ -111,10 +121,13 @@ const SharedRoutinePage = () => {
     };
 
     const exportToPNG = async () => {
-        if (!courses || courses.length === 0 || !routineRef?.current) return;
+        // Use hidden exportRef on mobile, otherwise normal routineRef
+        const ref = (isMobile && exportRef.current) ? exportRef : routineRef;
+
+        if (!ref.current) return;
 
         await exportRoutineToPNG({
-            routineRef,
+            routineRef: ref,
             filename: `shared-routine-${id.slice(0, 8)}`,
             showToast: false,
         });
@@ -291,6 +304,32 @@ const SharedRoutinePage = () => {
                     }
                 />
             </div>
+
+            {/* Hidden Desktop Table for Export - matching SharedMergedRoutinePage pattern */}
+            {mounted && isMobile && (
+                <div
+                    style={{
+                        position: 'fixed',
+                        left: 0,
+                        top: 0,
+                        width: '1800px',
+                        opacity: 0,
+                        pointerEvents: 'none',
+                        zIndex: -1,
+                        overflow: 'visible',
+                    }}
+                    aria-hidden="true"
+                >
+                    <div ref={exportRef}>
+                        <RoutineTableGrid
+                            selectedCourses={courses}
+                            showRemoveButtons={false}
+                            forceDesktop={true}
+                            className=""
+                        />
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
