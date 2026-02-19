@@ -752,95 +752,98 @@ const MergedRoutineGrid = ({ courses, friends }) => {
               </tr>
             </thead>
             <tbody>
-              {timeSlots.map(timeSlot => (
-                <tr key={timeSlot} className="border-b border-gray-300 dark:border-gray-700">
-                  <td className="py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400 whitespace-nowrap border-r border-gray-300 dark:border-gray-700">
-                    {timeSlot}
-                  </td>
-                  {days.map(day => {
-                    const slotCourses = getCoursesForSlot(day, timeSlot);
+              {timeSlots.map((timeSlot, index) => {
+                const matchSlot = REGULAR_TIMINGS[index];
+                return (
+                  <tr key={timeSlot} className="border-b border-gray-300 dark:border-gray-700">
+                    <td className="py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400 whitespace-nowrap border-r border-gray-300 dark:border-gray-700">
+                      {timeSlot}
+                    </td>
+                    {days.map(day => {
+                      const slotCourses = getCoursesForSlot(day, matchSlot);
 
-                    return (
-                      <td key={`${day}-${timeSlot}`} className="p-2 border-r border-gray-300 dark:border-gray-700 last:border-r-0 relative">
-                        {slotCourses.length > 0 && (
-                          <div className="space-y-1">
-                            {slotCourses.map((course, idx) => {
-                              // Check if this specific time slot is for a lab
-                              const isLab = course.labSchedules?.some(s => {
-                                if (s.day !== day.toUpperCase()) return false;
-                                const scheduleStart = timeToMinutes(formatTime(s.startTime));
-                                const scheduleEnd = timeToMinutes(formatTime(s.endTime));
-                                const slotStartMin = timeToMinutes(timeSlot.split('-')[0]);
-                                const slotEndMin = timeToMinutes(timeSlot.split('-')[1]);
-                                return scheduleStart < slotEndMin && scheduleEnd > slotStartMin;
-                              });
+                      return (
+                        <td key={`${day}-${timeSlot}`} className="p-2 border-r border-gray-300 dark:border-gray-700 last:border-r-0 relative">
+                          {slotCourses.length > 0 && (
+                            <div className="space-y-1">
+                              {slotCourses.map((course, idx) => {
+                                // Check if this specific time slot is for a lab
+                                const isLab = course.labSchedules?.some(s => {
+                                  if (s.day !== day.toUpperCase()) return false;
+                                  const scheduleStart = timeToMinutes(formatTime(s.startTime));
+                                  const scheduleEnd = timeToMinutes(formatTime(s.endTime));
+                                  const slotStartMin = timeToMinutes(matchSlot.split('-')[0]);
+                                  const slotEndMin = timeToMinutes(matchSlot.split('-')[1]);
+                                  return scheduleStart < slotEndMin && scheduleEnd > slotStartMin;
+                                });
 
-                              return (
-                                <div
-                                  key={`${course.sectionId}-${idx}`}
-                                  className="p-2 rounded text-xs transition-opacity hover:opacity-90 cursor-pointer text-gray-900 dark:text-gray-100"
-                                  style={{
-                                    backgroundColor: `${course.friendColor}30`,
-                                    borderLeft: `3px solid ${course.friendColor}`
-                                  }}
-                                  onMouseEnter={(e) => {
-                                    setHoveredCourse(course);
-                                    setHoveredCourseTitle(`${course.courseCode}${isLab ? 'L' : ''}`);
-                                    const rect = e.currentTarget.getBoundingClientRect();
-                                    const viewportWidth = window.innerWidth;
-                                    const tooltipWidth = 384; // w-96 = 384px
-                                    const shouldShowLeft = rect.right + tooltipWidth + 10 > viewportWidth;
+                                return (
+                                  <div
+                                    key={`${course.sectionId}-${idx}`}
+                                    className="p-2 rounded text-xs transition-opacity hover:opacity-90 cursor-pointer text-gray-900 dark:text-gray-100"
+                                    style={{
+                                      backgroundColor: `${course.friendColor}30`,
+                                      borderLeft: `3px solid ${course.friendColor}`
+                                    }}
+                                    onMouseEnter={(e) => {
+                                      setHoveredCourse(course);
+                                      setHoveredCourseTitle(`${course.courseCode}${isLab ? 'L' : ''}`);
+                                      const rect = e.currentTarget.getBoundingClientRect();
+                                      const viewportWidth = window.innerWidth;
+                                      const tooltipWidth = 384; // w-96 = 384px
+                                      const shouldShowLeft = rect.right + tooltipWidth + 10 > viewportWidth;
 
-                                    setTooltipPosition({
-                                      x: shouldShowLeft ? rect.left - tooltipWidth - 10 : rect.right + 10,
-                                      y: rect.top
-                                    });
-                                  }}
-                                  onMouseLeave={() => {
-                                    setHoveredCourse(null);
-                                    setHoveredCourseTitle(null);
-                                  }}
-                                >
-                                  <div className="font-semibold">
-                                    {course.courseCode}{isLab && 'L'}-{course.sectionName}
-                                  </div>
-                                  <div className="text-gray-600 dark:text-gray-400 text-xs mt-0.5">
-                                    {course.friendName}
-                                  </div>
-                                  {course.roomName && (
-                                    <div className="text-gray-500 text-xs">
-                                      {isLab ? course.labRoomName || course.labRoomNumber || 'TBA' : course.roomName || course.roomNumber || 'TBA'}
+                                      setTooltipPosition({
+                                        x: shouldShowLeft ? rect.left - tooltipWidth - 10 : rect.right + 10,
+                                        y: rect.top
+                                      });
+                                    }}
+                                    onMouseLeave={() => {
+                                      setHoveredCourse(null);
+                                      setHoveredCourseTitle(null);
+                                    }}
+                                  >
+                                    <div className="font-semibold">
+                                      {course.courseCode}{isLab && 'L'}-{course.sectionName}
                                     </div>
-                                  )}
-                                </div>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </td>
-                    );
-                  })}
-                </tr>
-              ))}
+                                    <div className="text-gray-600 dark:text-gray-400 text-xs mt-0.5">
+                                      {course.friendName}
+                                    </div>
+                                    {course.roomName && (
+                                      <div className="text-gray-500 text-xs">
+                                        {isLab ? course.labRoomName || course.labRoomNumber || 'TBA' : course.roomName || course.roomNumber || 'TBA'}
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
 
-        {/* Tooltip */ }
-                                        <CourseHoverTooltip
-                                          course={hoveredCourse}
-                                          position={tooltipPosition}
-                                          courseTitle={hoveredCourseTitle}
-                                          extraFields={hoveredCourse ? [{ label: 'Friend', value: hoveredCourse.friendName }] : []}
-                                        />
+        {/* Tooltip */}
+        <CourseHoverTooltip
+          course={hoveredCourse}
+          position={tooltipPosition}
+          courseTitle={hoveredCourseTitle}
+          extraFields={hoveredCourse ? [{ label: 'Friend', value: hoveredCourse.friendName }] : []}
+        />
 
-                                        {/* Footer */ }
-                                        <div className="mt-4 text-center text-sm text-gray-500">
-                                          Made with 💖 from https://oracle.eniamza.com
-                                        </div>
+        {/* Footer */}
+        <div className="mt-4 text-center text-sm text-gray-500">
+          Made with 💖 from https://oracle.eniamza.com
+        </div>
       </div>
     </div>
-                              );
-                            };
+  );
+};
 
-                            export default MergeRoutinesPage;
+export default MergeRoutinesPage;
