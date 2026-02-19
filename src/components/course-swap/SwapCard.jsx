@@ -8,7 +8,7 @@ import CourseHoverTooltip from "@/components/ui/CourseHoverTooltip";
 import { useSession } from 'next-auth/react';
 import { Calendar, User, ArrowRightLeft, Tag, CheckCircle, Trash2, Mail } from 'lucide-react';
 
-const SwapCard = ({ swap, courses = [], onDelete, onMarkComplete }) => {
+const SwapCard = ({ swap, courses = [], onDelete, onMarkComplete, onCourseClick }) => {
   const { data: session } = useSession();
   const [hoveredCourse, setHoveredCourse] = useState(null);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
@@ -102,6 +102,7 @@ const SwapCard = ({ swap, courses = [], onDelete, onMarkComplete }) => {
                 }
               }}
               onMouseLeave={() => setHoveredCourse(null)}
+              onClick={() => giveCourse && onCourseClick?.(giveCourse)}
             >
               <p className="font-bold text-base md:text-lg text-gray-900 dark:text-white break-words">
                 {giveCourse ? formatCourse(giveCourse) : `Section ${swap.getSectionId}`}
@@ -154,6 +155,7 @@ const SwapCard = ({ swap, courses = [], onDelete, onMarkComplete }) => {
                           }
                         }}
                         onMouseLeave={() => setHoveredCourse(null)}
+                        onClick={() => askCourse && onCourseClick?.(askCourse)}
                       >
                         {askCourse ? formatCourse(askCourse) : `Section ${sectionId}`}
                       </Badge>
@@ -225,7 +227,8 @@ const SwapCard = ({ swap, courses = [], onDelete, onMarkComplete }) => {
       </CardContent>
 
       {/* Hover Tooltip for "Looking For" Courses */}
-      <CourseHoverTooltip course={hoveredCourse} position={tooltipPosition} />
+      {/* Hover Tooltip for "Looking For" Courses - only if NOT handling clicks (mobile) */}
+      {!onCourseClick && <CourseHoverTooltip course={hoveredCourse} position={tooltipPosition} />}
     </Card>
   );
 };

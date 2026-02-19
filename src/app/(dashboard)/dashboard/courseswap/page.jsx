@@ -9,6 +9,8 @@ import SwapCard from '@/components/course-swap/SwapCard';
 import SwapFilter from '@/components/course-swap/SwapFilter';
 import { toast } from 'sonner';
 import globalInfo from '@/constants/globalInfo';
+import { useIsMobile } from '@/hooks/use-mobile';
+import CourseBottomSheet from '@/components/ui/CourseBottomSheet';
 
 const BACKUP_INDEX_URL = 'https://connect-cdn.itzmrz.xyz/connect_backup.json';
 const CURRENT_COURSES_URL = 'https://usis-cdn.eniamza.com/connect.json';
@@ -24,6 +26,8 @@ const CourseSwapPage = () => {
   const [selectedFilters, setSelectedFilters] = useState([]);
   const [showMySwapsOnly, setShowMySwapsOnly] = useState(false);
   const [facultyMap, setFacultyMap] = useState({});
+  const isMobile = useIsMobile();
+  const [bottomSheetCourse, setBottomSheetCourse] = useState(null);
 
   // Current semester from global config
   const currentSemester = globalInfo.semester;
@@ -313,7 +317,7 @@ const CourseSwapPage = () => {
 
       if (response.ok) {
         toast.success('Swap deleted successfully');
-        fetchSwaps();
+        setSwaps(prev => prev.filter(s => s.swapId !== swapId));
       } else {
         toast.error('Failed to delete swap');
       }
@@ -331,7 +335,7 @@ const CourseSwapPage = () => {
 
       if (response.ok) {
         toast.success('Swap marked as complete');
-        fetchSwaps();
+        setSwaps(prev => prev.map(s => s.swapId === swapId ? { ...s, isDone: true } : s));
       } else {
         toast.error('Failed to mark swap as complete');
       }
@@ -421,11 +425,18 @@ const CourseSwapPage = () => {
                 courses={getCoursesForSwap(swap)}
                 onDelete={handleDeleteSwap}
                 onMarkComplete={handleMarkComplete}
+                onCourseClick={(course) => isMobile && setBottomSheetCourse(course)}
               />
             ))}
           </div>
         )}
       </div>
+      <CourseBottomSheet
+        course={bottomSheetCourse}
+        courseTitle={bottomSheetCourse ? `${bottomSheetCourse.courseCode}-${bottomSheetCourse.sectionName}` : ''}
+        extraFields={bottomSheetCourse ? [{ label: 'Faculty', value: bottomSheetCourse.faculties || 'TBA' }] : []}
+        onClose={() => setBottomSheetCourse(null)}
+      />
     </div>
   );
 };

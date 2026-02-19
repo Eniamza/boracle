@@ -38,6 +38,8 @@ const CourseBottomSheet = ({ course, onClose, courseTitle, extraFields = [] }) =
             setActiveTitle(courseTitle);
             const timer = setTimeout(() => setIsVisible(true), 20);
             lockScroll();
+            // Push history state when opening
+            window.history.pushState({ modalOpen: true }, '');
             return () => clearTimeout(timer);
         } else if (displayCourse) {
             setIsVisible(false);
@@ -50,7 +52,26 @@ const CourseBottomSheet = ({ course, onClose, courseTitle, extraFields = [] }) =
         }
     }, [course, courseTitle]);
 
+    // Handle back button
+    useEffect(() => {
+        const handlePopState = (event) => {
+            if (isVisible) {
+                // Prevent default back navigation if modal is open
+                handleClose();
+            }
+        };
+
+        window.addEventListener('popstate', handlePopState);
+        return () => window.removeEventListener('popstate', handlePopState);
+    }, [isVisible]);
+
     const handleClose = () => {
+        // Pop history state if it was pushed
+        if (window.history.state?.modalOpen) {
+            window.history.back();
+            // The popstate listener will trigger the actual close logic, but to be safe/smooth:
+        }
+
         setIsVisible(false);
         setTimeout(() => {
             setDisplayCourse(null);
@@ -87,7 +108,13 @@ const CourseBottomSheet = ({ course, onClose, courseTitle, extraFields = [] }) =
             {/* Backdrop */}
             <div
                 className={`fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] transition-opacity duration-200 ${isVisible ? 'opacity-100' : 'opacity-0'}`}
-                onClick={handleClose}
+                onClick={() => {
+                    if (window.history.state?.modalOpen) {
+                        window.history.back();
+                    } else {
+                        handleClose();
+                    }
+                }}
             />
 
             {/* Sheet */}
@@ -101,7 +128,13 @@ const CourseBottomSheet = ({ course, onClose, courseTitle, extraFields = [] }) =
 
                 {/* Close button */}
                 <button
-                    onClick={handleClose}
+                    onClick={() => {
+                        if (window.history.state?.modalOpen) {
+                            window.history.back();
+                        } else {
+                            handleClose();
+                        }
+                    }}
                     className="absolute top-3 right-3 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
                 >
                     <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
