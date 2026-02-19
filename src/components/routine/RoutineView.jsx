@@ -29,21 +29,45 @@ const RoutineView = ({
     const [isVisible, setIsVisible] = useState(false);
     const [mounted, setMounted] = useState(false);
     const [shouldRender, setShouldRender] = useState(isOpen);
-    const scrollYRef = useRef(0);
+    const isLockedByMe = useRef(false);
 
     const lockScroll = () => {
-        scrollYRef.current = window.scrollY;
-        document.body.style.position = 'fixed';
-        document.body.style.top = `-${scrollYRef.current}px`;
-        document.body.style.width = '100%';
+        if (!isLockedByMe.current) {
+            const count = parseInt(document.body.dataset.scrollLockCount || '0', 10);
+            if (count === 0) {
+                const scrollY = window.scrollY;
+                document.body.dataset.lockScrollY = scrollY.toString();
+                document.body.style.position = 'fixed';
+                document.body.style.top = `-${scrollY}px`;
+                document.body.style.width = '100%';
+            }
+            document.body.dataset.scrollLockCount = (count + 1).toString();
+            isLockedByMe.current = true;
+        }
     };
 
     const unlockScroll = () => {
-        document.body.style.position = '';
-        document.body.style.top = '';
-        document.body.style.width = '';
-        window.scrollTo(0, scrollYRef.current);
+        if (isLockedByMe.current) {
+            const count = parseInt(document.body.dataset.scrollLockCount || '0', 10);
+            if (count <= 1) {
+                document.body.style.position = '';
+                document.body.style.top = '';
+                document.body.style.width = '';
+                const scrollY = parseInt(document.body.dataset.lockScrollY || '0', 10);
+                window.scrollTo(0, scrollY);
+                document.body.dataset.scrollLockCount = '0';
+            } else {
+                document.body.dataset.scrollLockCount = (count - 1).toString();
+            }
+            isLockedByMe.current = false;
+        }
     };
+
+    useEffect(() => {
+        return () => {
+            if (isLockedByMe.current) unlockScroll();
+        };
+    }, []);
 
     // Wait one frame before rendering modal content so useIsMobile resolves
     useEffect(() => {
