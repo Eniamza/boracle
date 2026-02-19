@@ -25,7 +25,6 @@ const PreRegistrationPage = () => {
   const [showRoutineModal, setShowRoutineModal] = useState(false);
   const [selectedCourses, setSelectedCourses] = useLocalStorage('boracle_selected_courses', []);
   const [savingRoutine, setSavingRoutine] = useState(false);
-  const [creditLimitWarning, setCreditLimitWarning] = useState(false);
   const [customToast, setCustomToast] = useState({ show: false, message: '', type: 'success' });
   const [filters, setFilters] = useState({
     hideFilled: false,
@@ -334,19 +333,18 @@ const PreRegistrationPage = () => {
 
     if (existsBySection) {
       // Removing course
-      setCreditLimitWarning(false);
+      // Removing course
       setSelectedCourses(prev => prev.filter(c => c.sectionId !== course.sectionId));
     } else if (existsByCourse) {
       // Same course already exists (different section) - prevent adding and show warning
-      toast.error(`${course.courseCode} is already in your routine (${existsByCourse.sectionName}). Remove it first to add a different section.`);
+      toast.error(`${course.courseCode} is already in your routine (Sec: ${existsByCourse.sectionName}). Remove it first to add a different section.`);
       return; // Don't proceed further
     } else {
       // Adding new course - check credit limit
       const newTotalCredits = selectedCourses.reduce((sum, c) => sum + (c.courseCredit || 0), 0) + (course.courseCredit || 0);
 
       if (newTotalCredits > 15) {
-        setCreditLimitWarning(true);
-        setTimeout(() => setCreditLimitWarning(false), 3000);
+        toast.error('Cannot add more than 15 credits!');
         return; // Don't proceed further
       }
 
@@ -503,12 +501,7 @@ const PreRegistrationPage = () => {
       )}
 
       {/* Credit Limit Warning */}
-      {creditLimitWarning && (
-        <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 bg-red-600 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-2">
-          <AlertCircle className="w-5 h-5" />
-          Cannot add more than 15 credits!
-        </div>
-      )}
+
 
       {/* Header */}
       <div className="sticky top-16 z-40 bg-white dark:bg-gray-900 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800 -mx-6 -mt-6 px-6 pt-6 pb-4">
