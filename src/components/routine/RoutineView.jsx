@@ -24,6 +24,21 @@ const RoutineView = ({
     const [isVisible, setIsVisible] = useState(false);
     const [mounted, setMounted] = useState(false);
     const [shouldRender, setShouldRender] = useState(isOpen);
+    const scrollYRef = useRef(0);
+
+    const lockScroll = () => {
+        scrollYRef.current = window.scrollY;
+        document.body.style.position = 'fixed';
+        document.body.style.top = `-${scrollYRef.current}px`;
+        document.body.style.width = '100%';
+    };
+
+    const unlockScroll = () => {
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.width = '';
+        window.scrollTo(0, scrollYRef.current);
+    };
 
     // Wait one frame before rendering modal content so useIsMobile resolves
     useEffect(() => {
@@ -35,8 +50,8 @@ const RoutineView = ({
         if (isOpen) {
             setShouldRender(true);
             if (isModal && isMobile && mounted) {
+                lockScroll();
                 requestAnimationFrame(() => setIsVisible(true));
-                document.body.style.overflow = 'hidden';
             }
         } else if (shouldRender) {
             // Animate out
@@ -44,7 +59,7 @@ const RoutineView = ({
             if (isMobile && isModal) {
                 const timer = setTimeout(() => {
                     setShouldRender(false);
-                    document.body.style.overflow = '';
+                    unlockScroll();
                     onClose?.();
                 }, 250);
                 return () => clearTimeout(timer);
@@ -53,9 +68,6 @@ const RoutineView = ({
                 onClose?.();
             }
         }
-        return () => {
-            document.body.style.overflow = '';
-        };
     }, [isOpen, isModal, isMobile, mounted]);
 
     const handleClose = () => {
@@ -63,6 +75,7 @@ const RoutineView = ({
             setIsVisible(false);
             setTimeout(() => {
                 setShouldRender(false);
+                unlockScroll();
                 onClose?.();
             }, 250);
         } else {

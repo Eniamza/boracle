@@ -15,28 +15,38 @@ const CourseBottomSheet = ({ course, onClose, courseTitle, extraFields = [] }) =
     const [isVisible, setIsVisible] = useState(false);
     const [displayCourse, setDisplayCourse] = useState(null);
     const [activeTitle, setActiveTitle] = useState(null);
+    const scrollYRef = React.useRef(0);
+
+    const lockScroll = () => {
+        scrollYRef.current = window.scrollY;
+        document.body.style.position = 'fixed';
+        document.body.style.top = `-${scrollYRef.current}px`;
+        document.body.style.width = '100%';
+    };
+
+    const unlockScroll = () => {
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.width = '';
+        window.scrollTo(0, scrollYRef.current);
+    };
 
     useEffect(() => {
         if (course) {
             setDisplayCourse(course);
             setActiveTitle(courseTitle);
-            // Small timeout ensures browser paints translate-y-full before we animate in
             const timer = setTimeout(() => setIsVisible(true), 20);
-            document.body.style.overflow = 'hidden';
+            lockScroll();
             return () => clearTimeout(timer);
         } else if (displayCourse) {
-            // Animate out first, then clear
             setIsVisible(false);
             const timer = setTimeout(() => {
                 setDisplayCourse(null);
                 setActiveTitle(null);
-                document.body.style.overflow = '';
+                unlockScroll();
             }, 200);
             return () => clearTimeout(timer);
         }
-        return () => {
-            document.body.style.overflow = '';
-        };
     }, [course, courseTitle]);
 
     const handleClose = () => {
@@ -44,7 +54,7 @@ const CourseBottomSheet = ({ course, onClose, courseTitle, extraFields = [] }) =
         setTimeout(() => {
             setDisplayCourse(null);
             setActiveTitle(null);
-            document.body.style.overflow = '';
+            unlockScroll();
             onClose?.();
         }, 200);
     };
