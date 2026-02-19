@@ -2,6 +2,7 @@
 import React, { useState, useRef } from 'react';
 import { X } from 'lucide-react';
 import CourseHoverTooltip from '@/components/ui/CourseHoverTooltip';
+import { getRoutineTimings, REGULAR_TIMINGS } from '@/constants/routineTimings';
 
 const RoutineTableGrid = ({
   selectedCourses = [],
@@ -15,15 +16,9 @@ const RoutineTableGrid = ({
   const [hoveredCourseTitle, setHoveredCourseTitle] = useState(null);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0, showLeft: false });
 
-  const timeSlots = [
-    '08:00 AM-09:20 AM',
-    '09:30 AM-10:50 AM',
-    '11:00 AM-12:20 PM',
-    '12:30 PM-01:50 PM',
-    '02:00 PM-03:20 PM',
-    '03:30 PM-04:50 PM',
-    '05:00 PM-06:20 PM'
-  ];
+
+
+  const timeSlots = getRoutineTimings();
 
   const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
@@ -98,84 +93,88 @@ const RoutineTableGrid = ({
             </tr>
           </thead>
           <tbody>
-            {timeSlots.map(timeSlot => (
-              <tr key={timeSlot} className="border-b border-gray-300 dark:border-gray-700">
-                <td className="py-4 px-4 text-base font-medium text-gray-600 dark:text-gray-400 whitespace-nowrap border-r border-gray-300 dark:border-gray-700">
-                  {timeSlot}
-                </td>
-                {days.map(day => {
-                  const courses = getCoursesForSlot(day, timeSlot);
-                  const conflict = hasConflict(day, timeSlot);
+            {timeSlots.map((timeSlot, index) => {
+              const matchSlot = REGULAR_TIMINGS[index];
+              return (
+                <tr key={timeSlot} className="border-b border-gray-300 dark:border-gray-700">
+                  <td className="py-4 px-4 text-base font-medium text-gray-600 dark:text-gray-400 whitespace-nowrap border-r border-gray-300 dark:border-gray-700">
+                    {timeSlot}
+                  </td>
+                  {days.map(day => {
+                    const courses = getCoursesForSlot(day, matchSlot);
+                    const conflict = hasConflict(day, matchSlot);
 
-                  return (
-                    <td key={`${day}-${timeSlot}`} className="p-2 border-r border-gray-300 dark:border-gray-700 last:border-r-0 relative">
-                      {courses.length > 0 && (
-                        <div className={`min-h-[80px] ${conflict ? 'space-y-1' : ''}`}>
-                          {courses.map(course => {
-                            const isLab = course.labSchedules?.some(s => {
-                              if (s.day !== day.toUpperCase()) return false;
-                              const scheduleStart = timeToMinutes(formatTime(s.startTime));
-                              const scheduleEnd = timeToMinutes(formatTime(s.endTime));
-                              const slotStartMin = timeToMinutes(timeSlot.split('-')[0]);
-                              const slotEndMin = timeToMinutes(timeSlot.split('-')[1]);
-                              // Check if the lab time overlaps with the slot time
-                              return scheduleStart < slotEndMin && scheduleEnd > slotStartMin;
-                            });
+                    return (
+                      <td key={`${day}-${timeSlot}`} className="p-2 border-r border-gray-300 dark:border-gray-700 last:border-r-0 relative">
+                        {courses.length > 0 && (
+                          <div className={`min-h-[80px] ${conflict ? 'space-y-1' : ''}`}>
+                            {courses.map(course => {
+                              const isLab = course.labSchedules?.some(s => {
+                                if (s.day !== day.toUpperCase()) return false;
+                                const scheduleStart = timeToMinutes(formatTime(s.startTime));
+                                const scheduleEnd = timeToMinutes(formatTime(s.endTime));
+                                const slotStartMin = timeToMinutes(matchSlot.split('-')[0]);
+                                const slotEndMin = timeToMinutes(matchSlot.split('-')[1]);
+                                // Check if the lab time overlaps with the slot time
+                                return scheduleStart < slotEndMin && scheduleEnd > slotStartMin;
+                              });
 
-                            return (
-                              <div
-                                key={course.sectionId}
-                                className={`p-3 rounded text-sm ${conflict
-                                  ? 'bg-red-100 dark:bg-red-900/50 border border-red-400 dark:border-red-600 text-red-900 dark:text-red-100'
-                                  : isLab
-                                    ? 'bg-purple-100 dark:bg-purple-900/50 border border-purple-400 dark:border-purple-600 text-purple-900 dark:text-purple-100'
-                                    : 'bg-blue-100 dark:bg-blue-900/50 border border-blue-400 dark:border-blue-600 text-blue-900 dark:text-blue-100'
-                                  } hover:opacity-80 transition-opacity ${onRemoveCourse ? 'cursor-pointer' : ''} group relative`}
-                                onClick={() => onRemoveCourse?.(course)}
-                                onMouseEnter={(e) => {
-                                  setHoveredCourse(course);
-                                  setHoveredCourseTitle(`${course.courseCode}${isLab ? 'L' : ''}`);
-                                  const rect = e.currentTarget.getBoundingClientRect();
-                                  const viewportWidth = window.innerWidth;
-                                  const tooltipWidth = 384; // w-96 = 384px
+                              return (
+                                <div
+                                  key={course.sectionId}
+                                  className={`p-3 rounded text-sm ${conflict
+                                    ? 'bg-red-100 dark:bg-red-900/50 border border-red-400 dark:border-red-600 text-red-900 dark:text-red-100'
+                                    : isLab
+                                      ? 'bg-purple-100 dark:bg-purple-900/50 border border-purple-400 dark:border-purple-600 text-purple-900 dark:text-purple-100'
+                                      : 'bg-blue-100 dark:bg-blue-900/50 border border-blue-400 dark:border-blue-600 text-blue-900 dark:text-blue-100'
+                                    } hover:opacity-80 transition-opacity ${onRemoveCourse ? 'cursor-pointer' : ''} group relative`}
+                                  onClick={() => onRemoveCourse?.(course)}
+                                  onMouseEnter={(e) => {
+                                    setHoveredCourse(course);
+                                    setHoveredCourseTitle(`${course.courseCode}${isLab ? 'L' : ''}`);
+                                    const rect = e.currentTarget.getBoundingClientRect();
+                                    const viewportWidth = window.innerWidth;
+                                    const tooltipWidth = 384; // w-96 = 384px
 
-                                  // Position tooltip on left if it would go outside viewport
-                                  const shouldShowLeft = rect.right + tooltipWidth + 10 > viewportWidth;
+                                    // Position tooltip on left if it would go outside viewport
+                                    const shouldShowLeft = rect.right + tooltipWidth + 10 > viewportWidth;
 
-                                  setTooltipPosition({
-                                    x: shouldShowLeft ? rect.left - tooltipWidth - 10 : rect.right + 10,
-                                    y: rect.top,
-                                    showLeft: shouldShowLeft
-                                  });
-                                }}
-                                onMouseLeave={() => {
-                                  setHoveredCourse(null);
-                                  setHoveredCourseTitle(null);
-                                }}
-                              >
-                                <div className="font-semibold text-base">
-                                  {course.courseCode}{isLab && 'L'}-{course.sectionName}-{isLab ? course.labRoomName || course.labRoomNumber || 'TBA' : course.roomName || course.roomNumber || 'TBA'}
-                                </div>
-                                {course.faculties && (
-                                  <div className="text-gray-600 dark:text-gray-400 truncate text-sm mt-1">
-                                    {course.faculties}
+                                    setTooltipPosition({
+                                      x: shouldShowLeft ? rect.left - tooltipWidth - 10 : rect.right + 10,
+                                      y: rect.top,
+                                      showLeft: shouldShowLeft
+                                    });
+                                  }}
+                                  onMouseLeave={() => {
+                                    setHoveredCourse(null);
+                                    setHoveredCourseTitle(null);
+                                  }}
+                                >
+                                  <div className="font-semibold text-base">
+                                    {course.courseCode}{isLab && 'L'}-{course.sectionName}-{isLab ? course.labRoomName || course.labRoomNumber || 'TBA' : course.roomName || course.roomNumber || 'TBA'}
                                   </div>
-                                )}
-                                {showRemoveButtons && onRemoveCourse && (
-                                  <button className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <X className="w-3 h-3 text-red-500 dark:text-red-400" />
-                                  </button>
-                                )}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </td>
-                  );
-                })}
-              </tr>
-            ))}
+                                  {course.faculties && (
+                                    <div className="text-gray-600 dark:text-gray-400 truncate text-sm mt-1">
+                                      {course.faculties}
+                                    </div>
+                                  )}
+                                  {showRemoveButtons && onRemoveCourse && (
+                                    <button className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                      <X className="w-3 h-3 text-red-500 dark:text-red-400" />
+                                    </button>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </td>
+                    );
+                  })}
+                </tr>
+              );
+            })}
+
           </tbody>
         </table>
 
@@ -205,12 +204,14 @@ const RoutineTableGrid = ({
         </div>
       </div>
 
-      {selectedCourses.length === 0 && (
-        <div className="text-center py-12 text-gray-500">
-          No courses selected. Add courses from the list to see them in your routine.
-        </div>
-      )}
-    </div>
+      {
+        selectedCourses.length === 0 && (
+          <div className="text-center py-12 text-gray-500">
+            No courses selected. Add courses from the list to see them in your routine.
+          </div>
+        )
+      }
+    </div >
   );
 };
 
