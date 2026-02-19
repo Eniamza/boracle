@@ -5,6 +5,8 @@ import { useSession } from 'next-auth/react';
 import RoutineTableGrid from '@/components/routine/RoutineTableGrid';
 import RoutineView from '@/components/routine/RoutineView';
 import { toast } from 'sonner';
+import { useIsMobile } from '@/hooks/use-mobile';
+import MobileCourseCard from '@/components/ui/MobileCourseCard';
 
 
 
@@ -38,6 +40,7 @@ const PreRegistrationPage = () => {
   const [facultyImageError, setFacultyImageError] = useState(false);
   const [filterDropdownOpen, setFilterDropdownOpen] = useState(false);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
+  const isMobile = useIsMobile();
   const observerRef = useRef();
   const lastCourseRef = useRef();
   const routineRef = useRef(null);
@@ -617,10 +620,47 @@ const PreRegistrationPage = () => {
         </div>
       </div>
 
-      {/* Course Table */}
+      {/* Course Table / Mobile Cards */}
       <div className="container mx-auto mt-6">
         {loading ? (
           <div className="text-center py-8 text-gray-600 dark:text-gray-300">Loading courses...</div>
+        ) : isMobile ? (
+          /* Mobile: Card layout */
+          <div className="space-y-3 px-1">
+            {displayedCourses.map((course, index) => {
+              const isLast = index === displayedCourses.length - 1;
+              const isSelected = !!selectedCourses.find(c => c.sectionId === course.sectionId);
+
+              return (
+                <div
+                  key={course.sectionId}
+                  ref={isLast && displayCount < filteredCourses.length ? lastCourseRef : null}
+                >
+                  <MobileCourseCard
+                    course={course}
+                    isSelected={isSelected}
+                    onToggle={addToRoutine}
+                    formatTime={formatTime}
+                    formatSchedule={formatSchedule}
+                  />
+                </div>
+              );
+            })}
+
+            {displayCount < filteredCourses.length && (
+              <div className="text-center py-4">
+                <div className="text-gray-600 dark:text-gray-400 mb-4 text-sm">
+                  Showing {displayCount} of {filteredCourses.length} courses
+                </div>
+                <button
+                  onClick={() => setDisplayCount(prev => Math.min(prev + 50, filteredCourses.length))}
+                  className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm"
+                >
+                  Load More ({Math.min(50, filteredCourses.length - displayCount)} remaining)
+                </button>
+              </div>
+            )}
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -711,7 +751,7 @@ const PreRegistrationPage = () => {
                           onMouseEnter={(e) => {
                             if (course.faculties) {
                               const rect = e.currentTarget.getBoundingClientRect();
-                              setFacultyImageError(false); // Reset image error state for new faculty
+                              setFacultyImageError(false);
                               setHoveredFaculty({
                                 initial: course.faculties,
                                 ...getFacultyDetails(course.faculties)
