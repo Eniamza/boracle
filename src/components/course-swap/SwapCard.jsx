@@ -167,13 +167,10 @@ const SwapCard = ({ swap, courses = [], onDelete, onMarkComplete, onCourseClick,
                               const rect = e.currentTarget.getBoundingClientRect();
                               const viewportWidth = window.innerWidth;
                               const tooltipWidth = 384;
-                              // Center tooltip horizontally below the element
-                              let xPos = rect.left + (rect.width / 2) - (tooltipWidth / 2);
-                              xPos = Math.max(10, Math.min(xPos, viewportWidth - tooltipWidth - 10));
-
+                              const shouldShowLeft = rect.right + tooltipWidth + 10 > viewportWidth;
                               setTooltipPosition({
-                                x: xPos,
-                                y: rect.bottom + 10
+                                x: shouldShowLeft ? rect.left - tooltipWidth - 10 : rect.right + 10,
+                                y: rect.top
                               });
                             }
                           }}
