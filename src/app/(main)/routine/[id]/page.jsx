@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Calendar, Download, RefreshCw, AlertCircle, Copy, Check, Save } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import RoutineTableGrid from '@/components/routine/RoutineTableGrid';
+import RoutineView from '@/components/routine/RoutineView';
 import { exportRoutineToPNG } from '@/components/routine/ExportRoutinePNG';
 
 const SharedRoutinePage = () => {
@@ -265,12 +265,25 @@ const SharedRoutinePage = () => {
 
             {/* Routine Grid */}
             <div className="max-w-7xl mx-auto">
-                <div ref={routineRef}>
-                    <RoutineTableGrid
-                        selectedCourses={courses}
-                        showRemoveButtons={false}
-                    />
-                </div>
+                <RoutineView
+                    title={`${routine?.ownerName
+                        ? `${routine.ownerName.charAt(0).toUpperCase() + routine.ownerName.slice(1).toLowerCase()}'s Routine`
+                        : 'Shared Routine'}`}
+                    courses={courses}
+                    isModal={false}
+                    headerExtras={
+                        <div className="flex items-center gap-2 mt-1">
+                            {routine?.createdAt && (
+                                <p className="text-xs text-gray-400 dark:text-gray-500">
+                                    Created {new Date(Number(routine.createdAt) * 1000).toLocaleDateString()}
+                                </p>
+                            )}
+                            <span className="text-sm text-gray-500 dark:text-gray-400">
+                                • {courses.length} course{courses.length !== 1 ? 's' : ''}
+                            </span>
+                        </div>
+                    }
+                />
             </div>
         </div>
     );

@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 import { exportRoutineToPNG } from '@/components/routine/ExportRoutinePNG';
 import { getRoutineTimings, REGULAR_TIMINGS } from '@/constants/routineTimings';
 import ShareModal from '@/components/savedRoutine/ShareModal';
+import RoutineView from '@/components/routine/RoutineView';
 
 const SavedRoutinesPage = () => {
   const { data: session } = useSession();
@@ -473,62 +474,6 @@ const SavedRoutinesPage = () => {
 
 
 
-  // Simple Modal wrapper for routine display
-  const RoutineTableModal = ({ selectedCourses, onClose }) => {
-    const routineRef = useRef(null);
-
-    const exportToPNG = async () => {
-      if (!selectedCourses || selectedCourses.length === 0) {
-        toast.error('No courses to export');
-        return;
-      }
-
-      if (!routineRef?.current) {
-        toast.error('Routine table not found');
-        return;
-      }
-
-      await exportRoutineToPNG({
-        routineRef,
-        filename: 'saved-routine',
-        showToast: true,
-      });
-    };
-
-    return (
-      <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
-        <div className="bg-white dark:bg-gray-900 rounded-lg max-w-[95vw] max-h-[95vh] w-full overflow-hidden flex flex-col shadow-xl z-[70]">
-          <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Saved Routine</h2>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={exportToPNG}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg flex items-center gap-2 transition-colors text-white"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                </svg>
-                Save as PNG
-              </button>
-              <button
-                onClick={onClose}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors text-gray-600 dark:text-gray-300"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
-          <div className="flex-1 overflow-auto p-4" ref={routineRef}>
-            <RoutineTableGrid
-              selectedCourses={selectedCourses}
-              showRemoveButtons={false}
-              className="h-full"
-            />
-          </div>
-        </div>
-      </div>
-    );
-  };
 
   // Merged Routine Table Modal with color-coded cells
   const MergedRoutineTableModal = ({ courses, friends, onClose }) => {
@@ -1088,9 +1033,11 @@ const SavedRoutinesPage = () => {
 
       {/* Routine View Modal */}
       {viewingRoutine && (
-        <RoutineTableModal
-          selectedCourses={routineCourses}
+        <RoutineView
+          title="Saved Routine"
+          courses={routineCourses}
           onClose={closeRoutineModal}
+          isModal={true}
         />
       )}
 

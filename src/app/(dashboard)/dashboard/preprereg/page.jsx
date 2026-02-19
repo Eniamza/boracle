@@ -3,7 +3,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { Search, Filter, Plus, Calendar, Clock, X, Users, BookOpen, Download, Save, AlertCircle, ChevronDown } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import RoutineTableGrid from '@/components/routine/RoutineTableGrid';
-import ExportRoutinePNG from '@/components/routine/ExportRoutinePNG';
+import RoutineView from '@/components/routine/RoutineView';
 import { toast } from 'sonner';
 
 
@@ -696,8 +696,8 @@ const PreRegistrationPage = () => {
                       ref={isLast && displayCount < filteredCourses.length ? lastCourseRef : null}
                       className={`
                         border-b border-gray-200 dark:border-gray-800 transition-colors
-                        ${isSelected 
-                          ? 'bg-green-200 dark:bg-green-500/30 hover:bg-green-300 dark:hover:bg-green-500/40' 
+                        ${isSelected
+                          ? 'bg-green-200 dark:bg-green-500/30 hover:bg-green-300 dark:hover:bg-green-500/40'
                           : 'hover:bg-gray-100 dark:hover:bg-gray-800/50'
                         }
                       `}
@@ -997,45 +997,22 @@ const PreRegistrationPage = () => {
 
       {/* Routine Modal */}
       {showRoutineModal && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
-          <div className="bg-white dark:bg-gray-900 rounded-lg p-6 w-full max-w-[95vw] max-h-[95vh] overflow-hidden flex flex-col shadow-xl z-[70]">
-            <div className="flex justify-between items-center mb-4">
-              <div>
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white">My Routine</h2>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Total Credits: <span className={`font-bold ${totalCredits > 15 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
-                    {totalCredits}/15
-                  </span>
-                </p>
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={saveRoutine}
-                  disabled={savingRoutine || !session}
-                  className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 dark:disabled:bg-gray-600 text-white rounded-lg flex items-center gap-2 transition-colors"
-                >
-                  <Save className="w-4 h-4" />
-                  {savingRoutine ? 'Saving...' : 'Save Routine'}
-                </button>
-                <ExportRoutinePNG courses={enrichedSelectedCourses} routineRef={routineRef} filename="routine" />
-                <button
-                  onClick={() => setShowRoutineModal(false)}
-                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-                >
-                  <X className="w-5 h-5 text-gray-600 dark:text-gray-300" />
-                </button>
-              </div>
-            </div>
-
-            <div className="flex-1 overflow-auto" ref={routineRef}>
-              <RoutineTableGrid
-                selectedCourses={enrichedSelectedCourses}
-                onRemoveCourse={addToRoutine}
-                showRemoveButtons={true}
-              />
-            </div>
-          </div>
-        </div>
+        <RoutineView
+          title="My Routine"
+          courses={enrichedSelectedCourses}
+          onClose={() => setShowRoutineModal(false)}
+          onSave={saveRoutine}
+          isSaving={savingRoutine}
+          onRemoveCourse={addToRoutine}
+          showRemoveButtons={true}
+          headerExtras={
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Total Credits: <span className={`font-bold ${totalCredits > 15 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
+                {totalCredits}/15
+              </span>
+            </p>
+          }
+        />
       )}
 
       {/* Faculty Hover Tooltip */}
