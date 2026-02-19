@@ -101,6 +101,18 @@ const SwapFilter = ({ courses = [], swaps = [], onFilterChange, isMobile = false
     };
   }, [open]);
 
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [open]);
+
   return (
     <>
       <div
@@ -153,7 +165,7 @@ const SwapFilter = ({ courses = [], swaps = [], onFilterChange, isMobile = false
             </div>
 
             {/* Content Segment */}
-            <div className="flex flex-col flex-1 overflow-hidden">
+            <div className="flex flex-col flex-1 overflow-hidden min-h-0">
               <div className="p-4 shrink-0 border-b border-gray-200 dark:border-gray-800">
                 <Input
                   placeholder="Search courses to filter..."
@@ -198,9 +210,9 @@ const SwapFilter = ({ courses = [], swaps = [], onFilterChange, isMobile = false
                 </div>
               )}
 
-              {/* Course List Scrollable */}
-              <div className="relative flex-1 overflow-hidden">
-                <div className="h-full overflow-y-auto p-2">
+              {/* Course List Wrapper */}
+              <div className="relative flex-1 flex flex-col min-h-0">
+                <div className="flex-1 overflow-y-auto p-2 min-h-0">
                   {filteredCourses.length === 0 ? (
                     <div className="py-8 text-center text-sm text-gray-500 dark:text-gray-400">
                       No matching courses found
