@@ -32,7 +32,14 @@ const MergedRoutineModalWrapper = ({ isMobile, onClose, children }) => {
       document.body.style.top = `-${scrollYRef.current}px`;
       document.body.style.width = '100%';
       const timer = setTimeout(() => setIsVisible(true), 20);
-      return () => clearTimeout(timer);
+      return () => {
+        clearTimeout(timer);
+        // Always restore scroll on unmount
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.width = '';
+        window.scrollTo(0, scrollYRef.current);
+      };
     }
   }, [isMobile]);
 
@@ -493,7 +500,6 @@ const SavedRoutinesPage = () => {
   const viewMergedRoutine = async (routine) => {
     try {
       setLoadingRoutine(true);
-      setViewingMergedRoutine(routine);
 
       // Parse the routine data to get all section IDs with friend info
       const data = JSON.parse(routine.routineData);
@@ -505,8 +511,6 @@ const SavedRoutinesPage = () => {
         color: colorPalette[index % colorPalette.length],
         sectionIds: item.sectionIds || []
       }));
-
-      setMergedRoutineFriends(friends);
 
       const allSectionIds = data.flatMap(item => item.sectionIds || []);
 
@@ -534,6 +538,9 @@ const SavedRoutinesPage = () => {
         });
 
       setMergedRoutineCourses(matchedCourses);
+      setMergedRoutineFriends(friends);
+      // Show modal only after data is ready
+      setViewingMergedRoutine(routine);
 
       if (matchedCourses.length === 0) {
         toast.error('No matching courses found for this merged routine');
@@ -839,7 +846,7 @@ const SavedRoutinesPage = () => {
           {routines.map((routine, index) => (
             <div
               key={routine.id}
-              className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-6 hover:border-gray-300 dark:hover:border-gray-700 transition-colors shadow-sm"
+              className="bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl p-6 hover:border-blue-300 dark:hover:border-blue-600/50 transition-colors shadow-sm"
             >
               {/* Routine Header */}
               <div className="flex items-start justify-between mb-4">
@@ -1024,7 +1031,7 @@ const SavedRoutinesPage = () => {
               return (
                 <div
                   key={routine.id}
-                  className="bg-white dark:bg-gray-900 border border-purple-200 dark:border-purple-800/50 rounded-lg p-6 hover:border-purple-300 dark:hover:border-purple-600/50 transition-colors shadow-sm"
+                  className="bg-white dark:bg-gray-800/50 border border-purple-200 dark:border-purple-700/50 rounded-xl p-6 hover:border-purple-300 dark:hover:border-purple-600/50 transition-colors shadow-sm"
                 >
                   {/* Routine Header */}
                   <div className="flex items-start justify-between mb-4">
