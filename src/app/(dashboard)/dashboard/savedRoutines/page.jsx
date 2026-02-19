@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { toast } from 'sonner';
 import { exportRoutineToPNG } from '@/components/routine/ExportRoutinePNG';
 import { getRoutineTimings, REGULAR_TIMINGS } from '@/constants/routineTimings';
-import { set } from 'mongoose';
+import ShareModal from '@/components/savedRoutine/ShareModal';
 
 const SavedRoutinesPage = () => {
   const { data: session } = useSession();
@@ -471,131 +471,7 @@ const SavedRoutinesPage = () => {
     }
   };
 
-  // Share Modal Component
-  const ShareModal = ({ routineId, type = 'routine', onClose }) => {
-    const [linkCopied, setLinkCopied] = useState(false);
-    const shareUrl = `${window.location.origin}/${type}/${routineId}`;
-    const shareText = `Check out my routine on BRACU O.R.A.C.L.E!`;
 
-    const copyLink = async () => {
-      try {
-        await navigator.clipboard.writeText(shareUrl);
-        setLinkCopied(true);
-        setTimeout(() => setLinkCopied(false), 3000);
-        toast.success('Link copied to clipboard!');
-      } catch (err) {
-        toast.error('Failed to copy link');
-      }
-    };
-
-    const shareToMessenger = () => {
-      window.open(`https://www.facebook.com/dialog/send?link=${encodeURIComponent(shareUrl)}&app_id=966242223397117&redirect_uri=${encodeURIComponent(shareUrl)}`, '_blank');
-    };
-
-    const shareToWhatsApp = () => {
-      window.open(`https://wa.me/?text=${encodeURIComponent(shareText + ' ' + shareUrl)}`, '_blank');
-    };
-
-    const shareToDiscord = () => {
-      // Discord doesn't have a direct share URL, so copy a formatted message
-      navigator.clipboard.writeText(`${shareText}\n${shareUrl}`);
-      toast.success('Copied! Paste it in your Discord chat.');
-    };
-
-    return (
-      <>
-        {/* Blurred backdrop overlay */}
-        <div
-          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[60] transition-opacity duration-300"
-          onClick={onClose}
-        />
-        {/* Centered modal */}
-        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 pointer-events-none">
-          <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border border-gray-200 dark:border-gray-700/60 rounded-2xl p-6 max-w-md w-full shadow-2xl pointer-events-auto animate-in fade-in zoom-in-95 duration-200">
-            {/* Header */}
-            <div className="flex items-center justify-between mb-5">
-              <div className="flex items-center gap-2">
-                <Share2 className="w-5 h-5 text-blue-500 dark:text-blue-400" />
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Share Routine</h2>
-              </div>
-              <button onClick={onClose} className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">
-                <X className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-              </button>
-            </div>
-
-            {/* Copiable Link */}
-            <div className="mb-5">
-              <label className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5 block">Shareable Link</label>
-              <div className="flex items-center gap-2">
-                <div className="flex-1 flex items-center gap-2 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2.5 min-w-0">
-                  <Link className="w-4 h-4 text-gray-400 dark:text-gray-500 flex-shrink-0" />
-                  <span className="text-sm text-gray-700 dark:text-gray-300 truncate font-mono">{shareUrl}</span>
-                </div>
-                <button
-                  onClick={copyLink}
-                  className={`flex-shrink-0 px-3 py-2.5 rounded-lg flex items-center gap-1.5 text-sm font-medium transition-all ${linkCopied
-                    ? 'bg-green-600 text-white'
-                    : 'bg-blue-600 hover:bg-blue-700 text-white'
-                    }`}
-                >
-                  {linkCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                  {linkCopied ? 'Copied' : 'Copy'}
-                </button>
-              </div>
-            </div>
-
-            {/* Social Media Icons */}
-            <div>
-              <label className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-3 block">Share via</label>
-              <div className="flex items-center justify-center gap-4">
-                {/* Messenger */}
-                <button
-                  onClick={shareToMessenger}
-                  className="group flex flex-col items-center gap-1.5"
-                  title="Share on Messenger"
-                >
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg">
-                    <svg viewBox="0 0 24 24" className="w-6 h-6 fill-white">
-                      <path d="M12 2C6.36 2 2 6.13 2 11.7c0 2.91 1.2 5.42 3.15 7.2.15.14.25.36.22.58l-.04 1.78c-.02.58.56.98 1.08.74l1.98-.87c.17-.07.36-.09.54-.05.92.25 1.9.39 2.93.39h.14c5.64 0 10.02-4.13 10.02-9.7C22 6.13 17.64 2 12 2zm5.85 7.65l-2.85 4.53c-.46.73-1.44.9-2.1.37l-2.27-1.7a.6.6 0 00-.72 0l-3.06 2.32c-.41.31-.94-.2-.67-.65l2.85-4.53c.46-.73 1.44-.9 2.1-.37l2.27 1.7a.6.6 0 00.72 0l3.06-2.32c.41-.31.94.2.67.65z" />
-                    </svg>
-                  </div>
-                  <span className="text-xs text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300">Messenger</span>
-                </button>
-
-                {/* WhatsApp */}
-                <button
-                  onClick={shareToWhatsApp}
-                  className="group flex flex-col items-center gap-1.5"
-                  title="Share on WhatsApp"
-                >
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg">
-                    <svg viewBox="0 0 24 24" className="w-6 h-6 fill-white">
-                      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
-                    </svg>
-                  </div>
-                  <span className="text-xs text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300">WhatsApp</span>
-                </button>
-
-                {/* Discord */}
-                <button
-                  onClick={shareToDiscord}
-                  className="group flex flex-col items-center gap-1.5"
-                  title="Share on Discord"
-                >
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-indigo-700 flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg">
-                    <svg viewBox="0 0 24 24" className="w-6 h-6 fill-white">
-                      <path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.8732.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189z" />
-                    </svg>
-                  </div>
-                  <span className="text-xs text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300">Discord</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </>
-    );
-  };
 
   // Simple Modal wrapper for routine display
   const RoutineTableModal = ({ selectedCourses, onClose }) => {
