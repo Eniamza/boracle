@@ -272,6 +272,8 @@ const MobileMergedRoutineView = ({
                         );
                     })
                 )}
+                {/* Extra bottom padding to ensure scroll clearance */}
+                <div className="h-6" aria-hidden="true"></div>
             </div>
 
 
