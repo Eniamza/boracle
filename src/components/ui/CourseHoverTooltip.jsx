@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef, useLayoutEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { getAdjustedTime } from '@/constants/routineTimings';
 
 /**
@@ -9,11 +10,44 @@ import { getAdjustedTime } from '@/constants/routineTimings';
  * @param {{ x: number, y: number }} position - Screen coordinates for tooltip positioning (viewport relative)
  * @param {Array<{ label: string, value: any }>} [extraFields] - Optional additional rows to display (e.g. Friend name)
  */
-const CourseHoverTooltip = ({ course, position, courseTitle, extraFields = [] }) => {
+const CourseHoverTooltip = ({ course: propCourse, position: propPosition, courseTitle: propCourseTitle, extraFields: propExtraFields = [] }) => {
     // Hydration fix: ensure window usage is safe
     const [mounted, setMounted] = useState(false);
     const tooltipRef = useRef(null);
     const [tooltipHeight, setTooltipHeight] = useState(0);
+
+    const [course, setCourse] = useState(null);
+    const [position, setPosition] = useState({ x: 0, y: 0 });
+    const [courseTitle, setCourseTitle] = useState(null);
+    const [extraFields, setExtraFields] = useState([]);
+    const [isHoveringTooltip, setIsHoveringTooltip] = useState(false);
+    const closeTimeoutRef = useRef(null);
+
+    useEffect(() => {
+        if (propCourse) {
+            setCourse(propCourse);
+            if (propPosition) setPosition(propPosition);
+            setCourseTitle(propCourseTitle);
+            setExtraFields(propExtraFields);
+        }
+
+        if (propCourse || isHoveringTooltip) {
+            if (closeTimeoutRef.current) {
+                clearTimeout(closeTimeoutRef.current);
+                closeTimeoutRef.current = null;
+            }
+        } else {
+            closeTimeoutRef.current = setTimeout(() => {
+                setCourse(null);
+            }, 100);
+        }
+
+        return () => {
+            if (closeTimeoutRef.current) {
+                clearTimeout(closeTimeoutRef.current);
+            }
+        };
+    }, [propCourse, propPosition, propCourseTitle, propExtraFields, isHoveringTooltip]);
 
     useEffect(() => {
         setMounted(true);
@@ -50,7 +84,7 @@ const CourseHoverTooltip = ({ course, position, courseTitle, extraFields = [] })
         overflowY: 'auto',
         // Start invisible until measured to prevent jump
         opacity: tooltipHeight > 0 ? 1 : 0,
-        pointerEvents: 'none'
+        pointerEvents: 'auto'
     };
 
     if (wouldOverflowBottom) {
@@ -86,9 +120,11 @@ const CourseHoverTooltip = ({ course, position, courseTitle, extraFields = [] })
 
     const displayTitle = courseTitle || `${course.courseCode}`;
 
-    return (
+    return createPortal(
         <div
             ref={tooltipRef}
+            onMouseEnter={() => setIsHoveringTooltip(true)}
+            onMouseLeave={() => setIsHoveringTooltip(false)}
             className="fixed z-[100] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700/60 rounded-xl p-4 shadow-2xl text-left transition-opacity duration-75"
             style={style}
         >
@@ -240,7 +276,8 @@ const CourseHoverTooltip = ({ course, position, courseTitle, extraFields = [] })
                     {course.sectionSchedule?.classStartDate} to {course.sectionSchedule?.classEndDate}
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 
