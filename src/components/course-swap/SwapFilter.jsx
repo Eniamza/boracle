@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Check, Filter, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const SwapFilter = ({ courses = [], swaps = [], onFilterChange }) => {
+const SwapFilter = ({ courses = [], swaps = [], onFilterChange, isMobile = false }) => {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [selectedCourses, setSelectedCourses] = useState([]);
@@ -25,8 +25,8 @@ const SwapFilter = ({ courses = [], swaps = [], onFilterChange }) => {
         swap.askingSections.forEach(id => sectionIds.add(id));
       }
     });
-    
-    return courses.filter(course => 
+
+    return courses.filter(course =>
       sectionIds.has(course.sectionId)
     );
   };
@@ -35,9 +35,9 @@ const SwapFilter = ({ courses = [], swaps = [], onFilterChange }) => {
 
   const filterCourses = (searchTerm) => {
     if (!searchTerm) return availableCourses.slice(0, 50);
-    
+
     const search = searchTerm.toLowerCase();
-    return availableCourses.filter(course => 
+    return availableCourses.filter(course =>
       course.courseCode?.toLowerCase().includes(search) ||
       course.sectionName?.toLowerCase().includes(search) ||
       formatCourse(course).toLowerCase().includes(search)
@@ -48,7 +48,7 @@ const SwapFilter = ({ courses = [], swaps = [], onFilterChange }) => {
     const newSelection = selectedCourses.includes(courseId)
       ? selectedCourses.filter(id => id !== courseId)
       : [...selectedCourses, courseId];
-    
+
     setSelectedCourses(newSelection);
     onFilterChange(newSelection);
   };
@@ -81,118 +81,210 @@ const SwapFilter = ({ courses = [], swaps = [], onFilterChange }) => {
     };
   }, [open]);
 
+  // Handle mobile back gesture
+  useEffect(() => {
+    const handlePopState = () => {
+      if (open) {
+        setOpen(false);
+      }
+    };
+
+    if (open) {
+      // Add a dummy state to history when modal opens
+      window.history.pushState({ modalOpen: true }, '');
+    }
+
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [open]);
+
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [open]);
+
   return (
-    <div className="relative" ref={dropdownRef}>
+    <>
       <div
         onClick={() => setOpen(!open)}
-        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg cursor-pointer transition-all flex items-center gap-2"
+        className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg cursor-pointer transition-all flex items-center justify-center gap-2 px-3 py-2.5 md:px-4 md:py-2 relative"
+        title="Filter Swaps"
       >
         <Filter className="w-4 h-4" />
-        <span>Filter Swaps</span>
+
+        {/* Desktop Content */}
+        <div className="hidden md:flex items-center">
+          <span>Filter Swaps</span>
+          {selectedCourses.length > 0 && (
+            <Badge className="bg-white/20 text-white border-0 ml-2">
+              {selectedCourses.length}
+            </Badge>
+          )}
+        </div>
+
+        {/* Mobile Badge */}
         {selectedCourses.length > 0 && (
-          <Badge className="bg-white/20 text-white border-0">
+          <div className="md:hidden absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-[10px] flex items-center justify-center text-white border border-white dark:border-gray-900">
             {selectedCourses.length}
-          </Badge>
+          </div>
         )}
       </div>
 
       {open && (
-        <div className="absolute z-[200] mt-2 w-80 rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 shadow-2xl shadow-gray-400/30 dark:shadow-black/50" 
-             style={{ maxHeight: '400px', overflow: 'hidden' }}>
-          <div className="p-3 border-b border-gray-200 dark:border-gray-800">
-            <Input
-              placeholder="Search courses to filter..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="h-9"
-              onClick={(e) => e.stopPropagation()}
-              autoFocus
-            />
-          </div>
-          
-          {selectedCourses.length > 0 && (
-            <div className="p-3 border-b border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-semibold text-blue-700 dark:text-blue-300">Selected Filters ({selectedCourses.length})</span>
-                <button
-                  onClick={clearFilters}
-                  className="text-xs font-medium text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
-                >
-                  Clear all
-                </button>
+        <div
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[60] p-4"
+          onClick={() => setOpen(false)}
+        >
+          <div
+            className="bg-white dark:bg-[#0f172a] border border-gray-200 dark:border-blue-800/50 rounded-lg max-w-md w-full shadow-xl z-[70] flex flex-col max-h-[70vh] md:max-h-[85vh]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-blue-800/50 shrink-0">
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Filter Swaps</h2>
+                <p className="text-sm text-gray-500 dark:text-blue-300/70">Search and filter courses</p>
               </div>
-              <div className="flex flex-wrap gap-1.5">
-                {selectedCourses.map(sectionId => {
-                  const course = getCourseBySection(sectionId);
-                  return (
-                    <Badge key={sectionId} className="text-xs bg-blue-600 hover:bg-blue-700 text-white border-0">
-                      {course ? formatCourse(course) : `Section ${sectionId}`}
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleCourse(sectionId);
-                        }}
-                        className="ml-1.5 hover:text-red-200"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </Badge>
-                  );
-                })}
-              </div>
+              <button
+                onClick={() => setOpen(false)}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-blue-800/30 rounded-lg transition-colors"
+                title="Close"
+              >
+                <X className="w-5 h-5 text-gray-500 dark:text-blue-300" />
+              </button>
             </div>
-          )}
 
-          <div className="relative">
-            <div className="max-h-[250px] overflow-y-auto">
-              {filteredCourses.length === 0 ? (
-                <div className="py-6 text-center text-sm text-gray-500 dark:text-gray-400">No courses found</div>
-              ) : (
-                filteredCourses.map((course) => {
-                  const isSelected = selectedCourses.includes(course.sectionId);
-                  return (
-                    <div
-                      key={course.sectionId}
-                      className={cn(
-                        "flex items-center px-3 py-2.5 cursor-pointer transition-colors border-l-3",
-                        isSelected 
-                          ? "bg-blue-50 dark:bg-blue-950/40 border-l-blue-600 dark:border-l-blue-400" 
-                          : "hover:bg-gray-100 dark:hover:bg-gray-800 border-l-transparent"
-                      )}
-                      onClick={() => toggleCourse(course.sectionId)}
+            {/* Content Segment */}
+            <div className="flex flex-col flex-1 overflow-hidden min-h-0">
+              <div className="p-4 shrink-0 border-b border-gray-200 dark:border-gray-800">
+                <Input
+                  placeholder="Search courses to filter..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="h-10 text-base"
+                  autoFocus
+                />
+              </div>
+
+              {/* Selected Categories */}
+              {selectedCourses.length > 0 && (
+                <div className="p-3 border-b border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30 shrink-0">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-semibold text-blue-700 dark:text-blue-300">Selected Filters ({selectedCourses.length})</span>
+                    <button
+                      onClick={clearFilters}
+                      className="text-xs font-medium text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors"
                     >
-                      <div
-                        className={cn(
-                          "mr-3 h-4 w-4 rounded border-2 flex items-center justify-center transition-colors",
-                          isSelected 
-                            ? "bg-blue-600 border-blue-600 dark:bg-blue-500 dark:border-blue-500" 
-                            : "border-gray-300 dark:border-gray-600"
-                        )}
-                      >
-                        {isSelected && <Check className="h-3 w-3 text-white" />}
-                      </div>
-                      <div className="flex-1">
-                        <div className={cn(
-                          "font-medium text-sm",
-                          isSelected ? "text-blue-700 dark:text-blue-300" : "text-gray-900 dark:text-gray-100"
-                        )}>{formatCourse(course)}</div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">
-                          {course.faculties || 'TBA'}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })
+                      Clear all
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {selectedCourses.map(sectionId => {
+                      const course = getCourseBySection(sectionId);
+                      return (
+                        <Badge key={sectionId} className="text-xs bg-blue-600 hover:bg-blue-700 text-white border-0 py-1 px-2.5">
+                          {course ? formatCourse(course) : `Section ${sectionId}`}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleCourse(sectionId);
+                            }}
+                            className="ml-1.5 hover:text-red-200 transition-colors"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </Badge>
+                      );
+                    })}
+                  </div>
+                </div>
               )}
+
+              {/* Course List Wrapper */}
+              <div className="relative flex-1 flex flex-col min-h-0">
+                <div className="flex-1 overflow-y-auto p-2 min-h-0">
+                  {filteredCourses.length === 0 ? (
+                    <div className="py-8 text-center text-sm text-gray-500 dark:text-gray-400">
+                      No matching courses found
+                    </div>
+                  ) : (
+                    <div className="space-y-1">
+                      {filteredCourses.map((course) => {
+                        const isSelected = selectedCourses.includes(course.sectionId);
+                        return (
+                          <div
+                            key={course.sectionId}
+                            className={cn(
+                              "flex items-center px-4 py-3 cursor-pointer transition-all rounded-lg border",
+                              isSelected
+                                ? "bg-blue-50 dark:bg-blue-950/40 border-blue-200 dark:border-blue-800/50"
+                                : "hover:bg-gray-50 dark:hover:bg-gray-800/50 border-transparent"
+                            )}
+                            onClick={() => toggleCourse(course.sectionId)}
+                          >
+                            <div
+                              className={cn(
+                                "mr-4 flex-shrink-0 h-5 w-5 rounded-md border-2 flex items-center justify-center transition-colors",
+                                isSelected
+                                  ? "bg-blue-600 border-blue-600 dark:bg-blue-500 dark:border-blue-500"
+                                  : "border-gray-300 dark:border-gray-600"
+                              )}
+                            >
+                              {isSelected && <Check className="h-3.5 w-3.5 text-white" strokeWidth={3} />}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className={cn(
+                                "font-medium text-[15px] truncate",
+                                isSelected ? "text-blue-700 dark:text-blue-300" : "text-gray-900 dark:text-gray-100"
+                              )}>
+                                {formatCourse(course)}
+                              </div>
+                              <div className="text-sm text-gray-500 dark:text-gray-400 truncate mt-0.5">
+                                {course.faculties || 'TBA'}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+                {/* Fade indicator for scroll */}
+                {filteredCourses.length > 5 && (
+                  <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-white dark:from-[#0f172a] to-transparent pointer-events-none" />
+                )}
+              </div>
             </div>
-            {/* Bottom fade gradient to indicate more content */}
-            {filteredCourses.length > 5 && (
-              <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-white dark:from-gray-950 to-transparent pointer-events-none" />
-            )}
+
+            {/* Footer Buttons */}
+            <div className="flex gap-2 p-4 border-t border-gray-200 dark:border-blue-800/50 bg-gray-50 dark:bg-[#0c1629] shrink-0 rounded-b-lg">
+              <button
+                onClick={clearFilters}
+                className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 rounded-lg transition-colors font-medium text-white flex justify-center items-center h-[42px]"
+              >
+                Reset
+              </button>
+              <button
+                onClick={() => setOpen(false)}
+                className="flex-[2] px-4 py-2.5 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors font-medium text-white flex justify-center items-center h-[42px]"
+              >
+                View Results
+              </button>
+            </div>
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 };
 

@@ -5,6 +5,9 @@ import { useSession } from 'next-auth/react';
 import RoutineTableGrid from '@/components/routine/RoutineTableGrid';
 import RoutineView from '@/components/routine/RoutineView';
 import { toast } from 'sonner';
+import { useIsMobile } from '@/hooks/use-mobile';
+import MobileCourseCard from '@/components/ui/MobileCourseCard';
+import CourseBottomSheet from '@/components/ui/CourseBottomSheet';
 
 
 
@@ -22,7 +25,6 @@ const PreRegistrationPage = () => {
   const [showRoutineModal, setShowRoutineModal] = useState(false);
   const [selectedCourses, setSelectedCourses] = useLocalStorage('boracle_selected_courses', []);
   const [savingRoutine, setSavingRoutine] = useState(false);
-  const [creditLimitWarning, setCreditLimitWarning] = useState(false);
   const [customToast, setCustomToast] = useState({ show: false, message: '', type: 'success' });
   const [filters, setFilters] = useState({
     hideFilled: false,
@@ -38,12 +40,20 @@ const PreRegistrationPage = () => {
   const [facultyImageError, setFacultyImageError] = useState(false);
   const [filterDropdownOpen, setFilterDropdownOpen] = useState(false);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
+  const [bottomSheetCourse, setBottomSheetCourse] = useState(null);
+  const [showSelectedDrawer, setShowSelectedDrawer] = useState(false);
+  const isMobile = useIsMobile();
+  const [mounted, setMounted] = useState(false);
   const observerRef = useRef();
   const lastCourseRef = useRef();
   const routineRef = useRef(null);
   const facultyDropdownRef = useRef(null);
   const facultyListRef = useRef(null);
   const filterDropdownRef = useRef(null);
+
+  useEffect(() => {
+    requestAnimationFrame(() => setMounted(true));
+  }, []);
 
   // Helper to get faculty details for a course
   const getFacultyDetails = useCallback((faculties) => {
@@ -66,11 +76,12 @@ const PreRegistrationPage = () => {
   // Enrich selected courses with faculty details
   const enrichedSelectedCourses = useMemo(() => {
     return selectedCourses.map(course => {
-      const { facultyName, facultyEmail } = getFacultyDetails(course.faculties);
+      const { facultyName, facultyEmail, imgUrl } = getFacultyDetails(course.faculties);
       return {
         ...course,
         employeeName: facultyName,
         employeeEmail: facultyEmail,
+        imgUrl,
       };
     });
   }, [selectedCourses, getFacultyDetails]);
@@ -268,6 +279,29 @@ const PreRegistrationPage = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Back button/gesture handler — close modals instead of navigating away
+  useEffect(() => {
+    const handlePopState = (event) => {
+      // If returning to this specific level, do not close!
+      if (event.state?.id === 'prePreregRoutineModal') return;
+
+      if (bottomSheetCourse) {
+        // CourseBottomSheet handles its own history now, but if it's open we shouldn't force close the routine modal
+        return;
+      } else if (showRoutineModal) {
+        setShowRoutineModal(false);
+      }
+    };
+
+    // Push state when routine modal opens
+    if (showRoutineModal) {
+      window.history.pushState({ id: 'prePreregRoutineModal' }, '');
+    }
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [showRoutineModal, bottomSheetCourse]);
+
   // Reset highlighted index when search changes
   useEffect(() => {
     setHighlightedIndex(0);
@@ -308,19 +342,18 @@ const PreRegistrationPage = () => {
 
     if (existsBySection) {
       // Removing course
-      setCreditLimitWarning(false);
+      // Removing course
       setSelectedCourses(prev => prev.filter(c => c.sectionId !== course.sectionId));
     } else if (existsByCourse) {
       // Same course already exists (different section) - prevent adding and show warning
-      toast.error(`${course.courseCode} is already in your routine (${existsByCourse.sectionName}). Remove it first to add a different section.`);
+      toast.error(`${course.courseCode} is already in your routine (Sec: ${existsByCourse.sectionName}). Remove it first to add a different section.`);
       return; // Don't proceed further
     } else {
       // Adding new course - check credit limit
       const newTotalCredits = selectedCourses.reduce((sum, c) => sum + (c.courseCredit || 0), 0) + (course.courseCredit || 0);
 
       if (newTotalCredits > 15) {
-        setCreditLimitWarning(true);
-        setTimeout(() => setCreditLimitWarning(false), 3000);
+        toast.error('Cannot add more than 15 credits!');
         return; // Don't proceed further
       }
 
@@ -477,12 +510,7 @@ const PreRegistrationPage = () => {
       )}
 
       {/* Credit Limit Warning */}
-      {creditLimitWarning && (
-        <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 bg-red-600 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-2">
-          <AlertCircle className="w-5 h-5" />
-          Cannot add more than 15 credits!
-        </div>
-      )}
+
 
       {/* Header */}
       <div className="sticky top-16 z-40 bg-white dark:bg-gray-900 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800 -mx-6 -mt-6 px-6 pt-6 pb-4">
@@ -597,30 +625,107 @@ const PreRegistrationPage = () => {
 
           {/* Selected Courses Tags */}
           {selectedCourses.length > 0 && (
-            <div className="flex flex-wrap gap-2 mt-3">
-              {selectedCourses.map(course => (
-                <span
-                  key={course.sectionId}
-                  className="px-3 py-1.5 bg-blue-100 dark:bg-blue-500/20 border border-blue-300 dark:border-blue-500/50 rounded-full text-sm flex items-center gap-2 text-blue-700 dark:text-blue-300"
+            isMobile ? (
+              <div className="mt-3">
+                <button
+                  onClick={() => setShowSelectedDrawer(!showSelectedDrawer)}
+                  className="w-full flex items-center justify-between px-3 py-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg text-sm text-blue-700 dark:text-blue-300"
                 >
-                  {course.courseCode}-[{course.sectionName}]-{course.faculties || 'TBA'}
-                  <button
-                    onClick={() => addToRoutine(course)}
-                    className="hover:text-blue-500 dark:hover:text-blue-200 transition-colors"
+                  <span className="font-medium">{selectedCourses.length} course{selectedCourses.length > 1 ? 's' : ''} selected</span>
+                  <ChevronDown className={`w-4 h-4 transition-transform ${showSelectedDrawer ? 'rotate-180' : ''}`} />
+                </button>
+                <div className={`overflow-hidden transition-all duration-200 ease-in-out ${showSelectedDrawer ? 'max-h-60 opacity-100 mt-2' : 'max-h-0 opacity-0'}`}>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedCourses.map(course => (
+                      <span
+                        key={course.sectionId}
+                        className="px-3 py-1.5 bg-blue-100 dark:bg-blue-500/20 border border-blue-300 dark:border-blue-500/50 rounded-full text-sm flex items-center gap-2 text-blue-700 dark:text-blue-300"
+                      >
+                        {course.courseCode}-[{course.sectionName}]
+                        <button
+                          onClick={() => addToRoutine(course)}
+                          className="hover:text-blue-500 dark:hover:text-blue-200 transition-colors"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-wrap gap-2 mt-3">
+                {selectedCourses.map(course => (
+                  <span
+                    key={course.sectionId}
+                    className="px-3 py-1.5 bg-blue-100 dark:bg-blue-500/20 border border-blue-300 dark:border-blue-500/50 rounded-full text-sm flex items-center gap-2 text-blue-700 dark:text-blue-300"
                   >
-                    <X className="w-3 h-3" />
-                  </button>
-                </span>
-              ))}
-            </div>
+                    {course.courseCode}-[{course.sectionName}]-{course.faculties || 'TBA'}
+                    <button
+                      onClick={() => addToRoutine(course)}
+                      className="hover:text-blue-500 dark:hover:text-blue-200 transition-colors"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )
           )}
         </div>
       </div>
 
-      {/* Course Table */}
+      {/* Course Table / Mobile Cards */}
       <div className="container mx-auto mt-6">
         {loading ? (
           <div className="text-center py-8 text-gray-600 dark:text-gray-300">Loading courses...</div>
+        ) : isMobile ? (
+          /* Mobile: Card layout */
+          <div className="space-y-3 px-1">
+            {displayedCourses.map((course, index) => {
+              const isLast = index === displayedCourses.length - 1;
+              const isSelected = !!selectedCourses.find(c => c.sectionId === course.sectionId);
+
+              return (
+                <div
+                  key={course.sectionId}
+                  ref={isLast && displayCount < filteredCourses.length ? lastCourseRef : null}
+                >
+                  <MobileCourseCard
+                    course={course}
+                    isSelected={isSelected}
+                    onToggle={addToRoutine}
+                    onCardTap={(c) => {
+                      // Enrich with faculty data before showing bottom sheet
+                      const { facultyName, facultyEmail, imgUrl } = getFacultyDetails(c.faculties);
+                      setBottomSheetCourse({
+                        ...c,
+                        employeeName: facultyName,
+                        employeeEmail: facultyEmail,
+                        imgUrl,
+                      });
+                    }}
+                    formatTime={formatTime}
+                    formatSchedule={formatSchedule}
+                  />
+                </div>
+              );
+            })}
+
+            {displayCount < filteredCourses.length && (
+              <div className="text-center py-4">
+                <div className="text-gray-600 dark:text-gray-400 mb-4 text-sm">
+                  Showing {displayCount} of {filteredCourses.length} courses
+                </div>
+                <button
+                  onClick={() => setDisplayCount(prev => Math.min(prev + 50, filteredCourses.length))}
+                  className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm"
+                >
+                  Load More ({Math.min(50, filteredCourses.length - displayCount)} remaining)
+                </button>
+              </div>
+            )}
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -711,7 +816,7 @@ const PreRegistrationPage = () => {
                           onMouseEnter={(e) => {
                             if (course.faculties) {
                               const rect = e.currentTarget.getBoundingClientRect();
-                              setFacultyImageError(false); // Reset image error state for new faculty
+                              setFacultyImageError(false);
                               setHoveredFaculty({
                                 initial: course.faculties,
                                 ...getFacultyDetails(course.faculties)
@@ -995,25 +1100,24 @@ const PreRegistrationPage = () => {
         </div>
       )}
 
-      {/* Routine Modal */}
-      {showRoutineModal && (
-        <RoutineView
-          title="My Routine"
-          courses={enrichedSelectedCourses}
-          onClose={() => setShowRoutineModal(false)}
-          onSave={saveRoutine}
-          isSaving={savingRoutine}
-          onRemoveCourse={addToRoutine}
-          showRemoveButtons={true}
-          headerExtras={
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Total Credits: <span className={`font-bold ${totalCredits > 15 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
-                {totalCredits}/15
-              </span>
-            </p>
-          }
-        />
-      )}
+      {/* Routine Modal — always rendered, uses isOpen for animated transitions */}
+      <RoutineView
+        title="My Routine"
+        courses={enrichedSelectedCourses}
+        isOpen={showRoutineModal}
+        onClose={() => setShowRoutineModal(false)}
+        onSave={saveRoutine}
+        isSaving={savingRoutine}
+        onRemoveCourse={addToRoutine}
+        showRemoveButtons={true}
+        headerExtras={
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Total Credits: <span className={`font-bold ${totalCredits > 15 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
+              {totalCredits}/15
+            </span>
+          </p>
+        }
+      />
 
       {/* Faculty Hover Tooltip */}
       {hoveredFaculty && (
@@ -1062,10 +1166,16 @@ const PreRegistrationPage = () => {
         </div>
       )}
 
+      {/* Mobile Course Bottom Sheet */}
+      <CourseBottomSheet
+        course={bottomSheetCourse}
+        onClose={() => setBottomSheetCourse(null)}
+      />
+
       {/* Floating Routine Button */}
       <button
         onClick={() => setShowRoutineModal(true)}
-        className="fixed bottom-6 right-6 px-5 py-3 bg-blue-600 hover:bg-blue-700 rounded-full shadow-lg transition-all hover:scale-105 z-40 flex items-center gap-3"
+        className="fixed bottom-6 z-40 flex items-center gap-3 px-5 py-3 bg-blue-600 hover:bg-blue-700 rounded-full shadow-lg transition-all hover:scale-105 left-1/2 -translate-x-1/2 md:left-auto md:right-6 md:translate-x-0"
       >
         <div className="relative">
           <Calendar className="w-5 h-5" />
@@ -1075,7 +1185,7 @@ const PreRegistrationPage = () => {
             </span>
           )}
         </div>
-        <span className="text-sm font-medium">Click to View Your Routine</span>
+        <span className="text-sm font-medium">View Routine</span>
       </button>
     </div>
   );

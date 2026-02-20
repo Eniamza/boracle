@@ -1,17 +1,33 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import CourseHoverTooltip from "@/components/ui/CourseHoverTooltip";
 import { useSession } from 'next-auth/react';
-import { Calendar, User, ArrowRightLeft, Tag, CheckCircle, Trash2, Mail } from 'lucide-react';
+import { Calendar, User, ArrowRightLeft, Tag, CheckCircle, Trash2, Mail, ChevronDown, ChevronUp } from 'lucide-react';
 
-const SwapCard = ({ swap, courses = [], onDelete, onMarkComplete }) => {
+const SwapCard = ({ swap, courses = [], onDelete, onMarkComplete, onCourseClick, isMobile = false }) => {
   const { data: session } = useSession();
   const [hoveredCourse, setHoveredCourse] = useState(null);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
+
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [showToggle, setShowToggle] = useState(false);
+  const tagsContainerRef = useRef(null);
+
+  useEffect(() => {
+    const checkHeight = () => {
+      if (tagsContainerRef.current) {
+        // A single row with badges normally takes ~34px height. Anything significantly above that means multiple rows.
+        setShowToggle(tagsContainerRef.current.scrollHeight > 45);
+      }
+    };
+    checkHeight();
+    window.addEventListener('resize', checkHeight);
+    return () => window.removeEventListener('resize', checkHeight);
+  }, [swap.askingSections]);
 
   if (!swap) return null;
 
@@ -102,6 +118,7 @@ const SwapCard = ({ swap, courses = [], onDelete, onMarkComplete }) => {
                 }
               }}
               onMouseLeave={() => setHoveredCourse(null)}
+              onClick={() => giveCourse && onCourseClick?.(giveCourse)}
             >
               <p className="font-bold text-base md:text-lg text-gray-900 dark:text-white break-words">
                 {giveCourse ? formatCourse(giveCourse) : `Section ${swap.getSectionId}`}
@@ -124,41 +141,62 @@ const SwapCard = ({ swap, courses = [], onDelete, onMarkComplete }) => {
             </div>
             <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
               {swap.askingSections && swap.askingSections.length > 0 ? (
-                <div className="flex flex-wrap gap-2">
-                  {swap.askingSections.map((sectionId) => {
-                    const askCourse = getCourseBySection(sectionId);
-                    return (
-                      <Badge
-                        key={sectionId}
-                        variant="outline"
-                        className="px-3 py-1.5 text font-medium
-                        bg-white dark:bg-gray-900 
-                        border-purple-300 dark:border-blue-700 
-                        text-blue-700 dark:text-blue-400 
-                        cursor-pointer 
-                        hover:bg-purple-50 dark:hover:bg-blue-900/30 
-                        hover:border-purple-400 dark:hover:border-blue-600
-                        hover:shadow-sm
-                        transition-all duration-200"
-                        onMouseEnter={(e) => {
-                          if (askCourse) {
-                            setHoveredCourse(askCourse);
-                            const rect = e.currentTarget.getBoundingClientRect();
-                            const viewportWidth = window.innerWidth;
-                            const tooltipWidth = 384;
-                            const shouldShowLeft = rect.right + tooltipWidth + 10 > viewportWidth;
-                            setTooltipPosition({
-                              x: shouldShowLeft ? rect.left - tooltipWidth - 10 : rect.right + 10,
-                              y: rect.top
-                            });
-                          }
-                        }}
-                        onMouseLeave={() => setHoveredCourse(null)}
-                      >
-                        {askCourse ? formatCourse(askCourse) : `Section ${sectionId}`}
-                      </Badge>
-                    );
-                  })}
+                <div className="flex flex-col gap-2">
+                  <div
+                    ref={tagsContainerRef}
+                    className={`flex flex-wrap gap-2 ${isExpanded ? '' : 'max-h-[36px] overflow-hidden'}`}
+                  >
+                    {swap.askingSections.map((sectionId) => {
+                      const askCourse = getCourseBySection(sectionId);
+                      return (
+                        <Badge
+                          key={sectionId}
+                          variant="outline"
+                          className="px-3 py-1.5 text font-medium
+                          bg-white dark:bg-gray-900 
+                          border-purple-300 dark:border-blue-700 
+                          text-blue-700 dark:text-blue-400 
+                          cursor-pointer 
+                          hover:bg-purple-50 dark:hover:bg-blue-900/30 
+                          hover:border-purple-400 dark:hover:border-blue-600
+                          hover:shadow-sm
+                          transition-all duration-200"
+                          onMouseEnter={(e) => {
+                            if (askCourse) {
+                              setHoveredCourse(askCourse);
+                              const rect = e.currentTarget.getBoundingClientRect();
+                              const viewportWidth = window.innerWidth;
+                              const tooltipWidth = 384;
+                              const shouldShowLeft = rect.right + tooltipWidth + 10 > viewportWidth;
+                              setTooltipPosition({
+                                x: shouldShowLeft ? rect.left - tooltipWidth - 10 : rect.right + 10,
+                                y: rect.top
+                              });
+                            }
+                          }}
+                          onMouseLeave={() => setHoveredCourse(null)}
+                          onClick={() => askCourse && onCourseClick?.(askCourse)}
+                        >
+                          {askCourse ? formatCourse(askCourse) : `Section ${sectionId}`}
+                        </Badge>
+                      );
+                    })}
+                  </div>
+                  {showToggle && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsExpanded(!isExpanded);
+                      }}
+                      className="text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 self-start flex items-center gap-1 mt-1 outline-none"
+                    >
+                      {isExpanded ? (
+                        <>Show less <ChevronUp className="w-3 h-3" /></>
+                      ) : (
+                        <>Show more ({swap.askingSections.length} sections) <ChevronDown className="w-3 h-3" /></>
+                      )}
+                    </button>
+                  )}
                 </div>
               ) : (
                 <p className="text-gray-500 italic">Any section of the same course</p>
@@ -225,7 +263,7 @@ const SwapCard = ({ swap, courses = [], onDelete, onMarkComplete }) => {
       </CardContent>
 
       {/* Hover Tooltip for "Looking For" Courses */}
-      <CourseHoverTooltip course={hoveredCourse} position={tooltipPosition} />
+      {!isMobile && <CourseHoverTooltip course={hoveredCourse} position={tooltipPosition} />}
     </Card>
   );
 };

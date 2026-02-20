@@ -4,7 +4,12 @@ import { Calendar, Download, RefreshCw, AlertCircle, Copy, Check, Save } from 'l
 import { useParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import RoutineView from '@/components/routine/RoutineView';
+import { copyToClipboard } from '@/lib/utils';
 import { exportRoutineToPNG } from '@/components/routine/ExportRoutinePNG';
+import { toast } from 'sonner';
+
+import { useIsMobile } from '@/hooks/use-mobile';
+import RoutineTableGrid from '@/components/routine/RoutineTableGrid';
 
 const SharedRoutinePage = () => {
     const { id } = useParams();
@@ -17,12 +22,46 @@ const SharedRoutinePage = () => {
     const [importing, setImporting] = useState(false);
     const [imported, setImported] = useState(false);
     const routineRef = useRef(null);
+    const exportRef = useRef(null);
+    const isMobile = useIsMobile();
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     useEffect(() => {
         if (id) {
             fetchRoutine();
         }
     }, [id]);
+
+    const [facultyMap, setFacultyMap] = useState({});
+
+    // Fetch faculty data if user is authenticated
+    useEffect(() => {
+        if (session?.user?.email) {
+            fetch('/api/faculty/lookup')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        setFacultyMap(data.facultyMap);
+                        // Re-enrich existing courses with faculty data
+                        setCourses(prev => prev.map(course => {
+                            const firstInitial = course.faculties?.split(',')[0]?.trim().toUpperCase();
+                            const facultyInfo = data.facultyMap[firstInitial];
+                            return {
+                                ...course,
+                                employeeName: facultyInfo?.facultyName || null,
+                                employeeEmail: facultyInfo?.email || null,
+                                imgUrl: facultyInfo?.imgUrl || null,
+                            };
+                        }));
+                    }
+                })
+                .catch(err => console.error('Error fetching faculty data:', err));
+        }
+    }, [session]);
 
     const fetchRoutine = async () => {
         try {
@@ -55,9 +94,18 @@ const SharedRoutinePage = () => {
             const coursesResponse = await fetch('https://usis-cdn.eniamza.com/connect.json');
             const allCourses = await coursesResponse.json();
 
-            const matchedCourses = allCourses.filter(course =>
-                sectionIds.includes(course.sectionId)
-            );
+            const matchedCourses = allCourses
+                .filter(course => sectionIds.includes(course.sectionId))
+                .map(course => {
+                    const firstInitial = course.faculties?.split(',')[0]?.trim().toUpperCase();
+                    const facultyInfo = facultyMap[firstInitial];
+                    return {
+                        ...course,
+                        employeeName: facultyInfo?.facultyName || null,
+                        employeeEmail: facultyInfo?.email || null,
+                        imgUrl: facultyInfo?.imgUrl || null,
+                    };
+                });
 
             setCourses(matchedCourses);
         } catch (err) {
@@ -69,12 +117,13 @@ const SharedRoutinePage = () => {
     };
 
     const copyRoutineId = async () => {
-        try {
-            await navigator.clipboard.writeText(id);
+        const success = await copyToClipboard(id);
+        if (success) {
             setCopied(true);
             setTimeout(() => setCopied(false), 3000);
-        } catch (err) {
-            console.error('Failed to copy ID:', err);
+            toast.success('Routine ID copied!');
+        } else {
+            toast.error('Failed to copy ID');
         }
     };
 
@@ -108,14 +157,19 @@ const SharedRoutinePage = () => {
     };
 
     const exportToPNG = async () => {
-        if (!courses || courses.length === 0 || !routineRef?.current) return;
+        // Use hidden exportRef on mobile, otherwise normal routineRef
+        const ref = (isMobile && exportRef.current) ? exportRef : routineRef;
+
+        if (!ref.current) return;
 
         await exportRoutineToPNG({
-            routineRef,
+            routineRef: ref,
             filename: `shared-routine-${id.slice(0, 8)}`,
             showToast: false,
         });
     };
+
+
 
     // Loading state
     if (loading) {
@@ -170,12 +224,12 @@ const SharedRoutinePage = () => {
             {/* Header Section */}
             <div className="max-w-7xl mx-auto mb-6">
                 <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6">
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                        <div className="flex items-center gap-3">
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
+                        <div className="flex flex-col sm:flex-row items-center gap-3">
                             <div className="p-2.5 bg-blue-100 dark:bg-blue-600/20 rounded-lg">
                                 <Calendar className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                             </div>
-                            <div className="flex flex-col">
+                            <div className="flex flex-col items-center sm:items-start">
                                 <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
                                     {routine?.ownerName
                                         ? `${routine.ownerName.charAt(0).toUpperCase() + routine.ownerName.slice(1).toLowerCase()}'s Routine`
@@ -221,7 +275,7 @@ const SharedRoutinePage = () => {
                         </div>
 
                         {/* Action Buttons */}
-                        <div className="flex items-center gap-2 self-end sm:self-auto">
+                        <div className="flex items-center gap-2 mt-2 sm:mt-0">
                             {/* Import Routine button — only show if logged in */}
                             {session?.user?.email && (
                                 <button
@@ -271,6 +325,8 @@ const SharedRoutinePage = () => {
                         : 'Shared Routine'}`}
                     courses={courses}
                     isModal={false}
+                    routineRefProp={routineRef}
+                    showExportButton={false}
                     headerExtras={
                         <div className="flex items-center gap-2 mt-1">
                             {routine?.createdAt && (
@@ -285,6 +341,32 @@ const SharedRoutinePage = () => {
                     }
                 />
             </div>
+
+            {/* Hidden Desktop Table for Export - matching SharedMergedRoutinePage pattern */}
+            {mounted && isMobile && (
+                <div
+                    style={{
+                        position: 'fixed',
+                        left: 0,
+                        top: 0,
+                        width: '1800px',
+                        opacity: 0,
+                        pointerEvents: 'none',
+                        zIndex: -1,
+                        overflow: 'visible',
+                    }}
+                    aria-hidden="true"
+                >
+                    <div ref={exportRef}>
+                        <RoutineTableGrid
+                            selectedCourses={courses}
+                            showRemoveButtons={false}
+                            forceDesktop={true}
+                            className=""
+                        />
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

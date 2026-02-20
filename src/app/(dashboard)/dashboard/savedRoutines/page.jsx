@@ -14,6 +14,388 @@ import { exportRoutineToPNG } from '@/components/routine/ExportRoutinePNG';
 import { getRoutineTimings, REGULAR_TIMINGS } from '@/constants/routineTimings';
 import ShareModal from '@/components/savedRoutine/ShareModal';
 import RoutineView from '@/components/routine/RoutineView';
+import { useIsMobile } from '@/hooks/use-mobile';
+import MobileMergedRoutineView from '@/components/routine/MobileMergedRoutineView';
+import { copyToClipboard } from '@/lib/utils';
+
+/**
+ * Wrapper that renders children in a mobile bottom-sheet or desktop centered modal.
+ * Always rendered — uses isOpen to animate in/out.
+ */
+const MergedRoutineModalWrapper = ({ isMobile, isOpen, onClose, children }) => {
+  const [isVisible, setIsVisible] = React.useState(false);
+  const [shouldRender, setShouldRender] = React.useState(false);
+  const isLockedByMe = React.useRef(false);
+
+  const lockScroll = React.useCallback(() => {
+    if (!isLockedByMe.current) {
+      const count = parseInt(document.body.dataset.scrollLockCount || '0', 10);
+      if (count === 0) {
+        const scrollY = window.scrollY;
+        document.body.dataset.lockScrollY = scrollY.toString();
+        document.body.style.position = 'fixed';
+        document.body.style.top = `-${scrollY}px`;
+        document.body.style.width = '100%';
+      }
+      document.body.dataset.scrollLockCount = (count + 1).toString();
+      isLockedByMe.current = true;
+    }
+  }, []);
+
+  const unlockScroll = React.useCallback(() => {
+    if (isLockedByMe.current) {
+      const count = parseInt(document.body.dataset.scrollLockCount || '0', 10);
+      if (count <= 1) {
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.width = '';
+        const scrollY = parseInt(document.body.dataset.lockScrollY || '0', 10);
+        window.scrollTo(0, scrollY);
+        document.body.dataset.scrollLockCount = '0';
+      } else {
+        document.body.dataset.scrollLockCount = (count - 1).toString();
+      }
+      isLockedByMe.current = false;
+    }
+  }, []);
+
+  React.useEffect(() => {
+    if (isOpen) {
+      setShouldRender(true);
+      if (isMobile) {
+        lockScroll();
+        const timer = setTimeout(() => setIsVisible(true), 20);
+        return () => clearTimeout(timer);
+      }
+    } else if (shouldRender) {
+      // Animate out
+      setIsVisible(false);
+      if (isMobile) {
+        const timer = setTimeout(() => {
+          setShouldRender(false);
+          unlockScroll();
+          onClose?.();
+        }, 250);
+        return () => clearTimeout(timer);
+      } else {
+        setShouldRender(false);
+        onClose?.();
+      }
+    }
+  }, [isOpen, isMobile, shouldRender, lockScroll, unlockScroll, onClose]);
+
+  // Safety: always unlock on unmount
+  React.useEffect(() => {
+    return () => {
+      if (isLockedByMe.current) unlockScroll();
+    };
+  }, [unlockScroll]);
+
+  const handleClose = () => {
+    if (isMobile) {
+      setIsVisible(false);
+      setTimeout(() => {
+        setShouldRender(false);
+        unlockScroll();
+        onClose?.();
+      }, 250);
+    } else {
+      setShouldRender(false);
+      onClose?.();
+    }
+  };
+
+  if (!shouldRender) return null;
+
+  if (isMobile) {
+    return (
+      <>
+        {/* Backdrop */}
+        <div
+          className={`fixed inset-0 bg-black/40 backdrop-blur-sm z-[60] transition-opacity duration-200 ${isVisible ? 'opacity-100' : 'opacity-0'}`}
+          onClick={handleClose}
+        />
+        {/* Bottom sheet */}
+        <div
+          className={`fixed bottom-0 left-0 right-0 z-[61] bg-white dark:bg-gray-900 rounded-t-2xl shadow-2xl transform transition-transform duration-250 ease-out ${isVisible ? 'translate-y-0' : 'translate-y-full'}`}
+          style={{ height: '80vh' }}
+        >
+          <div className="flex justify-center pt-2.5 pb-1">
+            <div className="w-10 h-1 bg-gray-300 dark:bg-gray-600 rounded-full" />
+          </div>
+          <div className="flex flex-col h-[calc(80vh-1rem)] overflow-hidden">
+            {React.Children.map(children, child =>
+              React.isValidElement(child)
+                ? React.cloneElement(child, {
+                  className: child.props.className?.replace(/max-w-\[95vw\]|max-h-\[95vh\]|shadow-xl|z-\[70\]/g, '').trim() + ' h-full',
+                  onClose: handleClose,
+                })
+                : child
+            )}
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  // Desktop
+  return (
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
+      {children}
+    </div>
+  );
+};
+
+// Merged Routine Table Modal with color-coded cells
+const MergedRoutineTableModal = ({ courses, friends, onClose, isOpen, isMobile }) => {
+  const routineRef = useRef(null);
+  const exportRef = useRef(null);
+  const [hoveredCourse, setHoveredCourse] = useState(null);
+  const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
+  const [hoveredCourseTitle, setHoveredCourseTitle] = useState(null);
+
+  const timeSlots = getRoutineTimings();
+
+  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+  // Time conversion utilities
+  const timeToMinutes = (timeStr) => {
+    const [time, period] = timeStr.split(' ');
+    const [hours, minutes] = time.split(':').map(Number);
+    let totalMinutes = hours * 60 + minutes;
+    if (period === 'PM' && hours !== 12) totalMinutes += 12 * 60;
+    if (period === 'AM' && hours === 12) totalMinutes -= 12 * 60;
+    return totalMinutes;
+  };
+
+  const formatTime = (time) => {
+    if (!time) return '';
+    const [hours, minutes] = time.split(':');
+    const hour = parseInt(hours);
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const displayHour = hour % 12 || 12;
+    return `${displayHour}:${minutes} ${ampm}`;
+  };
+
+  // Get courses for a specific slot
+  const getCoursesForSlot = (day, timeSlot) => {
+    const [slotStart, slotEnd] = timeSlot.split('-');
+    const slotStartMin = timeToMinutes(slotStart);
+    const slotEndMin = timeToMinutes(slotEnd);
+
+    return courses.filter(course => {
+      // Check class schedules
+      const classMatch = course.sectionSchedule?.classSchedules?.some(schedule => {
+        if (schedule.day !== day.toUpperCase()) return false;
+        const scheduleStart = timeToMinutes(formatTime(schedule.startTime));
+        const scheduleEnd = timeToMinutes(formatTime(schedule.endTime));
+        return scheduleStart < slotEndMin && scheduleEnd > slotStartMin;
+      });
+
+      // Check lab schedules
+      const labMatch = course.labSchedules?.some(schedule => {
+        if (schedule.day !== day.toUpperCase()) return false;
+        const scheduleStart = timeToMinutes(formatTime(schedule.startTime));
+        const scheduleEnd = timeToMinutes(formatTime(schedule.endTime));
+        return scheduleStart < slotEndMin && scheduleEnd > slotStartMin;
+      });
+
+      return classMatch || labMatch;
+    });
+  };
+
+  const exportToPNG = async () => {
+    if (!courses || courses.length === 0) {
+      toast.error('No courses to export');
+      return;
+    }
+
+    // On mobile, use the hidden desktop table ref for export
+    const ref = isMobile ? exportRef : routineRef;
+
+    if (!ref?.current) {
+      toast.error('Routine table not found');
+      return;
+    }
+
+    await exportRoutineToPNG({
+      routineRef: ref,
+      filename: 'merged-routine',
+      showToast: true,
+    });
+  };
+
+  const renderDesktopTable = () => (
+    <div className="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg">
+      {/* Friend Legend */}
+      <div className="mb-4 flex flex-wrap gap-3">
+        {friends.map(friend => (
+          <div key={friend.id} className="flex items-center gap-2">
+            <div
+              className="w-4 h-4 rounded-full"
+              style={{ backgroundColor: friend.color }}
+            />
+            <span className="text-sm text-gray-600 dark:text-gray-400">{friend.friendName}</span>
+          </div>
+        ))}
+      </div>
+
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse border border-gray-200 dark:border-gray-700">
+          <thead>
+            <tr className="border-b border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800">
+              <th className="text-left py-4 px-4 text-sm font-medium text-gray-600 dark:text-gray-400 w-36 border-r border-gray-200 dark:border-gray-700">Time/Day</th>
+              {days.map(day => (
+                <th key={day} className="text-center py-4 px-3 text-sm font-medium text-gray-600 dark:text-gray-400 border-r border-gray-200 dark:border-gray-700 last:border-r-0">
+                  {day}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {timeSlots.map((timeSlot, index) => {
+              const matchSlot = REGULAR_TIMINGS[index];
+              return (
+                <tr key={timeSlot} className="border-b border-gray-200 dark:border-gray-800">
+                  <td className="py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400 whitespace-nowrap border-r border-gray-200 dark:border-gray-700">
+                    {timeSlot}
+                  </td>
+                  {days.map(day => {
+                    const slotCourses = getCoursesForSlot(day, matchSlot);
+
+                    return (
+                      <td key={`${day}-${timeSlot}`} className="p-2 border-l border-gray-200 dark:border-gray-800 relative">
+                        {slotCourses.length > 0 && (
+                          <div className="space-y-1">
+                            {slotCourses.map((course, idx) => {
+                              // Check if this specific time slot is for a lab
+                              const isLab = course.labSchedules?.some(s => {
+                                if (s.day !== day.toUpperCase()) return false;
+                                const scheduleStart = timeToMinutes(formatTime(s.startTime));
+                                const scheduleEnd = timeToMinutes(formatTime(s.endTime));
+                                const slotStartMin = timeToMinutes(matchSlot.split('-')[0]);
+                                const slotEndMin = timeToMinutes(matchSlot.split('-')[1]);
+                                return scheduleStart < slotEndMin && scheduleEnd > slotStartMin;
+                              });
+
+                              return (
+                                <div
+                                  key={`${course.sectionId}-${idx}`}
+                                  className="p-2 rounded text-xs transition-opacity hover:opacity-90 cursor-pointer"
+                                  style={{
+                                    backgroundColor: `${course.friendColor}30`,
+                                    borderLeft: `3px solid ${course.friendColor}`
+                                  }}
+                                  onMouseEnter={(e) => {
+                                    setHoveredCourse(course);
+                                    setHoveredCourseTitle(`${course.courseCode}${isLab ? 'L' : ''}`);
+                                    const rect = e.currentTarget.getBoundingClientRect();
+                                    const viewportWidth = window.innerWidth;
+                                    const tooltipWidth = 384; // w-96 = 384px
+                                    const shouldShowLeft = rect.right + tooltipWidth + 10 > viewportWidth;
+
+                                    setTooltipPosition({
+                                      x: shouldShowLeft ? rect.left - tooltipWidth - 10 : rect.right + 10,
+                                      y: rect.top
+                                    });
+                                  }}
+                                  onMouseLeave={() => setHoveredCourse(null)}
+                                >
+                                  <div className="font-semibold text-gray-900 dark:text-white">
+                                    {course.courseCode}{isLab && 'L'}-{course.sectionName}
+                                  </div>
+                                  <div className="text-gray-600 dark:text-gray-400 text-xs mt-0.5">
+                                    {course.friendName}
+                                  </div>
+                                  {course.roomName && (
+                                    <div className="text-gray-500 dark:text-gray-500 text-xs">
+                                      {course.roomName}
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </td>
+                    );
+                  })}
+                </tr>
+
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Tooltip */}
+      <CourseHoverTooltip
+        course={hoveredCourse}
+        position={tooltipPosition}
+        courseTitle={hoveredCourseTitle}
+        extraFields={hoveredCourse ? [{ label: 'Friend', value: hoveredCourse.friendName }] : []}
+      />
+    </div>
+  );
+
+  return (
+    <MergedRoutineModalWrapper isMobile={isMobile} isOpen={isOpen} onClose={onClose}>
+      <div className="bg-white dark:bg-gray-900 rounded-lg max-w-[95vw] max-h-[95vh] w-full overflow-hidden flex flex-col shadow-xl z-[70]">
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+          <h2 className={`font-semibold text-gray-900 dark:text-white ${isMobile ? 'text-base' : 'text-xl'}`}>Merged Routine</h2>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={exportToPNG}
+              className={`bg-blue-600 hover:bg-blue-700 rounded-lg flex items-center gap-2 transition-colors text-white ${isMobile ? 'p-2' : 'px-4 py-2'}`}
+              title="Save as PNG"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              {!isMobile && 'Save as PNG'}
+            </button>
+            <button
+              onClick={onClose}
+              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors text-gray-600 dark:text-gray-300"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+        <div className="flex-1 overflow-auto p-4" ref={routineRef}>
+          {isMobile ? (
+            <>
+              <MobileMergedRoutineView
+                courses={courses}
+                friends={friends}
+              />
+              {/* Hidden desktop table for PNG export */}
+              <div
+                style={{
+                  position: 'fixed',
+                  left: 0,
+                  top: 0,
+                  width: '1800px',
+                  opacity: 0,
+                  pointerEvents: 'none',
+                  zIndex: -1,
+                  overflow: 'visible',
+                }}
+                aria-hidden="true"
+              >
+                <div ref={exportRef}>
+                  {renderDesktopTable()}
+                </div>
+              </div>
+            </>
+          ) : (
+            renderDesktopTable()
+          )}
+        </div>
+      </div>
+    </MergedRoutineModalWrapper>
+  );
+};
 
 const SavedRoutinesPage = () => {
   const { data: session } = useSession();
@@ -431,8 +813,6 @@ const SavedRoutinesPage = () => {
         sectionIds: item.sectionIds || []
       }));
 
-      setMergedRoutineFriends(friends);
-
       const allSectionIds = data.flatMap(item => item.sectionIds || []);
 
       // Fetch course data from the API
@@ -459,6 +839,7 @@ const SavedRoutinesPage = () => {
         });
 
       setMergedRoutineCourses(matchedCourses);
+      setMergedRoutineFriends(friends);
 
       if (matchedCourses.length === 0) {
         toast.error('No matching courses found for this merged routine');
@@ -475,220 +856,7 @@ const SavedRoutinesPage = () => {
 
 
 
-  // Merged Routine Table Modal with color-coded cells
-  const MergedRoutineTableModal = ({ courses, friends, onClose }) => {
-    const routineRef = useRef(null);
-    const [hoveredCourse, setHoveredCourse] = useState(null);
-    const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
-    const [hoveredCourseTitle, setHoveredCourseTitle] = useState(null);
 
-    const timeSlots = getRoutineTimings();
-
-    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-
-    // Time conversion utilities
-    const timeToMinutes = (timeStr) => {
-      const [time, period] = timeStr.split(' ');
-      const [hours, minutes] = time.split(':').map(Number);
-      let totalMinutes = hours * 60 + minutes;
-      if (period === 'PM' && hours !== 12) totalMinutes += 12 * 60;
-      if (period === 'AM' && hours === 12) totalMinutes -= 12 * 60;
-      return totalMinutes;
-    };
-
-    const formatTime = (time) => {
-      if (!time) return '';
-      const [hours, minutes] = time.split(':');
-      const hour = parseInt(hours);
-      const ampm = hour >= 12 ? 'PM' : 'AM';
-      const displayHour = hour % 12 || 12;
-      return `${displayHour}:${minutes} ${ampm}`;
-    };
-
-    // Get courses for a specific slot
-    const getCoursesForSlot = (day, timeSlot) => {
-      const [slotStart, slotEnd] = timeSlot.split('-');
-      const slotStartMin = timeToMinutes(slotStart);
-      const slotEndMin = timeToMinutes(slotEnd);
-
-      return courses.filter(course => {
-        // Check class schedules
-        const classMatch = course.sectionSchedule?.classSchedules?.some(schedule => {
-          if (schedule.day !== day.toUpperCase()) return false;
-          const scheduleStart = timeToMinutes(formatTime(schedule.startTime));
-          const scheduleEnd = timeToMinutes(formatTime(schedule.endTime));
-          return scheduleStart < slotEndMin && scheduleEnd > slotStartMin;
-        });
-
-        // Check lab schedules
-        const labMatch = course.labSchedules?.some(schedule => {
-          if (schedule.day !== day.toUpperCase()) return false;
-          const scheduleStart = timeToMinutes(formatTime(schedule.startTime));
-          const scheduleEnd = timeToMinutes(formatTime(schedule.endTime));
-          return scheduleStart < slotEndMin && scheduleEnd > slotStartMin;
-        });
-
-        return classMatch || labMatch;
-      });
-    };
-
-    const exportToPNG = async () => {
-      if (!courses || courses.length === 0) {
-        toast.error('No courses to export');
-        return;
-      }
-
-      if (!routineRef?.current) {
-        toast.error('Routine table not found');
-        return;
-      }
-
-      await exportRoutineToPNG({
-        routineRef,
-        filename: 'merged-routine',
-        showToast: true,
-      });
-    };
-
-    return (
-      <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
-        <div className="bg-white dark:bg-gray-900 rounded-lg max-w-[95vw] max-h-[95vh] w-full overflow-hidden flex flex-col shadow-xl z-[70]">
-          <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Merged Routine</h2>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={exportToPNG}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg flex items-center gap-2 transition-colors text-white"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                </svg>
-                Save as PNG
-              </button>
-              <button
-                onClick={onClose}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors text-gray-600 dark:text-gray-300"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
-          <div className="flex-1 overflow-auto p-4" ref={routineRef}>
-            <div className="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg">
-              {/* Friend Legend */}
-              <div className="mb-4 flex flex-wrap gap-3">
-                {friends.map(friend => (
-                  <div key={friend.id} className="flex items-center gap-2">
-                    <div
-                      className="w-4 h-4 rounded-full"
-                      style={{ backgroundColor: friend.color }}
-                    />
-                    <span className="text-sm text-gray-600 dark:text-gray-400">{friend.friendName}</span>
-                  </div>
-                ))}
-              </div>
-
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse border border-gray-200 dark:border-gray-700">
-                  <thead>
-                    <tr className="border-b border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800">
-                      <th className="text-left py-4 px-4 text-sm font-medium text-gray-600 dark:text-gray-400 w-36 border-r border-gray-200 dark:border-gray-700">Time/Day</th>
-                      {days.map(day => (
-                        <th key={day} className="text-center py-4 px-3 text-sm font-medium text-gray-600 dark:text-gray-400 border-r border-gray-200 dark:border-gray-700 last:border-r-0">
-                          {day}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {timeSlots.map((timeSlot, index) => {
-                      const matchSlot = REGULAR_TIMINGS[index];
-                      return (
-                        <tr key={timeSlot} className="border-b border-gray-200 dark:border-gray-800">
-                          <td className="py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400 whitespace-nowrap border-r border-gray-200 dark:border-gray-700">
-                            {timeSlot}
-                          </td>
-                          {days.map(day => {
-                            const slotCourses = getCoursesForSlot(day, matchSlot);
-
-                            return (
-                              <td key={`${day}-${timeSlot}`} className="p-2 border-l border-gray-200 dark:border-gray-800 relative">
-                                {slotCourses.length > 0 && (
-                                  <div className="space-y-1">
-                                    {slotCourses.map((course, idx) => {
-                                      // Check if this specific time slot is for a lab
-                                      const isLab = course.labSchedules?.some(s => {
-                                        if (s.day !== day.toUpperCase()) return false;
-                                        const scheduleStart = timeToMinutes(formatTime(s.startTime));
-                                        const scheduleEnd = timeToMinutes(formatTime(s.endTime));
-                                        const slotStartMin = timeToMinutes(matchSlot.split('-')[0]);
-                                        const slotEndMin = timeToMinutes(matchSlot.split('-')[1]);
-                                        return scheduleStart < slotEndMin && scheduleEnd > slotStartMin;
-                                      });
-
-                                      return (
-                                        <div
-                                          key={`${course.sectionId}-${idx}`}
-                                          className="p-2 rounded text-xs transition-opacity hover:opacity-90 cursor-pointer"
-                                          style={{
-                                            backgroundColor: `${course.friendColor}30`,
-                                            borderLeft: `3px solid ${course.friendColor}`
-                                          }}
-                                          onMouseEnter={(e) => {
-                                            setHoveredCourse(course);
-                                            setHoveredCourseTitle(`${course.courseCode}${isLab ? 'L' : ''}`);
-                                            const rect = e.currentTarget.getBoundingClientRect();
-                                            const viewportWidth = window.innerWidth;
-                                            const tooltipWidth = 384; // w-96 = 384px
-                                            const shouldShowLeft = rect.right + tooltipWidth + 10 > viewportWidth;
-
-                                            setTooltipPosition({
-                                              x: shouldShowLeft ? rect.left - tooltipWidth - 10 : rect.right + 10,
-                                              y: rect.top
-                                            });
-                                          }}
-                                          onMouseLeave={() => setHoveredCourse(null)}
-                                        >
-                                          <div className="font-semibold text-gray-900 dark:text-white">
-                                            {course.courseCode}{isLab && 'L'}-{course.sectionName}
-                                          </div>
-                                          <div className="text-gray-600 dark:text-gray-400 text-xs mt-0.5">
-                                            {course.friendName}
-                                          </div>
-                                          {course.roomName && (
-                                            <div className="text-gray-500 dark:text-gray-500 text-xs">
-                                              {course.roomName}
-                                            </div>
-                                          )}
-                                        </div>
-                                      );
-                                    })}
-                                  </div>
-                                )}
-                              </td>
-                            );
-                          })}
-                        </tr>
-
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Tooltip */}
-              <CourseHoverTooltip
-                course={hoveredCourse}
-                position={tooltipPosition}
-                courseTitle={hoveredCourseTitle}
-                extraFields={hoveredCourse ? [{ label: 'Friend', value: hoveredCourse.friendName }] : []}
-              />
-            </div>
-          </div>
-        </div>
-      </div >
-    );
-  };
 
   // Helper to close modal
   const closeRoutineModal = () => {
@@ -703,10 +871,33 @@ const SavedRoutinesPage = () => {
     setMergedRoutineFriends([]);
   };
 
+  const isMobileDevice = useIsMobile();
+
   useEffect(() => {
     fetchRoutines();
     fetchMergedRoutines();
   }, []);
+
+  // Back button/gesture handler
+  useEffect(() => {
+    const handlePopState = (event) => {
+      // If we are coming back TO this modal level after closing a child, don't close this one!
+      if (event.state?.id === 'savedRoutineModal') return;
+
+      if (viewingMergedRoutine) {
+        closeMergedRoutineModal();
+      } else if (viewingRoutine) {
+        closeRoutineModal();
+      }
+    };
+
+    if (viewingRoutine || viewingMergedRoutine) {
+      window.history.pushState({ id: 'savedRoutineModal' }, '');
+    }
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [viewingRoutine, viewingMergedRoutine]);
 
   return (
     <div className="min-h-screen text-gray-900 dark:text-white p-8">
@@ -736,7 +927,7 @@ const SavedRoutinesPage = () => {
           {routines.map((routine, index) => (
             <div
               key={routine.id}
-              className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-6 hover:border-gray-300 dark:hover:border-gray-700 transition-colors shadow-sm"
+              className="bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl p-6 hover:border-blue-300 dark:hover:border-blue-600/50 transition-colors shadow-sm"
             >
               {/* Routine Header */}
               <div className="flex items-start justify-between mb-4">
@@ -811,11 +1002,11 @@ const SavedRoutinesPage = () => {
                     {/* Routine ID as copyable code subtitle */}
                     <button
                       onClick={async () => {
-                        try {
-                          await navigator.clipboard.writeText(routine.id.toString());
+                        const success = await copyToClipboard(routine.id.toString());
+                        if (success) {
                           setCopiedRoutineId(routine.id);
                           setTimeout(() => setCopiedRoutineId(null), 3000);
-                        } catch (err) {
+                        } else {
                           toast.error('Failed to copy ID');
                         }
                       }}
@@ -921,7 +1112,7 @@ const SavedRoutinesPage = () => {
               return (
                 <div
                   key={routine.id}
-                  className="bg-white dark:bg-gray-900 border border-purple-200 dark:border-purple-800/50 rounded-lg p-6 hover:border-purple-300 dark:hover:border-purple-600/50 transition-colors shadow-sm"
+                  className="bg-white dark:bg-gray-800/50 border border-purple-200 dark:border-purple-700/50 rounded-xl p-6 hover:border-purple-300 dark:hover:border-purple-600/50 transition-colors shadow-sm"
                 >
                   {/* Routine Header */}
                   <div className="flex items-start justify-between mb-4">
@@ -939,11 +1130,11 @@ const SavedRoutinesPage = () => {
                         {/* Routine ID as copyable code subtitle */}
                         <button
                           onClick={async () => {
-                            try {
-                              await navigator.clipboard.writeText(routine.id.toString());
+                            const success = await copyToClipboard(routine.id.toString());
+                            if (success) {
                               setCopiedMergedRoutineId(routine.id);
                               setTimeout(() => setCopiedMergedRoutineId(null), 3000);
-                            } catch (err) {
+                            } else {
                               toast.error('Failed to copy ID');
                             }
                           }}
@@ -1032,23 +1223,22 @@ const SavedRoutinesPage = () => {
       </div>
 
       {/* Routine View Modal */}
-      {viewingRoutine && (
-        <RoutineView
-          title="Saved Routine"
-          courses={routineCourses}
-          onClose={closeRoutineModal}
-          isModal={true}
-        />
-      )}
+      <RoutineView
+        title="Saved Routine"
+        courses={routineCourses}
+        isOpen={!!viewingRoutine}
+        onClose={closeRoutineModal}
+        isModal={true}
+      />
 
-      {/* Merged Routine View Modal */}
-      {viewingMergedRoutine && (
-        <MergedRoutineTableModal
-          courses={mergedRoutineCourses}
-          friends={mergedRoutineFriends}
-          onClose={closeMergedRoutineModal}
-        />
-      )}
+      {/* Merged Routine View Modal — always rendered, uses isOpen */}
+      <MergedRoutineTableModal
+        courses={mergedRoutineCourses}
+        friends={mergedRoutineFriends}
+        isOpen={!!viewingMergedRoutine}
+        onClose={closeMergedRoutineModal}
+        isMobile={isMobileDevice}
+      />
 
       {/* Backdrop overlay when floating menu is open */}
       {showFloatingOptions && (

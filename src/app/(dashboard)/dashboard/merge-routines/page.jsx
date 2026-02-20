@@ -2,7 +2,6 @@
 
 
 import React, { useState, useRef, useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -35,8 +34,14 @@ import { ChevronDown } from 'lucide-react';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import CourseHoverTooltip from '@/components/ui/CourseHoverTooltip';
 import { getRoutineTimings, REGULAR_TIMINGS } from '@/constants/routineTimings';
+import { copyToClipboard } from '@/lib/utils';
+import { useIsMobile } from '@/hooks/use-mobile';
+import MobileMergedRoutineView from '@/components/routine/MobileMergedRoutineView';
+import RoutineSelectorSheet from '@/components/routine/RoutineSelectorSheet';
 
 const MergeRoutinesPage = () => {
+  const isMobile = useIsMobile();
+  const [currentFriendIndex, setCurrentFriendIndex] = useState(0);
   const { data: session } = useSession();
   // Use local storage for routine inputs
   const [routineInputs, setRoutineInputs] = useLocalStorage('boracle_merge_inputs', [
@@ -52,6 +57,9 @@ const MergeRoutinesPage = () => {
   const [userSavedRoutines, setUserSavedRoutines] = useState([]);
   const [facultyMap, setFacultyMap] = useState({});
   const [validationErrors, setValidationErrors] = useState({});
+  // State for the mobile routine selector sheet
+  const [selectorSheetOpen, setSelectorSheetOpen] = useState(false);
+  const [selectorSheetInputId, setSelectorSheetInputId] = useState(null);
 
   // Fetch user's saved routines on mount
   useEffect(() => {
@@ -99,6 +107,7 @@ const MergeRoutinesPage = () => {
   }, [session]);
 
   const mergedRoutineRef = useRef(null);
+  const exportRef = useRef(null);
 
   // Predefined color palette for friends
   const colorPalette = [
@@ -174,12 +183,12 @@ const MergeRoutinesPage = () => {
 
   // Copy routine ID to clipboard
   const copyRoutineId = async (routineId) => {
-    try {
-      await navigator.clipboard.writeText(routineId);
+    const success = await copyToClipboard(routineId);
+    if (success) {
       setCopiedId(routineId);
       toast.success('Routine ID copied to clipboard');
       setTimeout(() => setCopiedId(null), 2000);
-    } catch (error) {
+    } else {
       toast.error('Failed to copy routine ID');
     }
   };
@@ -376,292 +385,404 @@ const MergeRoutinesPage = () => {
       return;
     }
 
-    if (!mergedRoutineRef?.current) {
+    const ref = isMobile ? exportRef : mergedRoutineRef;
+    if (!ref?.current) {
       toast.error('Routine table not found');
       return;
     }
 
     await exportRoutineToPNG({
-      routineRef: mergedRoutineRef,
+      routineRef: ref,
       filename: 'merged-routine',
       showToast: true,
     });
   };
 
   return (
-    <div className="min-h-screen">
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
-            <Users className="h-10 w-10" />
+    <div className="w-full flex-1">
+      <div className="max-w-7xl mx-auto px-1.5 sm:px-4 py-4 sm:py-8 w-full min-w-0">
+        {/* <div className="mb-8 px-2 sm:px-0">
+          <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+            <Users className="h-8 w-8 sm:h-10 sm:w-10" />
             Merge Friend Routines
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mt-2">
             Combine multiple routines to see everyone's schedule in one view
           </p>
-        </div>
+        </div> */}
 
-        <div className="flex flex-col gap-6">
-          {/* Input Section - Now on top */}
-          <Card className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-xl">
-            <CardHeader>
-              <CardTitle className="text-gray-900 dark:text-white">Add Routines</CardTitle>
-              <CardDescription className="text-gray-600 dark:text-gray-400">
-                Enter routine IDs and friend names to merge their schedules
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Alert className="mb-4 bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800">
-                <AlertCircle className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                <AlertDescription className="text-gray-700 dark:text-gray-300">
-                  Get routine IDs from your saved routines or ask friends to share theirs
-                </AlertDescription>
-              </Alert>
+        <div className="grid grid-cols-1 gap-6 w-full">
+          <div className="col-span-1 min-w-0 flex flex-col gap-6">
+            {/* Input Section - Now on top */}
+            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-xl rounded-xl py-6 [overflow-x:clip] w-full min-w-0">
+              <div className="px-3 sm:px-6 pb-1.5">
+                <h3 className="leading-none font-semibold text-gray-900 dark:text-white">Add Routines</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1.5">
+                  Enter routine IDs and friend names to merge their schedules
+                </p>
+              </div>
+              <div className="px-1.5 pb-4 sm:px-6 sm:pb-6 pt-4">
+                <Alert className="mb-4 mx-1.5 sm:mx-0 bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800">
+                  <AlertCircle className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                  <AlertDescription className="text-gray-700 dark:text-gray-300">
+                    Get routine IDs from your saved routines or ask friends to share theirs
+                  </AlertDescription>
+                </Alert>
 
-              {/* Horizontal scrollable cards for friend inputs */}
-              <div className="flex gap-4 overflow-x-auto pb-4">
-                {routineInputs.map((input, index) => (
-                  <div key={input.id} className="flex-shrink-0 w-72 space-y-3 p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <div
-                          className="w-4 h-4 rounded-full"
-                          style={{ backgroundColor: input.color }}
-                        />
-                        <span className="text-sm font-medium text-gray-900 dark:text-white">Friend {index + 1}</span>
-                      </div>
-                      {routineInputs.length > 1 && (
-                        <Button
-                          onClick={() => removeRoutineInput(input.id)}
-                          variant="ghost"
-                          size="sm"
-                          className="text-red-600 hover:text-red-700 hover:bg-red-100 dark:hover:bg-red-900/30"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
+                {/* Horizontal scrollable cards for friend inputs */}
+                <div className="overflow-hidden w-full min-w-0 max-w-full">
+                  <div
+                    className="flex gap-4 overflow-x-auto pb-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] snap-x snap-mandatory scroll-smooth w-full min-w-0 max-w-full"
+                    onScroll={(e) => {
+                      if (isMobile) {
+                        const container = e.target;
+                        const children = Array.from(container.children);
+                        let closestIdx = 0;
+                        let closestDist = Infinity;
+                        const containerCenter = container.scrollLeft + container.clientWidth / 2;
+                        children.forEach((child, i) => {
+                          const childCenter = child.offsetLeft + child.offsetWidth / 2;
+                          const dist = Math.abs(containerCenter - childCenter);
+                          if (dist < closestDist) {
+                            closestDist = dist;
+                            closestIdx = i;
+                          }
+                        });
+                        if (closestIdx !== currentFriendIndex) {
+                          setCurrentFriendIndex(closestIdx);
+                        }
+                      }
+                    }}
+                  >
+                    {routineInputs.map((input, index) => (
+                      <div key={input.id} className="flex-shrink-0 w-[calc(100%-1rem)] sm:w-72 space-y-3 p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800/50 snap-start">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <div
+                              className="w-4 h-4 rounded-full"
+                              style={{ backgroundColor: input.color }}
+                            />
+                            <span className="text-sm font-medium text-gray-900 dark:text-white">Friend {index + 1}</span>
+                          </div>
+                          {routineInputs.length > 1 && (
+                            <Button
+                              onClick={() => removeRoutineInput(input.id)}
+                              variant="ghost"
+                              size="sm"
+                              className="text-red-600 hover:text-red-700 hover:bg-red-100 dark:hover:bg-red-900/30"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor={`name-${input.id}`} className="text-gray-700 dark:text-gray-300">Friend's Name</Label>
-                      <Input
-                        id={`name-${input.id}`}
-                        placeholder="e.g., John Doe"
-                        value={input.friendName}
-                        onChange={(e) => updateRoutineInput(input.id, 'friendName', e.target.value)}
-                        className={`bg-white dark:bg-gray-800 text-gray-900 dark:text-white ${validationErrors[input.id]?.friendName
-                          ? 'border-red-500 dark:border-red-500 border-2 focus:ring-red-500 focus:border-red-500'
-                          : 'border-gray-300 dark:border-gray-600'
-                          }`}
-                      />
-                    </div>
+                        <div className="space-y-2">
+                          <Label htmlFor={`name-${input.id}`} className="text-gray-700 dark:text-gray-300">Friend's Name</Label>
+                          <Input
+                            id={`name-${input.id}`}
+                            placeholder="e.g., John Doe"
+                            value={input.friendName}
+                            onChange={(e) => updateRoutineInput(input.id, 'friendName', e.target.value)}
+                            className={`bg-white dark:bg-gray-800 text-gray-900 dark:text-white ${validationErrors[input.id]?.friendName
+                              ? 'border-red-500 dark:border-red-500 border-2 focus:ring-red-500 focus:border-red-500'
+                              : 'border-gray-300 dark:border-gray-600'
+                              }`}
+                          />
+                        </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor={`routine-${input.id}`} className="text-gray-700 dark:text-gray-300">Routine ID</Label>
-                      <div className="flex gap-2">
-                        <Input
-                          id={`routine-${input.id}`}
-                          placeholder="e.g., abc123def456"
-                          value={input.routineId}
-                          onChange={(e) => updateRoutineInput(input.id, 'routineId', e.target.value)}
-                          className={`flex-1 bg-white dark:bg-gray-800 text-gray-900 dark:text-white ${hasDuplicateRoutineId(input.routineId) || validationErrors[input.id]?.routineId
-                            ? 'border-red-500 dark:border-red-500 border-2 focus:ring-red-500 focus:border-red-500'
-                            : 'border-gray-300 dark:border-gray-600'
-                            }`}
-                        />
-                        {input.routineId && (
-                          <Button
-                            onClick={() => copyRoutineId(input.routineId)}
-                            variant="ghost"
-                            size="icon"
-                            className="shrink-0 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
-                          >
-                            {copiedId === input.routineId ? (
-                              <Check className="h-4 w-4 text-green-600" />
-                            ) : (
-                              <Copy className="h-4 w-4" />
+                        <div className="space-y-2">
+                          <Label htmlFor={`routine-${input.id}`} className="text-gray-700 dark:text-gray-300">Routine ID</Label>
+                          <div className="flex gap-2">
+                            <Input
+                              id={`routine-${input.id}`}
+                              placeholder="e.g., abc123def456"
+                              value={input.routineId}
+                              onChange={(e) => updateRoutineInput(input.id, 'routineId', e.target.value)}
+                              className={`flex-1 bg-white dark:bg-gray-800 text-gray-900 dark:text-white ${hasDuplicateRoutineId(input.routineId) || validationErrors[input.id]?.routineId
+                                ? 'border-red-500 dark:border-red-500 border-2 focus:ring-red-500 focus:border-red-500'
+                                : 'border-gray-300 dark:border-gray-600'
+                                }`}
+                            />
+                            {input.routineId && (
+                              <Button
+                                onClick={() => copyRoutineId(input.routineId)}
+                                variant="ghost"
+                                size="icon"
+                                className="shrink-0 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
+                              >
+                                {copiedId === input.routineId ? (
+                                  <Check className="h-4 w-4 text-green-600" />
+                                ) : (
+                                  <Copy className="h-4 w-4" />
+                                )}
+                              </Button>
                             )}
-                          </Button>
+                          </div>
+                          {hasDuplicateRoutineId(input.routineId) && (
+                            <p className="text-red-500 text-sm mt-1">
+                              Each routine ID must be unique.
+                            </p>
+                          )}
+
+                          {/* Saved Routine Selector */}
+                          {userSavedRoutines.length > 0 && (
+                            <div className="mt-2">
+                              {isMobile ? (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="text-xs flex items-center justify-between w-full bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/80 text-gray-700 dark:text-gray-300"
+                                  onClick={() => {
+                                    setSelectorSheetInputId(input.id);
+                                    setSelectorSheetOpen(true);
+                                  }}
+                                >
+                                  {(() => {
+                                    const matched = userSavedRoutines.find(r => r.id === input.routineId.trim());
+                                    return matched ? (
+                                      <span className="font-medium text-blue-600 dark:text-blue-400">
+                                        {matched.routineName || `Routine #${matched.routineNumber}`}
+                                      </span>
+                                    ) : (
+                                      <span className="text-muted-foreground">Select Saved Routine</span>
+                                    );
+                                  })()}
+                                  <ChevronDown className="h-3 w-3 opacity-50 ml-2" />
+                                </Button>
+                              ) : (
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className=" text-xs flex items-center justify-between bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/80 text-gray-700 dark:text-gray-300"
+                                    >
+                                      {(() => {
+                                        const matched = userSavedRoutines.find(r => r.id === input.routineId.trim());
+                                        return matched ? (
+                                          <span className="font-medium text-blue-600 dark:text-blue-400">
+                                            {matched.routineName || `Routine #${matched.routineNumber}`}
+                                          </span>
+                                        ) : (
+                                          <span className="text-muted-foreground">Select Saved Routine</span>
+                                        );
+                                      })()}
+                                      <ChevronDown className="h-3 w-3 opacity-50 ml-2" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="start" className="w-[200px] max-h-[240px] overflow-y-auto bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800">
+                                    <DropdownMenuLabel className="text-xs text-gray-500 dark:text-gray-400">My Saved Routines</DropdownMenuLabel>
+                                    <DropdownMenuSeparator className="bg-gray-100 dark:bg-gray-800" />
+                                    {userSavedRoutines.map((routine) => (
+                                      <DropdownMenuItem
+                                        key={routine.id}
+                                        onClick={() => updateRoutineInput(input.id, 'routineId', routine.id)}
+                                        className="flex flex-col items-start gap-0.5 cursor-pointer focus:bg-gray-100 dark:focus:bg-gray-800"
+                                      >
+                                        <span className={`text-sm font-medium ${input.routineId === routine.id ? 'text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-200'}`}>
+                                          {routine.routineName || `Routine #${routine.routineNumber}`}
+                                        </span>
+                                        <span className="text-[10px] text-gray-500 dark:text-gray-400">
+                                          {new Date(Number(routine.createdAt) * 1000).toLocaleString(undefined, {
+                                            dateStyle: 'medium',
+                                            timeStyle: 'short'
+                                          })}
+                                        </span>
+                                      </DropdownMenuItem>
+                                    ))}
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              )}
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor={`color-${input.id}`} className="text-gray-700 dark:text-gray-300">Color</Label>
+                          <div className="flex gap-2">
+                            <Input
+                              id={`color-${input.id}`}
+                              type="color"
+                              value={input.color}
+                              onChange={(e) => updateRoutineInput(input.id, 'color', e.target.value)}
+                              className="w-20 h-10 cursor-pointer"
+                            />
+                            <Input
+                              value={input.color}
+                              onChange={(e) => updateRoutineInput(input.id, 'color', e.target.value)}
+                              className="flex-1 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
+                              placeholder="#3B82F6"
+                            />
+                          </div>
+                        </div>
+
+                        {loadingRoutines[input.id] && (
+                          <div className="flex items-center gap-2 text-sm text-blue-600">
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                            Loading routine...
+                          </div>
                         )}
                       </div>
-                      {hasDuplicateRoutineId(input.routineId) && (
-                        <p className="text-red-500 text-sm mt-1">
-                          Each routine ID must be unique.
-                        </p>
-                      )}
+                    ))}
+                  </div>
+                </div>
 
-                      {/* Saved Routine Selector */}
-                      {userSavedRoutines.length > 0 && (
-                        <div className="mt-2">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className=" text-xs flex items-center justify-between bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/80 text-gray-700 dark:text-gray-300"
-                              >
-                                {(() => {
-                                  const matched = userSavedRoutines.find(r => r.id === input.routineId.trim());
-                                  return matched ? (
-                                    <span className="font-medium text-blue-600 dark:text-blue-400">
-                                      {matched.routineName || `Routine #${matched.routineNumber}`}
-                                    </span>
-                                  ) : (
-                                    <span className="text-muted-foreground">Select Saved Routine</span>
-                                  );
-                                })()}
-                                <ChevronDown className="h-3 w-3 opacity-50 ml-2" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="start" className="w-[200px] max-h-[240px] overflow-y-auto bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800">
-                              <DropdownMenuLabel className="text-xs text-gray-500 dark:text-gray-400">My Saved Routines</DropdownMenuLabel>
-                              <DropdownMenuSeparator className="bg-gray-100 dark:bg-gray-800" />
-                              {userSavedRoutines.map((routine) => (
-                                <DropdownMenuItem
-                                  key={routine.id}
-                                  onClick={() => updateRoutineInput(input.id, 'routineId', routine.id)}
-                                  className="flex flex-col items-start gap-0.5 cursor-pointer focus:bg-gray-100 dark:focus:bg-gray-800"
-                                >
-                                  <span className={`text-sm font-medium ${input.routineId === routine.id ? 'text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-200'}`}>
-                                    {routine.routineName || `Routine #${routine.routineNumber}`}
-                                  </span>
-                                  <span className="text-[10px] text-gray-500 dark:text-gray-400">
-                                    {new Date(Number(routine.createdAt) * 1000).toLocaleString(undefined, {
-                                      dateStyle: 'medium',
-                                      timeStyle: 'short'
-                                    })}
-                                  </span>
-                                </DropdownMenuItem>
-                              ))}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                {isMobile && routineInputs.length > 1 && (
+                  <div className="flex justify-center gap-2 mt-2 mb-2">
+                    {routineInputs.map((_, idx) => (
+                      <div
+                        key={idx}
+                        className={`h-2 rounded-full transition-all duration-300 ${idx === currentFriendIndex ? 'w-4 bg-blue-600' : 'w-2 bg-gray-300 dark:bg-gray-600'}`}
+                      />
+                    ))}
+                  </div>
+                )}
+
+                <div className="flex gap-2 mt-4 justify-center">
+
+
+                  <Button
+                    onClick={addRoutineInput}
+                    variant="outline"
+                    size="sm"
+                    className="border-gray-300 dark:border-blue-700 dark:bg-blue-600 text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-blue-800"
+                    disabled={routineInputs.length >= 10}
+                  >
+                    <Plus className="h-4 w-4 shrink-0" />
+                    <span>Add Another Friend</span>
+                  </Button>
+
+                  <Button
+                    onClick={mergeRoutines}
+                    size="sm"
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
+                        <span>Merging...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Eye className="h-4 w-4 shrink-0" />
+                        <span>Merge & View</span>
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            {/* Merged Routine Display - Now below */}
+            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-xl rounded-xl py-6 [overflow-x:clip] w-full min-w-0">
+              <div className="px-3 sm:px-6 pb-1.5">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h3 className="leading-none font-semibold text-gray-900 dark:text-white">Merged Routine</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1.5">
+                      Merged view of all homies' schedules
+                    </p>
+                  </div>
+                  {mergedCourses.length > 0 && (
+                    <div className="flex gap-2">
+                      <button
+                        onClick={saveMergedRoutine}
+                        disabled={savingRoutine || !session}
+                        className={`bg-green-600 hover:bg-green-700 disabled:bg-gray-400 dark:disabled:bg-gray-600 rounded-lg flex items-center gap-2 transition-colors text-white ${isMobile ? 'p-2' : 'px-4 py-2'}`}
+                        title="Save to Cloud"
+                      >
+                        {savingRoutine ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Save className="w-4 h-4" />
+                        )}
+                        {!isMobile && (savingRoutine ? 'Saving...' : 'Save to Cloud')}
+                      </button>
+                      <button
+                        onClick={exportAsImage}
+                        className={`bg-blue-600 hover:bg-blue-700 rounded-lg flex items-center gap-2 transition-colors text-white ${isMobile ? 'p-2' : 'px-4 py-2'}`}
+                        title="Save as PNG"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                        {!isMobile && 'Save as PNG'}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="px-0.5 pb-3 sm:px-6 sm:pb-6 pt-4">
+                {/* The Routine Gets Loaded Here*/}
+                {/* Saihan: why was this so hard to find :| */}
+                {mergedCourses.length > 0 ? (
+                  <>
+                    {isMobile ? (
+                      <>
+                        <MobileMergedRoutineView
+                          courses={mergedCourses}
+                          friends={routineInputs.filter(r => r.routineId && r.friendName)}
+                        />
+                        {/* Hidden Desktop Table For Export */}
+                        <div
+                          style={{
+                            position: 'fixed',
+                            left: 0,
+                            top: 0,
+                            width: '1800px',
+                            opacity: 0,
+                            pointerEvents: 'none',
+                            zIndex: -1,
+                            overflow: 'visible',
+                          }}
+                          aria-hidden="true"
+                        >
+                          <div ref={exportRef}>
+                            <MergedRoutineGrid
+                              courses={mergedCourses}
+                              friends={routineInputs.filter(r => r.routineId && r.friendName)}
+                            />
+                          </div>
                         </div>
-                      )}
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor={`color-${input.id}`} className="text-gray-700 dark:text-gray-300">Color</Label>
-                      <div className="flex gap-2">
-                        <Input
-                          id={`color-${input.id}`}
-                          type="color"
-                          value={input.color}
-                          onChange={(e) => updateRoutineInput(input.id, 'color', e.target.value)}
-                          className="w-20 h-10 cursor-pointer"
+                      </>
+                    ) : (
+                      <div ref={mergedRoutineRef} className="w-full min-w-0 overflow-x-auto">
+                        <MergedRoutineGrid
+                          courses={mergedCourses}
+                          friends={routineInputs.filter(r => r.routineId && r.friendName)}
                         />
-                        <Input
-                          value={input.color}
-                          onChange={(e) => updateRoutineInput(input.id, 'color', e.target.value)}
-                          className="flex-1 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
-                          placeholder="#3B82F6"
-                        />
-                      </div>
-                    </div>
-
-                    {loadingRoutines[input.id] && (
-                      <div className="flex items-center gap-2 text-sm text-blue-600">
-                        <Loader2 className="h-3 w-3 animate-spin" />
-                        Loading routine...
                       </div>
                     )}
-                  </div>
-                ))}
-              </div>
-
-              <div className="flex gap-2 mt-4 justify-center">
-
-
-                <Button
-                  onClick={addRoutineInput}
-                  variant="outline"
-                  size="sm"
-                  className="border-gray-300 dark:border-blue-700 dark:bg-blue-600 text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-blue-800"
-                  disabled={routineInputs.length >= 10}
-                >
-                  <Plus className="h-4 w-4 shrink-0" />
-                  <span>Add Another Friend</span>
-                </Button>
-
-                <Button
-                  onClick={mergeRoutines}
-                  size="sm"
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <>
-                      <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
-                      <span>Merging...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Eye className="h-4 w-4 shrink-0" />
-                      <span>Merge & View</span>
-                    </>
-                  )}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Merged Routine Display - Now below */}
-          <Card className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-xl">
-            <CardHeader>
-              <div className="flex justify-between items-center">
-                <div>
-                  <CardTitle className="text-gray-900 dark:text-white">Merged Routine</CardTitle>
-                  <CardDescription className="text-gray-600 dark:text-gray-400">
-                    Combined view of all friends' schedules
-                  </CardDescription>
-                </div>
-                {mergedCourses.length > 0 && (
-                  <div className="flex gap-2">
-                    <button
-                      onClick={saveMergedRoutine}
-                      disabled={savingRoutine || !session}
-                      className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 dark:disabled:bg-gray-600 rounded-lg flex items-center gap-2 transition-colors text-white"
-                    >
-                      {savingRoutine ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <Save className="w-4 h-4" />
-                      )}
-                      {savingRoutine ? 'Saving...' : 'Save to Cloud'}
-                    </button>
-                    <button
-                      onClick={exportAsImage}
-                      className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg flex items-center gap-2 transition-colors text-white"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                      </svg>
-                      Save as PNG
-                    </button>
+                  </>
+                ) : (
+                  <div className="text-center py-16">
+                    <Users className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                    <p className="text-gray-500 dark:text-gray-400">
+                      Add routine IDs and click "Merge & View" to see the combined schedule
+                    </p>
                   </div>
                 )}
               </div>
-            </CardHeader>
-            <CardContent>
-              {/* The Routine Gets Loaded Here*/}
-              {/* Saihan: why was this so hard to find :| */}
-              {mergedCourses.length > 0 ? (
-                <div ref={mergedRoutineRef}>
-                  <MergedRoutineGrid
-                    courses={mergedCourses}
-                    friends={routineInputs.filter(r => r.routineId && r.friendName)}
-                  />
-                </div>
-              ) : (
-                <div className="text-center py-16">
-                  <Users className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                  <p className="text-gray-500 dark:text-gray-400">
-                    Add routine IDs and click "Merge & View" to see the combined schedule
-                  </p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
+
+        {/* Mobile Routine Selector Sheet */}
+        <RoutineSelectorSheet
+          isOpen={selectorSheetOpen}
+          onClose={() => {
+            setSelectorSheetOpen(false);
+            setSelectorSheetInputId(null);
+          }}
+          routines={userSavedRoutines}
+          selectedRoutineId={selectorSheetInputId ? routineInputs.find(r => r.id === selectorSheetInputId)?.routineId?.trim() : null}
+          onSelect={(routineId) => {
+            if (selectorSheetInputId) {
+              updateRoutineInput(selectorSheetInputId, 'routineId', routineId);
+            }
+          }}
+        />
       </div>
     </div>
   );
@@ -724,8 +845,8 @@ const MergedRoutineGrid = ({ courses, friends }) => {
   };
 
   return (
-    <div className="w-full">
-      <div className="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+    <div className="w-full min-w-0 overflow-hidden">
+      <div className="bg-gray-50 dark:bg-gray-900 p-2 sm:p-4 rounded-lg border border-gray-200 dark:border-gray-700 w-full overflow-hidden">
         {/* Friend Legend */}
         <div className="mb-4 flex flex-wrap gap-3">
           {friends.map(friend => (
@@ -739,11 +860,11 @@ const MergedRoutineGrid = ({ courses, friends }) => {
           ))}
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse border border-gray-300 dark:border-gray-700">
+        <div className="overflow-x-auto max-w-full w-full">
+          <table className="w-full border-collapse border border-gray-300 dark:border-gray-700 min-w-[800px]">
             <thead>
               <tr className="border-b border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-800">
-                <th className="text-left py-4 px-4 text-sm font-medium text-gray-600 dark:text-gray-400 w-36 border-r border-gray-300 dark:border-gray-700">Time/Day</th>
+                <th className="text-left py-4 px-4 text-sm font-medium text-gray-600 dark:text-gray-400 w-36 border-r border-gray-300 dark:border-gray-700 sticky left-0 bg-gray-100 dark:bg-gray-800 z-10">Time/Day</th>
                 {days.map(day => (
                   <th key={day} className="text-center py-4 px-3 text-sm font-medium text-gray-600 dark:text-gray-400 border-r border-gray-300 dark:border-gray-700 last:border-r-0">
                     {day}
@@ -756,7 +877,7 @@ const MergedRoutineGrid = ({ courses, friends }) => {
                 const matchSlot = REGULAR_TIMINGS[index];
                 return (
                   <tr key={timeSlot} className="border-b border-gray-300 dark:border-gray-700">
-                    <td className="py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400 whitespace-nowrap border-r border-gray-300 dark:border-gray-700">
+                    <td className="py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400 whitespace-nowrap border-r border-gray-300 dark:border-gray-700 sticky left-0 bg-white dark:bg-gray-900 z-10">
                       {timeSlot}
                     </td>
                     {days.map(day => {

@@ -17,9 +17,9 @@ const CourseSelector = ({ label, courses = [], value, onChange, placeholder }) =
   const filterCourses = (searchTerm) => {
     if (!courses || courses.length === 0) return [];
     if (!searchTerm) return courses.slice(0, 50);
-    
+
     const search = searchTerm.toLowerCase();
-    return courses.filter(course => 
+    return courses.filter(course =>
       course.courseCode?.toLowerCase().includes(search) ||
       course.sectionName?.toLowerCase().includes(search) ||
       formatCourse(course).toLowerCase().includes(search)
@@ -62,10 +62,10 @@ const CourseSelector = ({ label, courses = [], value, onChange, placeholder }) =
           )}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 text-gray-500 dark:text-gray-400" />
         </div>
-        
+
         {open && (
-          <div className="absolute z-[200] mt-2 w-full rounded-lg border border-gray-200 dark:border-blue-700/50 bg-white dark:bg-[#0f172a] shadow-xl" 
-               style={{ maxHeight: '300px', overflow: 'hidden' }}>
+          <div className="absolute z-[200] mt-2 w-full rounded-lg border border-gray-200 dark:border-blue-700/50 bg-white dark:bg-[#0f172a] shadow-xl"
+            style={{ maxHeight: '320px', overflow: 'hidden' }}>
             <div className="p-2 border-b border-gray-200 dark:border-blue-800/50">
               <Input
                 placeholder="Search courses..."
@@ -76,7 +76,7 @@ const CourseSelector = ({ label, courses = [], value, onChange, placeholder }) =
                 autoFocus
               />
             </div>
-            <div className="max-h-[240px] overflow-y-auto">
+            <div className="max-h-[260px] overflow-y-auto">
               {filteredCourses.length === 0 ? (
                 <div className="py-6 text-center text-sm text-gray-500 dark:text-blue-300/70">No course found.</div>
               ) : (
@@ -85,8 +85,8 @@ const CourseSelector = ({ label, courses = [], value, onChange, placeholder }) =
                     key={course.sectionId}
                     className={cn(
                       "flex items-center px-3 py-2.5 cursor-pointer transition-colors text-gray-900 dark:text-white",
-                      value === course.sectionId?.toString() 
-                        ? "bg-blue-100 dark:bg-blue-800/40" 
+                      value === course.sectionId?.toString()
+                        ? "bg-blue-100 dark:bg-blue-800/40"
                         : "hover:bg-gray-100 dark:hover:bg-[#1e3a5f]"
                     )}
                     onClick={() => {

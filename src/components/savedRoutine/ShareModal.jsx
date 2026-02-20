@@ -2,18 +2,20 @@ import React, { useState } from 'react';
 import { Share2, X, Link, Copy, Check } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { copyToClipboard } from '@/lib/utils';
+
 const ShareModal = ({ routineId, type = 'routine', onClose }) => {
     const [linkCopied, setLinkCopied] = useState(false);
-    const shareUrl = `${window.location.origin}/${type}/${routineId}`;
+    const shareUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/${type}/${routineId}`;
     const shareText = `Check out my routine on BRACU O.R.A.C.L.E!`;
 
     const copyLink = async () => {
-        try {
-            await navigator.clipboard.writeText(shareUrl);
+        const success = await copyToClipboard(shareUrl);
+        if (success) {
             setLinkCopied(true);
             setTimeout(() => setLinkCopied(false), 3000);
             toast.success('Link copied to clipboard!');
-        } catch (err) {
+        } else {
             toast.error('Failed to copy link');
         }
     };

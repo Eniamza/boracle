@@ -9,6 +9,8 @@ import SwapCard from '@/components/course-swap/SwapCard';
 import SwapFilter from '@/components/course-swap/SwapFilter';
 import { toast } from 'sonner';
 import globalInfo from '@/constants/globalInfo';
+import { useIsMobile } from '@/hooks/use-mobile';
+import CourseBottomSheet from '@/components/ui/CourseBottomSheet';
 
 const BACKUP_INDEX_URL = 'https://connect-cdn.itzmrz.xyz/connect_backup.json';
 const CURRENT_COURSES_URL = 'https://usis-cdn.eniamza.com/connect.json';
@@ -24,6 +26,8 @@ const CourseSwapPage = () => {
   const [selectedFilters, setSelectedFilters] = useState([]);
   const [showMySwapsOnly, setShowMySwapsOnly] = useState(false);
   const [facultyMap, setFacultyMap] = useState({});
+  const isMobile = useIsMobile();
+  const [bottomSheetCourse, setBottomSheetCourse] = useState(null);
 
   // Current semester from global config
   const currentSemester = globalInfo.semester;
@@ -313,7 +317,7 @@ const CourseSwapPage = () => {
 
       if (response.ok) {
         toast.success('Swap deleted successfully');
-        fetchSwaps();
+        setSwaps(prev => prev.filter(s => s.swapId !== swapId));
       } else {
         toast.error('Failed to delete swap');
       }
@@ -331,7 +335,7 @@ const CourseSwapPage = () => {
 
       if (response.ok) {
         toast.success('Swap marked as complete');
-        fetchSwaps();
+        setSwaps(prev => prev.map(s => s.swapId === swapId ? { ...s, isDone: true } : s));
       } else {
         toast.error('Failed to mark swap as complete');
       }
@@ -344,14 +348,8 @@ const CourseSwapPage = () => {
   return (
     <div className="min-h-screen">
       <div className="container mx-auto px-4 py-8">
-        <div className="flex flex-col gap-4 mb-8">
-          <div>
-            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">
-              Swap Arena
-            </h1>
-          </div>
-
-          <div className="flex flex-wrap gap-3 items-center">
+        <div className="flex items-center justify-between mb-8 gap-3">
+          <div className="flex items-center">
             {session?.user?.email && (
               <label className="flex items-center gap-2 cursor-pointer bg-blue-50 dark:bg-gray-800 border border-blue-200 dark:border-gray-700 px-3 py-2 rounded-lg">
                 <span className="text-xs md:text-sm font-medium text-blue-700 dark:text-gray-300 whitespace-nowrap">My Swaps</span>
@@ -371,16 +369,21 @@ const CourseSwapPage = () => {
                 </button>
               </label>
             )}
+          </div>
+
+          <div className="flex items-center gap-2 md:gap-3">
             {swaps.length > 0 && (
               <SwapFilter
                 courses={allAvailableCourses}
                 swaps={swaps}
                 onFilterChange={handleFilterChange}
+                isMobile={isMobile}
               />
             )}
             <CreateSwapModal
               courses={currentCourses}
               onSwapCreated={fetchSwaps}
+              isMobile={isMobile}
             />
           </div>
         </div>
@@ -421,11 +424,19 @@ const CourseSwapPage = () => {
                 courses={getCoursesForSwap(swap)}
                 onDelete={handleDeleteSwap}
                 onMarkComplete={handleMarkComplete}
+                onCourseClick={(course) => isMobile && setBottomSheetCourse(course)}
+                isMobile={isMobile}
               />
             ))}
           </div>
         )}
       </div>
+      <CourseBottomSheet
+        course={bottomSheetCourse}
+        courseTitle={bottomSheetCourse ? `${bottomSheetCourse.courseCode}-${bottomSheetCourse.sectionName}` : ''}
+        extraFields={bottomSheetCourse ? [{ label: 'Faculty', value: bottomSheetCourse.faculties || 'TBA' }] : []}
+        onClose={() => setBottomSheetCourse(null)}
+      />
     </div>
   );
 };

@@ -3,18 +3,23 @@ import React, { useState, useRef } from 'react';
 import { X } from 'lucide-react';
 import CourseHoverTooltip from '@/components/ui/CourseHoverTooltip';
 import { getRoutineTimings, REGULAR_TIMINGS } from '@/constants/routineTimings';
+import { useIsMobile } from '@/hooks/use-mobile';
+import MobileRoutineView from '@/components/routine/MobileRoutineView';
 
 const RoutineTableGrid = ({
   selectedCourses = [],
   onRemoveCourse = null,
   displayToast = null,
   showRemoveButtons = true,
-  className = ""
+  className = "",
+  forceDesktop = false,
+  mobileAction,
 }) => {
   const routineRef = useRef(null);
   const [hoveredCourse, setHoveredCourse] = useState(null);
   const [hoveredCourseTitle, setHoveredCourseTitle] = useState(null);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0, showLeft: false });
+  const isMobile = useIsMobile();
 
 
 
@@ -77,6 +82,30 @@ const RoutineTableGrid = ({
     return courses.length > 1;
   };
 
+
+  // Prevents flashing desktop view on mobile while measuring
+  if (isMobile === undefined) {
+    return null;
+  }
+
+  // Mobile: render day-view card layout
+  if (isMobile && !forceDesktop) {
+    return (
+      <div className={`w-full ${className}`}>
+        <MobileRoutineView
+          selectedCourses={selectedCourses}
+          onRemoveCourse={onRemoveCourse}
+          showRemoveButtons={showRemoveButtons}
+          mobileAction={mobileAction}
+        />
+        {selectedCourses.length === 0 && (
+          <div className="text-center py-12 text-gray-500 bg-white dark:bg-gray-900 rounded-lg">
+            No courses selected. Add courses from the list to see them in your routine.
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className={`w-full ${className}`}>

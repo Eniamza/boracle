@@ -1,5 +1,5 @@
-'use client';
 import React, { useEffect, useState, useRef, useLayoutEffect } from 'react';
+import { getAdjustedTime } from '@/constants/routineTimings';
 
 /**
  * Reusable course hover tooltip component.
@@ -180,7 +180,7 @@ const CourseHoverTooltip = ({ course, position, courseTitle, extraFields = [] })
                                 {course.sectionSchedule.classSchedules.map((sched, idx) => (
                                     <div key={`cls-${idx}`} className="flex justify-between text-xs">
                                         <span className="font-bold text-gray-900 dark:text-gray-100 w-16">{formatDay(sched.day)}</span>
-                                        <span className="font-mono font-medium text-gray-900 dark:text-gray-200 text-right flex-1">{formatTime(sched.startTime)} - {formatTime(sched.endTime)}</span>
+                                        <span className="font-mono font-medium text-gray-900 dark:text-gray-200 text-right flex-1">{getAdjustedTime(formatTime(sched.startTime))} - {getAdjustedTime(formatTime(sched.endTime))}</span>
                                     </div>
                                 ))}
                             </div>
@@ -200,7 +200,7 @@ const CourseHoverTooltip = ({ course, position, courseTitle, extraFields = [] })
                                 {course.labSchedules.map((sched, idx) => (
                                     <div key={`lab-${idx}`} className="flex justify-between text-xs">
                                         <span className="font-bold text-gray-900 dark:text-gray-100 w-16">{formatDay(sched.day)}</span>
-                                        <span className="font-mono font-medium text-gray-900 dark:text-gray-200 text-right flex-1">{formatTime(sched.startTime)} - {formatTime(sched.endTime)}</span>
+                                        <span className="font-mono font-medium text-gray-900 dark:text-gray-200 text-right flex-1">{getAdjustedTime(formatTime(sched.startTime))} - {getAdjustedTime(formatTime(sched.endTime))}</span>
                                     </div>
                                 ))}
                             </div>
