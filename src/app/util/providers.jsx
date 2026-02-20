@@ -20,7 +20,7 @@ export function Providers({ children }) {
       >
         <SidebarProvider defaultOpen={true}>
           <AppSidebar />
-          <SidebarInset className="overflow-hidden">
+          <SidebarInset>
             <header className="sticky top-0 z-50 flex h-16 shrink-0 items-center gap-2 border-b border-gray-200 dark:border-gray-800 bg-white/95 dark:bg-gray-950/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 supports-[backdrop-filter]:dark:bg-gray-950/60 px-4">
               <SidebarTrigger className="-ml-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg p-2 transition-colors" />
               <Separator orientation="vertical" className="mr-2 h-4" />
@@ -31,7 +31,7 @@ export function Providers({ children }) {
                 <ModeToggle />
               </div>
             </header>
-            <main className="flex-1 p-6 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900 min-h-[calc(100vh-4rem)] min-w-0 overflow-x-hidden">
+            <main className="flex-1 p-6 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900 min-h-[calc(100vh-4rem)]">
               {children}
             </main>
           </SidebarInset>
