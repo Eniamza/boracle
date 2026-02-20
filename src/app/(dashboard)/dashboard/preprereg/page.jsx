@@ -43,12 +43,17 @@ const PreRegistrationPage = () => {
   const [bottomSheetCourse, setBottomSheetCourse] = useState(null);
   const [showSelectedDrawer, setShowSelectedDrawer] = useState(false);
   const isMobile = useIsMobile();
+  const [mounted, setMounted] = useState(false);
   const observerRef = useRef();
   const lastCourseRef = useRef();
   const routineRef = useRef(null);
   const facultyDropdownRef = useRef(null);
   const facultyListRef = useRef(null);
   const filterDropdownRef = useRef(null);
+
+  useEffect(() => {
+    requestAnimationFrame(() => setMounted(true));
+  }, []);
 
   // Helper to get faculty details for a course
   const getFacultyDetails = useCallback((faculties) => {
@@ -1170,7 +1175,7 @@ const PreRegistrationPage = () => {
       {/* Floating Routine Button */}
       <button
         onClick={() => setShowRoutineModal(true)}
-        className={`fixed bottom-6 z-40 flex items-center gap-3 px-5 py-3 bg-blue-600 hover:bg-blue-700 rounded-full shadow-lg transition-all hover:scale-105 ${isMobile ? 'left-1/2 -translate-x-1/2' : 'right-6'}`}
+        className="fixed bottom-6 z-40 flex items-center gap-3 px-5 py-3 bg-blue-600 hover:bg-blue-700 rounded-full shadow-lg transition-all hover:scale-105 left-1/2 -translate-x-1/2 md:left-auto md:right-6 md:translate-x-0"
       >
         <div className="relative">
           <Calendar className="w-5 h-5" />
