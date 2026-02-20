@@ -1,4 +1,3 @@
-import 'server-only';
 import { cache } from 'react';
 import { db, eq } from '@/lib/db';
 import { savedRoutine, savedMergedRoutine, userinfo } from '@/lib/db/schema';
