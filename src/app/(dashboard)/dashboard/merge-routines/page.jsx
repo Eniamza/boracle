@@ -21,6 +21,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { exportRoutineToPNG } from '@/components/routine/ExportRoutinePNG';
 import { useSession } from 'next-auth/react';
 import { useEffect } from 'react';
+import { useFaculty } from '@/app/contexts/FacultyContext';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -55,7 +56,7 @@ const MergeRoutinesPage = () => {
   const [loadingRoutines, setLoadingRoutines] = useState({});
   const [copiedId, setCopiedId] = useState(null);
   const [userSavedRoutines, setUserSavedRoutines] = useState([]);
-  const [facultyMap, setFacultyMap] = useState({});
+  const { getFacultyDetails } = useFaculty();
   const [validationErrors, setValidationErrors] = useState({});
   // State for the mobile routine selector sheet
   const [selectorSheetOpen, setSelectorSheetOpen] = useState(false);
@@ -82,27 +83,6 @@ const MergeRoutinesPage = () => {
       };
 
       fetchSavedRoutines();
-
-      // Fetch faculty data
-      fetch('/api/faculty/lookup')
-        .then(res => res.json())
-        .then(data => {
-          if (data.success) {
-            setFacultyMap(data.facultyMap);
-            // Re-enrich currently merged courses if any
-            setMergedCourses(prev => prev.map(course => {
-              const firstInitial = course.faculties?.split(',')[0]?.trim().toUpperCase();
-              const facultyInfo = data.facultyMap[firstInitial];
-              return {
-                ...course,
-                employeeName: facultyInfo?.facultyName || null,
-                employeeEmail: facultyInfo?.email || null,
-                imgUrl: facultyInfo?.imgUrl || null,
-              };
-            }));
-          }
-        })
-        .catch(err => console.error('Error fetching faculty data:', err));
     }
   }, [session]);
 
@@ -328,9 +308,9 @@ const MergeRoutinesPage = () => {
                   friendName: input.friendName,
                   friendColor: input.color,
                   originalRoutineId: trimmedRoutineId,
-                  employeeName: facultyMap[course.faculties?.split(',')[0]?.trim().toUpperCase()]?.facultyName || null,
-                  employeeEmail: facultyMap[course.faculties?.split(',')[0]?.trim().toUpperCase()]?.email || null,
-                  imgUrl: facultyMap[course.faculties?.split(',')[0]?.trim().toUpperCase()]?.imgUrl || null
+                  employeeName: getFacultyDetails(course.faculties).facultyName,
+                  employeeEmail: getFacultyDetails(course.faculties).facultyEmail,
+                  imgUrl: getFacultyDetails(course.faculties).imgUrl
                 };
               }
               return null;

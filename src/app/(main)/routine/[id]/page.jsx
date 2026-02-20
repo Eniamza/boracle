@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 
 import { useIsMobile } from '@/hooks/use-mobile';
 import RoutineTableGrid from '@/components/routine/RoutineTableGrid';
+import { useFaculty } from '@/app/contexts/FacultyContext';
 
 const SharedRoutinePage = () => {
     const { id } = useParams();
@@ -36,32 +37,7 @@ const SharedRoutinePage = () => {
         }
     }, [id]);
 
-    const [facultyMap, setFacultyMap] = useState({});
-
-    // Fetch faculty data if user is authenticated
-    useEffect(() => {
-        if (session?.user?.email) {
-            fetch('/api/faculty/lookup')
-                .then(res => res.json())
-                .then(data => {
-                    if (data.success) {
-                        setFacultyMap(data.facultyMap);
-                        // Re-enrich existing courses with faculty data
-                        setCourses(prev => prev.map(course => {
-                            const firstInitial = course.faculties?.split(',')[0]?.trim().toUpperCase();
-                            const facultyInfo = data.facultyMap[firstInitial];
-                            return {
-                                ...course,
-                                employeeName: facultyInfo?.facultyName || null,
-                                employeeEmail: facultyInfo?.email || null,
-                                imgUrl: facultyInfo?.imgUrl || null,
-                            };
-                        }));
-                    }
-                })
-                .catch(err => console.error('Error fetching faculty data:', err));
-        }
-    }, [session]);
+    const { getFacultyDetails } = useFaculty();
 
     const fetchRoutine = async () => {
         try {
@@ -96,16 +72,12 @@ const SharedRoutinePage = () => {
 
             const matchedCourses = allCourses
                 .filter(course => sectionIds.includes(course.sectionId))
-                .map(course => {
-                    const firstInitial = course.faculties?.split(',')[0]?.trim().toUpperCase();
-                    const facultyInfo = facultyMap[firstInitial];
-                    return {
-                        ...course,
-                        employeeName: facultyInfo?.facultyName || null,
-                        employeeEmail: facultyInfo?.email || null,
-                        imgUrl: facultyInfo?.imgUrl || null,
-                    };
-                });
+                .map(course => ({
+                    ...course,
+                    employeeName: getFacultyDetails(course.faculties).facultyName,
+                    employeeEmail: getFacultyDetails(course.faculties).facultyEmail,
+                    imgUrl: getFacultyDetails(course.faculties).imgUrl,
+                }));
 
             setCourses(matchedCourses);
         } catch (err) {

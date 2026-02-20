@@ -8,9 +8,7 @@ import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
 import MobileCourseCard from '@/components/ui/MobileCourseCard';
 import CourseBottomSheet from '@/components/ui/CourseBottomSheet';
-
-
-
+import { useFaculty } from '@/app/contexts/FacultyContext';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 
 const PreRegistrationPage = () => {
@@ -34,7 +32,7 @@ const PreRegistrationPage = () => {
   const [facultyDropdownOpen, setFacultyDropdownOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(0);
   const [displayCount, setDisplayCount] = useState(50);
-  const [facultyMap, setFacultyMap] = useState({});
+  const { getFacultyDetails } = useFaculty();
   const [hoveredFaculty, setHoveredFaculty] = useState(null);
   const [facultyTooltipPosition, setFacultyTooltipPosition] = useState({ x: 0, y: 0 });
   const [facultyImageError, setFacultyImageError] = useState(false);
@@ -55,23 +53,7 @@ const PreRegistrationPage = () => {
     requestAnimationFrame(() => setMounted(true));
   }, []);
 
-  // Helper to get faculty details for a course
-  const getFacultyDetails = useCallback((faculties) => {
-    if (!faculties) return { facultyName: null, facultyEmail: null, imgUrl: null };
 
-    // Get the first initial from the faculties string
-    const firstInitial = faculties.split(',')[0]?.trim().toUpperCase();
-    const facultyInfo = facultyMap[firstInitial];
-
-    if (facultyInfo) {
-      return {
-        facultyName: facultyInfo.facultyName,
-        facultyEmail: facultyInfo.email,
-        imgUrl: facultyInfo.imgUrl,
-      };
-    }
-    return { facultyName: null, facultyEmail: null, imgUrl: null };
-  }, [facultyMap]);
 
   // Enrich selected courses with faculty details
   const enrichedSelectedCourses = useMemo(() => {
@@ -133,15 +115,7 @@ const PreRegistrationPage = () => {
         setFilteredCourses(data);
         setLoading(false);
 
-        // Fetch all faculty data in the background (single query, non-blocking)
-        fetch('/api/faculty/lookup')
-          .then(res => res.json())
-          .then(facultyData => {
-            if (facultyData.success) {
-              setFacultyMap(facultyData.facultyMap);
-            }
-          })
-          .catch(err => console.error('Error fetching faculty data:', err));
+
       } catch (error) {
         console.error('Error fetching courses:', error);
         setLoading(false);

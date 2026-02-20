@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import globalInfo from '@/constants/globalInfo';
 import { useIsMobile } from '@/hooks/use-mobile';
 import CourseBottomSheet from '@/components/ui/CourseBottomSheet';
+import { useFaculty } from '@/app/contexts/FacultyContext';
 
 const BACKUP_INDEX_URL = 'https://connect-cdn.itzmrz.xyz/connect_backup.json';
 const CURRENT_COURSES_URL = 'https://usis-cdn.eniamza.com/connect.json';
@@ -25,7 +26,7 @@ const CourseSwapPage = () => {
   const [loading, setLoading] = useState(true);
   const [selectedFilters, setSelectedFilters] = useState([]);
   const [showMySwapsOnly, setShowMySwapsOnly] = useState(false);
-  const [facultyMap, setFacultyMap] = useState({});
+  const { enrichCoursesWithFaculty } = useFaculty();
   const isMobile = useIsMobile();
   const [bottomSheetCourse, setBottomSheetCourse] = useState(null);
 
@@ -52,45 +53,7 @@ const CourseSwapPage = () => {
     return normalizeSemester(currentSemester);
   }, [currentSemester]);
 
-  // Helper to get faculty details for a course
-  const getFacultyDetails = useCallback((faculties) => {
-    if (!faculties) return { facultyName: null, facultyEmail: null };
-    const firstInitial = faculties.split(',')[0]?.trim().toUpperCase();
-    const facultyInfo = facultyMap[firstInitial];
-    if (facultyInfo) {
-      return {
-        facultyName: facultyInfo.facultyName,
-        facultyEmail: facultyInfo.email,
-        imgUrl: facultyInfo.imgUrl,
-      };
-    }
-    return { facultyName: null, facultyEmail: null, imgUrl: null };
-  }, [facultyMap]);
 
-  // Enrich courses with faculty details
-  const enrichCoursesWithFaculty = useCallback((courses) => {
-    return courses.map(course => {
-      const { facultyName, facultyEmail } = getFacultyDetails(course.faculties);
-      return {
-        ...course,
-        employeeName: facultyName,
-        employeeEmail: facultyEmail,
-        imgUrl: getFacultyDetails(course.faculties).imgUrl,
-      };
-    });
-  }, [getFacultyDetails]);
-
-  // Fetch faculty data
-  useEffect(() => {
-    fetch('/api/faculty/lookup')
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          setFacultyMap(data.facultyMap);
-        }
-      })
-      .catch(err => console.error('Error fetching faculty data:', err));
-  }, []);
 
   // Fetch backup index
   useEffect(() => {

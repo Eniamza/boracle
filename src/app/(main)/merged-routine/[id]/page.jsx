@@ -10,6 +10,7 @@ import { copyToClipboard } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
 import MobileMergedRoutineView from '@/components/routine/MobileMergedRoutineView';
+import { useFaculty } from '@/app/contexts/FacultyContext';
 
 const SharedMergedRoutinePage = () => {
     const { id } = useParams();
@@ -46,36 +47,11 @@ const SharedMergedRoutinePage = () => {
 
     const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-    const [facultyMap, setFacultyMap] = useState({});
+    const { getFacultyDetails } = useFaculty();
 
     useEffect(() => {
         if (id) fetchRoutine();
     }, [id]);
-
-    // Fetch faculty data if user is authenticated
-    useEffect(() => {
-        if (session?.user?.email) {
-            fetch('/api/faculty/lookup')
-                .then(res => res.json())
-                .then(data => {
-                    if (data.success) {
-                        setFacultyMap(data.facultyMap);
-                        // Re-enrich existing courses with faculty data
-                        setCourses(prev => prev.map(course => {
-                            const firstInitial = course.faculties?.split(',')[0]?.trim().toUpperCase();
-                            const facultyInfo = data.facultyMap[firstInitial];
-                            return {
-                                ...course,
-                                employeeName: facultyInfo?.facultyName || null,
-                                employeeEmail: facultyInfo?.email || null,
-                                imgUrl: facultyInfo?.imgUrl || null,
-                            };
-                        }));
-                    }
-                })
-                .catch(err => console.error('Error fetching faculty data:', err));
-        }
-    }, [session]);
 
     // Time conversion utilities - matching the modal exactly
     const timeToMinutes = (timeStr) => {
@@ -169,16 +145,13 @@ const SharedMergedRoutinePage = () => {
                 .filter(course => allSectionIds.includes(course.sectionId))
                 .map(course => {
                     const friend = friendsData.find(f => f.sectionIds.includes(course.sectionId));
-                    // Enrich with faculty data if available
-                    const firstInitial = course.faculties?.split(',')[0]?.trim().toUpperCase();
-                    const facultyInfo = facultyMap[firstInitial];
                     return {
                         ...course,
                         friendName: friend?.friendName || 'Unknown',
                         friendColor: friend?.color || '#6B7280',
-                        employeeName: facultyInfo?.facultyName || null,
-                        employeeEmail: facultyInfo?.email || null,
-                        imgUrl: facultyInfo?.imgUrl || null,
+                        employeeName: getFacultyDetails(course.faculties).facultyName,
+                        employeeEmail: getFacultyDetails(course.faculties).facultyEmail,
+                        imgUrl: getFacultyDetails(course.faculties).imgUrl,
                     };
                 });
 

@@ -4,6 +4,7 @@ import { Calendar, Clock, Trash2, Eye, Download, RefreshCw, AlertCircle, X, User
 import CourseHoverTooltip from '@/components/ui/CourseHoverTooltip';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import { useFaculty } from '@/app/contexts/FacultyContext';
 import RoutineTableGrid from '@/components/routine/RoutineTableGrid';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -397,6 +398,7 @@ const MergedRoutineTableModal = ({ courses, friends, onClose, isOpen, isMobile }
   );
 };
 
+
 const SavedRoutinesPage = () => {
   const { data: session } = useSession();
   const router = useRouter();
@@ -422,7 +424,7 @@ const SavedRoutinesPage = () => {
   const [importing, setImporting] = useState(false);
   const [sharingRoutineId, setSharingRoutineId] = useState(null);
   const [sharingRoutineType, setSharingRoutineType] = useState('routine');
-  const [facultyMap, setFacultyMap] = useState({});
+  const { getFacultyDetails } = useFaculty();
 
   // Editing state
   const [editingRoutineId, setEditingRoutineId] = useState(null);
@@ -447,45 +449,6 @@ const SavedRoutinesPage = () => {
     '#8B5CF6', // Indigo
     '#0EA5E9', // Sky
   ];
-
-
-  // Fetch faculty data for tooltip enrichment
-  useEffect(() => {
-    if (session?.user?.email) {
-      fetch('/api/faculty/lookup')
-        .then(res => res.json())
-        .then(data => {
-          if (data.success) {
-            setFacultyMap(data.facultyMap);
-
-            // Re-enrich currently viewed routine courses if any
-            setRoutineCourses(prev => prev.map(course => {
-              const firstInitial = course.faculties?.split(',')[0]?.trim().toUpperCase();
-              const facultyInfo = data.facultyMap[firstInitial];
-              return {
-                ...course,
-                employeeName: facultyInfo?.facultyName || null,
-                employeeEmail: facultyInfo?.email || null,
-                imgUrl: facultyInfo?.imgUrl || null,
-              };
-            }));
-
-            // Re-enrich currently viewed merged routine courses if any
-            setMergedRoutineCourses(prev => prev.map(course => {
-              const firstInitial = course.faculties?.split(',')[0]?.trim().toUpperCase();
-              const facultyInfo = data.facultyMap[firstInitial];
-              return {
-                ...course,
-                employeeName: facultyInfo?.facultyName || null,
-                employeeEmail: facultyInfo?.email || null,
-                imgUrl: facultyInfo?.imgUrl || null,
-              };
-            }));
-          }
-        })
-        .catch(err => console.error('Error fetching faculty data:', err));
-    }
-  }, [session]);
 
   // Close floating options when clicking outside
   useEffect(() => {
@@ -773,16 +736,12 @@ const SavedRoutinesPage = () => {
         sectionIds.includes(course.sectionId)
       );
 
-      setRoutineCourses(matchedCourses.map(course => {
-        const firstInitial = course.faculties?.split(',')[0]?.trim().toUpperCase();
-        const facultyInfo = facultyMap[firstInitial];
-        return {
-          ...course,
-          employeeName: facultyInfo?.facultyName || null,
-          employeeEmail: facultyInfo?.email || null,
-          imgUrl: facultyInfo?.imgUrl || null,
-        };
-      }));
+      setRoutineCourses(matchedCourses.map(course => ({
+        ...course,
+        employeeName: getFacultyDetails(course.faculties).facultyName,
+        employeeEmail: getFacultyDetails(course.faculties).facultyEmail,
+        imgUrl: getFacultyDetails(course.faculties).imgUrl,
+      })));
 
       if (matchedCourses.length === 0) {
         toast.error('No matching courses found for this routine');
@@ -825,16 +784,13 @@ const SavedRoutinesPage = () => {
         .map(course => {
           // Find which friend this course belongs to
           const friend = friends.find(f => f.sectionIds.includes(course.sectionId));
-          // Enrich with faculty data if available
-          const firstInitial = course.faculties?.split(',')[0]?.trim().toUpperCase();
-          const facultyInfo = facultyMap[firstInitial];
           return {
             ...course,
             friendName: friend?.friendName || 'Unknown',
             friendColor: friend?.color || '#6B7280',
-            employeeName: facultyInfo?.facultyName || null,
-            employeeEmail: facultyInfo?.email || null,
-            imgUrl: facultyInfo?.imgUrl || null,
+            employeeName: getFacultyDetails(course.faculties).facultyName,
+            employeeEmail: getFacultyDetails(course.faculties).facultyEmail,
+            imgUrl: getFacultyDetails(course.faculties).imgUrl,
           };
         });
 

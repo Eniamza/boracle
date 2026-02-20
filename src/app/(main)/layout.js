@@ -7,7 +7,7 @@ import NavigationBar from "@/components/navbar/navigation-bar";
 import { SessionProvider } from "next-auth/react";
 import { ModeToggle } from "@/components/light-toggle";
 import { Description } from "@radix-ui/react-dialog";
-
+import { FacultyProvider } from "@/app/contexts/FacultyContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -39,18 +39,20 @@ export default function RootLayout({ children, pageProps = {} }) {
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <SessionProvider session={pageProps.session}>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="dark"
-            enableSystem
-            disableTransitionOnChange
-          >
-            <NavigationBar />
-            {children}
-           <div className="fixed bottom-4 right-4">
-            <ModeToggle />
-          </div>
-          </ThemeProvider>
+          <FacultyProvider>
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="dark"
+              enableSystem
+              disableTransitionOnChange
+            >
+              <NavigationBar />
+              {children}
+              <div className="fixed bottom-4 right-4">
+                <ModeToggle />
+              </div>
+            </ThemeProvider>
+          </FacultyProvider>
         </SessionProvider>
       </body>
     </html>
