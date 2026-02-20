@@ -30,10 +30,10 @@ export async function generateMetadata({ params }) {
 
     return {
         title,
-        description: `Click to view or import ${routine.ownerName}'s merged routine with ${uniqueCourseCount} course${uniqueCourseCount !== 1 ? 's' : ''} and ${friendsCount} friend${friendsCount !== 1 ? 's' : ''}`,
+        description: `Click to view or import ${routine.ownerName.charAt(0).toUpperCase() + routine.ownerName.slice(1).toLowerCase()}'s merged routine with ${uniqueCourseCount} course${uniqueCourseCount !== 1 ? 's' : ''} and ${friendsCount} friend${friendsCount !== 1 ? 's' : ''}`,
         openGraph: {
             title,
-            description: `Click to view or import ${routine.ownerName}'s merged routine with ${uniqueCourseCount} course${uniqueCourseCount !== 1 ? 's' : ''} and ${friendsCount} friend${friendsCount !== 1 ? 's' : ''}`,
+            description: `Click to view or import ${routine.ownerName.charAt(0).toUpperCase() + routine.ownerName.slice(1).toLowerCase()}'s merged routine with ${uniqueCourseCount} course${uniqueCourseCount !== 1 ? 's' : ''} and ${friendsCount} friend${friendsCount !== 1 ? 's' : ''}`,
             type: 'website',
         },
     };
