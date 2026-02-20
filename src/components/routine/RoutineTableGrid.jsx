@@ -83,6 +83,11 @@ const RoutineTableGrid = ({
   };
 
 
+  // Prevents flashing desktop view on mobile while measuring
+  if (isMobile === undefined) {
+    return null;
+  }
+
   // Mobile: render day-view card layout
   if (isMobile && !forceDesktop) {
     return (
@@ -94,7 +99,7 @@ const RoutineTableGrid = ({
           mobileAction={mobileAction}
         />
         {selectedCourses.length === 0 && (
-          <div className="text-center py-12 text-gray-500">
+          <div className="text-center py-12 text-gray-500 bg-white dark:bg-gray-900 rounded-lg">
             No courses selected. Add courses from the list to see them in your routine.
           </div>
         )}

@@ -78,9 +78,10 @@ const RoutineView = ({
     useEffect(() => {
         if (isOpen) {
             setShouldRender(true);
-            if (isModal && isMobile && mounted) {
+            if (isModal && isMobile) {
                 lockScroll();
-                requestAnimationFrame(() => setIsVisible(true));
+                const timer = setTimeout(() => setIsVisible(true), 20);
+                return () => clearTimeout(timer);
             }
         } else if (shouldRender) {
             // Animate out
@@ -97,7 +98,7 @@ const RoutineView = ({
                 onClose?.();
             }
         }
-    }, [isOpen, isModal, isMobile, mounted]);
+    }, [isOpen, isModal, isMobile, shouldRender]);
 
     const handleClose = () => {
         if (isMobile && isModal) {
@@ -108,6 +109,7 @@ const RoutineView = ({
                 onClose?.();
             }, 250);
         } else {
+            setShouldRender(false);
             onClose?.();
         }
     };
@@ -191,13 +193,13 @@ const RoutineView = ({
         <>
             {/* Backdrop — tap to close */}
             <div
-                className={`fixed inset-0 bg-black/40 backdrop-blur-sm z-[60] transition-opacity duration-250 ${isVisible ? 'opacity-100' : 'opacity-0'}`}
+                className={`fixed inset-0 bg-black/40 backdrop-blur-sm z-[60] transition-opacity duration-200 ${isVisible ? 'opacity-100' : 'opacity-0'}`}
                 onClick={handleClose}
             />
 
             {/* Bottom sheet — slides up, 80% height (20% gap on top) */}
             <div
-                className={`fixed bottom-0 left-0 right-0 z-[61] bg-white dark:bg-gray-900 rounded-t-2xl shadow-2xl flex flex-col transition-transform duration-250 ease-out ${isVisible ? 'translate-y-0' : 'translate-y-full'}`}
+                className={`fixed bottom-0 left-0 right-0 z-[61] bg-white dark:bg-gray-900 rounded-t-2xl shadow-2xl flex flex-col transform transition-transform duration-250 ease-out ${isVisible ? 'translate-y-0' : 'translate-y-full'}`}
                 style={{ height: '80vh', maxHeight: '80vh' }}
             >
                 {/* Drag handle */}
@@ -287,7 +289,7 @@ const RoutineView = ({
     }
 
     // Don't render modal until mounted (prevents desktop flash on mobile)
-    if (!mounted || !shouldRender) return null;
+    if (!mounted || !shouldRender || isMobile === undefined) return null;
 
     if (isMobile) {
         return MobileContent;
