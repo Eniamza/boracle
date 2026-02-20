@@ -432,7 +432,7 @@ const MergeRoutinesPage = () => {
               {/* Horizontal scrollable cards for friend inputs */}
               <div className="overflow-hidden">
                 <div
-                  className="flex gap-4 overflow-x-auto pb-2 hide-scrollbar snap-x snap-mandatory scroll-smooth"
+                  className="flex gap-4 overflow-x-auto pb-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] snap-x snap-mandatory scroll-smooth"
                   onScroll={(e) => {
                     if (isMobile) {
                       const container = e.target;

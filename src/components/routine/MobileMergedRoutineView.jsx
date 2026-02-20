@@ -161,7 +161,7 @@ const MobileMergedRoutineView = ({
             </div>
 
             {/* Day Tabs - sticky */}
-            <div className="flex overflow-x-auto gap-1.5 pb-3 pt-1 px-1 scrollbar-hide sticky top-0 z-10 bg-white dark:bg-gray-900">
+            <div className="flex overflow-x-auto gap-1.5 pb-3 pt-1 px-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] sticky top-0 z-10 bg-white dark:bg-gray-900">
                 {days.map((day, idx) => {
                     const isSelected = selectedDay === day;
                     const count = coursesPerDay[day];
