@@ -400,8 +400,8 @@ const MergeRoutinesPage = () => {
   };
 
   return (
-    <div className="min-h-screen">
-      <div className="max-w-7xl mx-auto px-1.5 sm:px-4 py-4 sm:py-8">
+    <div className="w-full flex-1">
+      <div className="max-w-7xl mx-auto px-1.5 sm:px-4 py-4 sm:py-8 w-full min-w-0">
         {/* <div className="mb-8 px-2 sm:px-0">
           <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
             <Users className="h-8 w-8 sm:h-10 sm:w-10" />
@@ -412,16 +412,16 @@ const MergeRoutinesPage = () => {
           </p>
         </div> */}
 
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-6 w-full min-w-0">
           {/* Input Section - Now on top */}
-          <Card className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-xl overflow-hidden">
+          <Card className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-xl overflow-hidden w-full min-w-0">
             <CardHeader className="px-3 py-4 sm:px-6 sm:py-6">
               <CardTitle className="text-gray-900 dark:text-white">Add Routines</CardTitle>
               <CardDescription className="text-gray-600 dark:text-gray-400">
                 Enter routine IDs and friend names to merge their schedules
               </CardDescription>
             </CardHeader>
-            <CardContent className="px-1.5 pb-4 sm:px-6 sm:pb-6">
+            <CardContent className="px-1.5 pb-4 sm:px-6 sm:pb-6 overflow-hidden">
               <Alert className="mb-4 mx-1.5 sm:mx-0 bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800">
                 <AlertCircle className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                 <AlertDescription className="text-gray-700 dark:text-gray-300">
@@ -430,9 +430,9 @@ const MergeRoutinesPage = () => {
               </Alert>
 
               {/* Horizontal scrollable cards for friend inputs */}
-              <div className="overflow-hidden">
+              <div className="overflow-hidden w-full min-w-0 max-w-full">
                 <div
-                  className="flex gap-4 overflow-x-auto pb-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] snap-x snap-mandatory scroll-smooth"
+                  className="flex gap-4 overflow-x-auto pb-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] snap-x snap-mandatory scroll-smooth w-full min-w-0 max-w-full"
                   onScroll={(e) => {
                     if (isMobile) {
                       const container = e.target;
@@ -675,7 +675,7 @@ const MergeRoutinesPage = () => {
           </Card>
 
           {/* Merged Routine Display - Now below */}
-          <Card className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-xl overflow-hidden">
+          <Card className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-xl overflow-hidden w-full min-w-0">
             <CardHeader className="px-3 py-4 sm:px-6 sm:py-6">
               <div className="flex justify-between items-center">
                 <div>
@@ -747,7 +747,7 @@ const MergeRoutinesPage = () => {
                       </div>
                     </>
                   ) : (
-                    <div ref={mergedRoutineRef}>
+                    <div ref={mergedRoutineRef} className="w-full min-w-0 overflow-x-auto">
                       <MergedRoutineGrid
                         courses={mergedCourses}
                         friends={routineInputs.filter(r => r.routineId && r.friendName)}
@@ -844,8 +844,8 @@ const MergedRoutineGrid = ({ courses, friends }) => {
   };
 
   return (
-    <div className="w-full">
-      <div className="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+    <div className="w-full min-w-0 overflow-hidden">
+      <div className="bg-gray-50 dark:bg-gray-900 p-2 sm:p-4 rounded-lg border border-gray-200 dark:border-gray-700 w-full overflow-hidden">
         {/* Friend Legend */}
         <div className="mb-4 flex flex-wrap gap-3">
           {friends.map(friend => (
@@ -859,11 +859,11 @@ const MergedRoutineGrid = ({ courses, friends }) => {
           ))}
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse border border-gray-300 dark:border-gray-700">
+        <div className="overflow-x-auto max-w-full w-full">
+          <table className="w-full border-collapse border border-gray-300 dark:border-gray-700 min-w-[800px]">
             <thead>
               <tr className="border-b border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-800">
-                <th className="text-left py-4 px-4 text-sm font-medium text-gray-600 dark:text-gray-400 w-36 border-r border-gray-300 dark:border-gray-700">Time/Day</th>
+                <th className="text-left py-4 px-4 text-sm font-medium text-gray-600 dark:text-gray-400 w-36 border-r border-gray-300 dark:border-gray-700 sticky left-0 bg-gray-100 dark:bg-gray-800 z-10">Time/Day</th>
                 {days.map(day => (
                   <th key={day} className="text-center py-4 px-3 text-sm font-medium text-gray-600 dark:text-gray-400 border-r border-gray-300 dark:border-gray-700 last:border-r-0">
                     {day}
@@ -876,7 +876,7 @@ const MergedRoutineGrid = ({ courses, friends }) => {
                 const matchSlot = REGULAR_TIMINGS[index];
                 return (
                   <tr key={timeSlot} className="border-b border-gray-300 dark:border-gray-700">
-                    <td className="py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400 whitespace-nowrap border-r border-gray-300 dark:border-gray-700">
+                    <td className="py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400 whitespace-nowrap border-r border-gray-300 dark:border-gray-700 sticky left-0 bg-white dark:bg-gray-900 z-10">
                       {timeSlot}
                     </td>
                     {days.map(day => {
