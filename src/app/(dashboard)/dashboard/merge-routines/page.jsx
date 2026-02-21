@@ -1,5 +1,5 @@
 'use client';
-
+import Link from 'next/link';
 
 import React, { useState, useRef, useMemo } from 'react';
 import { Input } from "@/components/ui/input";
@@ -402,10 +402,10 @@ const MergeRoutinesPage = () => {
                 </p>
               </div>
               <div className="px-1.5 pb-4 sm:px-6 sm:pb-6 pt-4">
-                <Alert className="mb-4 mx-1.5 sm:mx-0 bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800">
+                <Alert className="mb-4 bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800">
                   <AlertCircle className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                   <AlertDescription className="text-gray-700 dark:text-gray-300">
-                    Get routine IDs from your saved routines or ask friends to share theirs
+                    Get routine IDs from your saved routines or ask friends to share theirs. Routine IDs can be found in your <Link href="/dashboard/savedRoutines" className="text-blue-600 dark:text-blue-400 hover:underline font-medium">Saved Routines</Link>
                   </AlertDescription>
                 </Alert>
 
