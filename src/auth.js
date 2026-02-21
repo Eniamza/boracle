@@ -82,7 +82,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
   session: {
     strategy: "jwt",
-    maxAge: 1 * 24 * 60 * 60, // 1 days
+    maxAge: 3 * 24 * 60 * 60, // 1 days
   },
   secret: process.env.AUTH_SECRET,
   debug: process.env.NODE_ENV === "development"
