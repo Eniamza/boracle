@@ -9,4 +9,5 @@ export const postStateEnum = pgEnum('post_state', ['pending', 'published', 'reje
 
 export const decisionEnum = pgEnum('decision', ['pending', 'published', 'rejected']);
 
-export const modDecisionEnum = pgEnum('moddecision', ['pending', 'published', 'rejected']);
+export const modDecisionEnum = pgEnum('moddecision_state', ['APPROVED', 'REJECTED', 'PENDING']);
+export const swapRequestStatusEnum = pgEnum('swaprequest_status', ['PENDING', 'ACCEPTED', 'REJECTED']);

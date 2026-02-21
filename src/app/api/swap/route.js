@@ -10,7 +10,7 @@ export async function GET(request) {
     // Get authenticated user session
     const session = await auth();
     console.log("Routine List API accessed by:", session?.user?.email);
-    
+
     if (!session || !session.user?.email) {
       return NextResponse.json(
         { error: "Unauthorized" },
@@ -22,7 +22,8 @@ export async function GET(request) {
     const swapRequest = await db
       .select()
       .from(courseSwap);
-    
+
+    const currentUserEmail = session.user.email;
     let swaps = [];
 
     for (const element of swapRequest) {
@@ -30,12 +31,21 @@ export async function GET(request) {
         .select({ askSectionId: askSectionId.askSectionId })
         .from(askSectionId)
         .where(eq(askSectionId.swapId, element.swapId));
-      
-      element.askingSections = askingSections.map(item => item.askSectionId);
-      swaps.push(element);
+
+      const isOwner = currentUserEmail === element.uEmail;
+
+      swaps.push({
+        swapId: element.swapId,
+        isDone: element.isDone,
+        getSectionId: element.getSectionId,
+        createdAt: element.createdAt,
+        semester: element.semester,
+        isOwner: isOwner,
+        askingSections: askingSections.map(item => item.askSectionId)
+      });
     }
 
-    console.log("Swap Requests:", swaps);
+    // console.log("Swap Requests:", swaps);
 
     return NextResponse.json(swaps, { status: 200 });
   } catch (error) {
@@ -49,14 +59,14 @@ export async function POST(request) {
     // Get authenticated user session
     const session = await auth();
     console.log("Swap List API accessed by:", session?.user?.email);
-    
+
     if (!session || !session.user?.email) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }
       );
     }
-    
+
     // Fetching the Swap request 
     const uEmail = session.user.email;
     const { givingSection, askingSection } = await request.json();

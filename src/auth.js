@@ -1,11 +1,11 @@
 import NextAuth from "next-auth"
 import Google from "next-auth/providers/google"
+import Credentials from "next-auth/providers/credentials"
 import { db, eq, getCurrentEpoch } from '@/lib/db';
 import { userinfo } from '@/lib/db/schema';
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   trustHost: true,
-  // Remove the MongoDB adapter since we're using JWT strategy
   providers: [
     Google({
       clientId: process.env.GOOGLE_ID,
@@ -18,19 +18,63 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           image: profile.picture,
         }
       }
-    })
+    }),
+    ...(process.env.NODE_ENV === "development" ? [
+      Credentials({
+        name: "Developer Bypasser",
+        credentials: {
+          email: { label: "Email", type: "email" }
+        },
+        async authorize(credentials) {
+          if (!credentials?.email) return null;
+
+          try {
+            const userProfile = await db
+              .select()
+              .from(userinfo)
+              .where(eq(userinfo.email, credentials.email));
+
+            if (userProfile.length > 0) {
+              const u = userProfile[0];
+              return {
+                id: u.uId || u.email,
+                name: u.userName,
+                email: u.email,
+                userrole: u.userRole
+              };
+            }
+          } catch (e) {
+            console.error("Error authorizing dev user:", e);
+          }
+          return null;
+        }
+      })
+    ] : [])
   ],
   callbacks: {
     async signIn({ user, account, profile }) {
-      if (!profile.email?.endsWith('@g.bracu.ac.bd')) {
-        console.log("Non-BRACU email attempted:", profile.email);
+      // Allow dev switcher credentials
+      if (account?.provider === 'credentials' && process.env.NODE_ENV === 'development') {
+        return true;
+      }
+      if (!profile?.email?.endsWith('@g.bracu.ac.bd')) {
+        console.log("Non-BRACU email attempted:", profile?.email);
         return false;
       }
       return true;
     },
 
     async jwt({ token, user, account, profile }) {
-      // Initial sign-in
+      // Handle Credentials provider directly adding user info
+      if (account?.provider === 'credentials' && user) {
+        token.id = user.id;
+        token.email = user.email;
+        token.name = user.name;
+        token.userrole = user.userrole;
+        return token;
+      }
+
+      // Initial sign-in for Google Auto-registration
       if (account && profile) {
         console.log("JWT callback - initial sign-in:", { email: profile.email });
 

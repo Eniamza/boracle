@@ -12,6 +12,8 @@ const SwapCard = ({ swap, courses = [], onDelete, onMarkComplete, onCourseClick,
   const { data: session } = useSession();
   const [hoveredCourse, setHoveredCourse] = useState(null);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
+  const [isRequesting, setIsRequesting] = useState(false);
+  const [hasRequested, setHasRequested] = useState(false); // Can be enhanced later to check initial status
 
   const [isExpanded, setIsExpanded] = useState(false);
   const [showToggle, setShowToggle] = useState(false);
@@ -53,7 +55,7 @@ const SwapCard = ({ swap, courses = [], onDelete, onMarkComplete, onCourseClick,
   };
 
   const giveCourse = getCourseBySection(swap.getSectionId);
-  const isOwner = session?.user?.email === swap.uEmail;
+  const isOwner = swap.isOwner;
 
   // Different card styles for owner vs others and completed status
   const getCardStyle = () => {
@@ -65,6 +67,36 @@ const SwapCard = ({ swap, courses = [], onDelete, onMarkComplete, onCourseClick,
       return 'bg-blue-50 dark:bg-blue-950/20 border-blue-300 dark:border-blue-800';
     }
     return 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700';
+  };
+
+  const handleRequestSwap = async () => {
+    if (!session?.user?.email) {
+      import('sonner').then(({ toast }) => toast.error('Please login to request a swap'));
+      return;
+    }
+
+    try {
+      setIsRequesting(true);
+      const response = await fetch('/api/swap/requests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ swapId: swap.swapId })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        import('sonner').then(({ toast }) => toast.success('Swap request sent!'));
+        setHasRequested(true);
+      } else {
+        import('sonner').then(({ toast }) => toast.error(data.error || 'Failed to send request'));
+      }
+    } catch (error) {
+      console.error('Error requesting swap:', error);
+      import('sonner').then(({ toast }) => toast.error('Error sending request'));
+    } finally {
+      setIsRequesting(false);
+    }
   };
 
   return (
@@ -209,17 +241,9 @@ const SwapCard = ({ swap, courses = [], onDelete, onMarkComplete, onCourseClick,
       <CardContent className="px-3 md:px-6 py-3 border-t bg-gray-200/60 dark:bg-gray-800/50">
         {/* User Info */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 py-2">
-          <div className="space-y-1 min-w-0 flex-1">
-            <div className="flex items-center gap-2 text-sm">
-              <User className="w-4 h-4 text-gray-500 shrink-0" />
-              <span className="font-medium text-gray-900 dark:text-white truncate">
-                {swap.uEmail || 'Unknown user'}
-              </span>
-            </div>
-            <div className="flex items-center gap-2 text-xs text-gray-500">
-              <Calendar className="w-3 h-3 shrink-0" />
-              {formatDate(swap.createdAt)}
-            </div>
+          <div className="flex items-center gap-2 text-xs text-gray-500 min-w-0 flex-1">
+            <Calendar className="w-3 h-3 shrink-0" />
+            {formatDate(swap.createdAt)}
           </div>
 
           {/* Action Buttons */}
@@ -246,19 +270,26 @@ const SwapCard = ({ swap, courses = [], onDelete, onMarkComplete, onCourseClick,
                 <span className="ml-1">Delete</span>
               </Button>
             </div>
-          ) : swap.uEmail && (
+          ) : session?.user?.email && !swap.isDone ? (
             <Button
               size="sm"
-              onClick={() => {
-                const courseInfo = giveCourse ? `${giveCourse.courseCode}-${giveCourse.sectionName} (${giveCourse.faculties || 'TBA'})` : `Section ${swap.getSectionId}`;
-                window.open(`https://mail.google.com/mail/?view=cm&to=${swap.uEmail}&su=Course Swap Request - ${encodeURIComponent(courseInfo)}`, '_blank');
-              }}
-              className="w-full sm:w-auto gap-2 bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 dark:text-white text-white"
-              title="Contact via Gmail"
+              onClick={handleRequestSwap}
+              disabled={isRequesting || hasRequested}
+              className={`w-full sm:w-auto gap-2 ${hasRequested
+                ? 'bg-gray-400 dark:bg-gray-700 cursor-not-allowed'
+                : 'bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white dark:text-white'
+                }`}
+              title="Request Swap directly"
             >
-              Send <Mail className="w-4 h-4" />
+              {isRequesting ? (
+                <>Sending... <span className="animate-spin w-4 h-4 border-2 border-white/30 border-t-white rounded-full"></span></>
+              ) : hasRequested ? (
+                <>Requested <CheckCircle className="w-4 h-4" /></>
+              ) : (
+                <>Request Swap <Mail className="w-4 h-4" /></>
+              )}
             </Button>
-          )}
+          ) : null}
         </div>
       </CardContent>
 

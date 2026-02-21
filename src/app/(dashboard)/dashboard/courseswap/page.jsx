@@ -12,6 +12,7 @@ import globalInfo from '@/constants/globalInfo';
 import { useIsMobile } from '@/hooks/use-mobile';
 import CourseBottomSheet from '@/components/ui/CourseBottomSheet';
 import { useFaculty } from '@/app/contexts/FacultyContext';
+import SwapNotifications from '@/components/course-swap/SwapNotifications';
 
 const BACKUP_INDEX_URL = 'https://connect-cdn.itzmrz.xyz/connect_backup.json';
 const CURRENT_COURSES_URL = 'https://usis-cdn.eniamza.com/connect.json';
@@ -59,11 +60,13 @@ const CourseSwapPage = () => {
   useEffect(() => {
     const fetchBackupIndex = async () => {
       try {
-        const response = await fetch(BACKUP_INDEX_URL);
-        const data = await response.json();
-        setBackupIndex(data);
+        const response = await fetch(BACKUP_INDEX_URL).catch(() => null);
+        if (response && response.ok) {
+          const data = await response.json();
+          setBackupIndex(data);
+        }
       } catch (error) {
-        console.error('Error fetching backup index:', error);
+        // Silently swallow fetch errors so Next.js doesn't crash the overlay
       }
     };
     fetchBackupIndex();
@@ -227,10 +230,7 @@ const CourseSwapPage = () => {
 
     // Apply "My Swaps Only" filter first
     if (showMySwapsOnly && session?.user?.email) {
-      filtered = filtered.filter(swap => {
-        const isMySwap = swap.uEmail?.toLowerCase() === session.user.email?.toLowerCase();
-        return isMySwap;
-      });
+      filtered = filtered.filter(swap => swap.isOwner);
     } else {
       // When "My Swaps Only" is OFF, hide inactive (isDone) swaps
       filtered = filtered.filter(swap => !swap.isDone);
@@ -238,8 +238,8 @@ const CourseSwapPage = () => {
       // Sort user swaps first, then others
       if (session?.user?.email) {
         filtered.sort((a, b) => {
-          const isAUser = a.uEmail?.toLowerCase() === session.user.email?.toLowerCase();
-          const isBUser = b.uEmail?.toLowerCase() === session.user.email?.toLowerCase();
+          const isAUser = !!a.isOwner;
+          const isBUser = !!b.isOwner;
           if (isAUser === isBUser) return 0;
           return isAUser ? -1 : 1;
         });
@@ -335,6 +335,13 @@ const CourseSwapPage = () => {
           </div>
 
           <div className="flex items-center gap-2 md:gap-3">
+            {session?.user?.email && (
+              <SwapNotifications
+                isMobile={isMobile}
+                swaps={swaps}
+                courses={allAvailableCourses}
+              />
+            )}
             {swaps.length > 0 && (
               <SwapFilter
                 courses={allAvailableCourses}

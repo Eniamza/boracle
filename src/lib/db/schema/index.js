@@ -7,6 +7,7 @@ export {
   postStateEnum,
   decisionEnum,
   modDecisionEnum,
+  swapRequestStatusEnum,
 } from './enums.js';
 
 // Tables
@@ -24,3 +25,4 @@ export { votes } from './votes.js';
 export { moderatesReview } from './moderatesReview.js';
 export { moderatesCourseMaterials } from './moderatesCourseMaterials.js';
 export { services } from './services.js';
+export { swapRequest } from './swapRequest.js';
