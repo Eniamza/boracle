@@ -151,12 +151,12 @@ const RoutineTableGrid = ({
                               return (
                                 <div
                                   key={course.sectionId}
-                                  className={`p-3 rounded text-sm ${conflict
-                                    ? 'bg-red-100 dark:bg-red-900/50 border border-red-400 dark:border-red-600 text-red-900 dark:text-red-100'
+                                  className={`p-2.5 rounded-r-lg rounded-l-[4px] transition-all duration-200 ${conflict
+                                    ? 'bg-red-50/90 dark:bg-red-900/30 border-l-4 border-red-500 text-red-900 dark:text-red-100 shadow-[0_2px_10px_-3px_rgba(239,68,68,0.2)] hover:shadow-[0_4px_12px_-2px_rgba(239,68,68,0.3)]'
                                     : isLab
-                                      ? 'bg-purple-100 dark:bg-purple-900/50 border border-purple-400 dark:border-purple-600 text-purple-900 dark:text-purple-100'
-                                      : 'bg-blue-100 dark:bg-blue-900/50 border border-blue-400 dark:border-blue-600 text-blue-900 dark:text-blue-100'
-                                    } hover:opacity-80 transition-opacity ${onRemoveCourse ? 'cursor-pointer' : ''} group relative`}
+                                      ? 'bg-purple-50/90 dark:bg-purple-900/30 border-l-4 border-purple-500 text-purple-900 dark:text-purple-100 shadow-[0_2px_10px_-3px_rgba(168,85,247,0.2)] hover:shadow-[0_4px_12px_-2px_rgba(168,85,247,0.3)]'
+                                      : 'bg-blue-50/90 dark:bg-blue-900/30 border-l-4 border-blue-500 text-blue-900 dark:text-blue-100 shadow-[0_2px_10px_-3px_rgba(59,130,246,0.2)] hover:shadow-[0_4px_12px_-2px_rgba(59,130,246,0.3)]'
+                                    } ${onRemoveCourse ? 'cursor-pointer hover:bg-white/40 dark:hover:bg-gray-800/40' : ''} group relative flex flex-col justify-center min-h-[76px]`}
                                   onClick={() => onRemoveCourse?.(course)}
                                   onMouseEnter={(e) => {
                                     setHoveredCourse(course);
@@ -179,17 +179,31 @@ const RoutineTableGrid = ({
                                     setHoveredCourseTitle(null);
                                   }}
                                 >
-                                  <div className="font-semibold text-base">
-                                    {course.courseCode}{isLab && 'L'}-{course.sectionName}-{isLab ? course.labRoomName || course.labRoomNumber || 'TBA' : course.roomName || course.roomNumber || 'TBA'}
+                                  <div className="font-bold text-sm tracking-tight leading-tight flex items-center gap-1.5">
+                                    {course.courseCode}{isLab && 'L'}
+                                    <span className="text-xs uppercase font-black px-1.5 py-0.5 rounded-sm bg-black/10 dark:bg-white/20 text-gray-900 dark:text-gray-100 shadow-sm">{course.sectionName}</span>
                                   </div>
+
+                                  <div className="text-xs font-bold mt-1.5 flex items-center gap-1">
+                                    <svg className="w-3 h-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    </svg>
+                                    <span className="truncate">{isLab ? course.labRoomName || course.labRoomNumber || 'TBA' : course.roomName || course.roomNumber || 'TBA'}</span>
+                                  </div>
+
                                   {course.faculties && (
-                                    <div className="text-gray-600 dark:text-gray-400 truncate text-sm mt-1">
-                                      {course.faculties}
+                                    <div className="text-[11px] opacity-70 mt-0.5 flex items-center gap-1 font-medium">
+                                      <svg className="w-3 h-3 opacity-70 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                      </svg>
+                                      <span className="truncate">{course.faculties}</span>
                                     </div>
                                   )}
+
                                   {showRemoveButtons && onRemoveCourse && (
-                                    <button className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                      <X className="w-3 h-3 text-red-500 dark:text-red-400" />
+                                    <button className="absolute top-1.5 right-1.5 p-1 bg-white/50 dark:bg-black/20 hover:bg-red-500 hover:text-white rounded-md opacity-0 group-hover:opacity-100 transition-all shadow-sm">
+                                      <X className="w-3 h-3" />
                                     </button>
                                   )}
                                 </div>

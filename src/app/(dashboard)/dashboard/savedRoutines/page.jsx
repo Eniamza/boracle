@@ -282,10 +282,10 @@ const MergedRoutineTableModal = ({ courses, friends, onClose, isOpen, isMobile }
                               return (
                                 <div
                                   key={`${course.sectionId}-${idx}`}
-                                  className="p-2 rounded text-xs transition-opacity hover:opacity-90 cursor-pointer"
+                                  className="p-2.5 rounded-r-lg rounded-l-[4px] transition-all duration-200 shadow-[0_2px_10px_-3px_rgba(0,0,0,0.1)] hover:shadow-[0_4px_12px_-2px_rgba(0,0,0,0.15)] cursor-pointer flex flex-col justify-center min-h-[76px]"
                                   style={{
-                                    backgroundColor: `${course.friendColor}30`,
-                                    borderLeft: `3px solid ${course.friendColor}`
+                                    backgroundColor: `${course.friendColor}25`,
+                                    borderLeft: `4px solid ${course.friendColor}`
                                   }}
                                   onMouseEnter={(e) => {
                                     setHoveredCourse(course);
@@ -302,15 +302,25 @@ const MergedRoutineTableModal = ({ courses, friends, onClose, isOpen, isMobile }
                                   }}
                                   onMouseLeave={() => setHoveredCourse(null)}
                                 >
-                                  <div className="font-semibold text-gray-900 dark:text-white">
-                                    {course.courseCode}{isLab && 'L'}-{course.sectionName}
+                                  <div className="font-bold text-sm tracking-tight leading-tight flex items-center gap-1.5 text-gray-900 dark:text-white">
+                                    {course.courseCode}{isLab && 'L'}
+                                    <span className="text-xs uppercase font-black px-1.5 py-0.5 rounded-sm bg-black/10 dark:bg-white/20 text-gray-900 dark:text-gray-100 shadow-sm">{course.sectionName}</span>
                                   </div>
-                                  <div className="text-gray-600 dark:text-gray-400 text-xs mt-0.5">
-                                    {course.friendName}
+
+                                  <div className="text-xs font-medium mt-1.5 flex items-center gap-1 text-gray-700 dark:text-gray-300">
+                                    <svg className="w-3 h-3 opacity-80 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                    </svg>
+                                    <span className="truncate">{course.friendName}</span>
                                   </div>
+
                                   {course.roomName && (
-                                    <div className="text-gray-500 dark:text-gray-500 text-xs">
-                                      {course.roomName}
+                                    <div className="text-[11px] mt-0.5 flex items-center gap-1 font-bold text-gray-700 dark:text-gray-300">
+                                      <svg className="w-3 h-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                      </svg>
+                                      <span className="truncate">{isLab ? course.labRoomName || course.labRoomNumber || course.roomName : course.roomName}</span>
                                     </div>
                                   )}
                                 </div>
