@@ -23,6 +23,9 @@ const CourseHoverTooltip = ({ course: propCourse, position: propPosition, course
     const [isHoveringTooltip, setIsHoveringTooltip] = useState(false);
     const closeTimeoutRef = useRef(null);
 
+    // Stringify extra fields to prevent infinite loops from inline array references
+    const extraFieldsStr = JSON.stringify(propExtraFields);
+
     useEffect(() => {
         if (propCourse) {
             setCourse(propCourse);
@@ -47,7 +50,7 @@ const CourseHoverTooltip = ({ course: propCourse, position: propPosition, course
                 clearTimeout(closeTimeoutRef.current);
             }
         };
-    }, [propCourse, propPosition, propCourseTitle, propExtraFields, isHoveringTooltip]);
+    }, [propCourse, propPosition, propCourseTitle, extraFieldsStr, isHoveringTooltip]);
 
     useEffect(() => {
         setMounted(true);
