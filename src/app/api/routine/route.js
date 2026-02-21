@@ -68,7 +68,7 @@ export async function POST(request) {
       );
     }
 
-    const { routineStr, email } = await request.json();
+    const { routineStr, email, routineName } = await request.json();
 
     if (email !== session.user.email) {
       return NextResponse.json(
@@ -85,6 +85,7 @@ export async function POST(request) {
         routineStr: routineStr,
         email: session.user.email,
         semester: globalInfo.semester,
+        routineName: routineName || null,
         createdAt: getCurrentEpoch(),
       })
       .returning({ routineId: savedRoutine.routineId });

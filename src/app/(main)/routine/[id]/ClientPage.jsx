@@ -104,12 +104,17 @@ const SharedRoutinePage = () => {
 
         try {
             setImporting(true);
+            const importedName = routine.ownerName
+                ? `${routine.ownerName.charAt(0).toUpperCase() + routine.ownerName.slice(1).toLowerCase()}'s Routine`
+                : 'Imported Routine';
+
             const response = await fetch('/api/routine', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     routineStr: routine.routineStr,
                     email: session.user.email,
+                    routineName: importedName
                 }),
             });
 

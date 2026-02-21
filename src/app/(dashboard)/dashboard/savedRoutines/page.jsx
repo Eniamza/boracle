@@ -617,12 +617,20 @@ const SavedRoutinesPage = () => {
         const savedData = await savedResponse.json();
         if (savedData.success && savedData.routine) {
           // ? Import as a new saved routine - POST request to routine endpoint
+          const fetchedOwnerName = savedData.routine.ownerName || savedData.routine.routineName;
+          const importedName = fetchedOwnerName
+            ? fetchedOwnerName.includes("'s R")
+              ? fetchedOwnerName
+              : `${fetchedOwnerName.charAt(0).toUpperCase() + fetchedOwnerName.slice(1).toLowerCase()}'s Routine`
+            : 'Imported Routine';
+
           const importResponse = await fetch('/api/routine', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               routineStr: savedData.routine.routineStr,
-              email: session.user.email
+              email: session.user.email,
+              routineName: importedName
             })
           });
 
