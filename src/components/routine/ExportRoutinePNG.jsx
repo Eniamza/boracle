@@ -55,16 +55,20 @@ export const exportRoutineToPNG = async ({
   container.style.left = '-9999px';
   container.style.width = `${width}px`;
   container.style.zoom = zoom;
-  
+
   // ! Apply theme class to container so dark: variants work correctly
   if (isDarkMode) {
     container.classList.add('dark');
   }
-  
+
   document.body.appendChild(container);
 
   // ? Cloning the Routine Segment
   const clonedRoutine = originalRoutineSegment.cloneNode(true);
+
+  // ? Remove export-hide elements (like cross buttons) from the cloned routine
+  const exportHideElements = clonedRoutine.querySelectorAll('.export-hide');
+  exportHideElements.forEach(el => el.remove());
 
   // ? Force the clonedRoutine to show everything and adjust to desktop resolution
   clonedRoutine.style.width = `${width}px`;
@@ -99,12 +103,12 @@ export const exportRoutineToPNG = async ({
     return true;
   } catch (error) {
     console.error('Error exporting routine:', error);
-    
+
     // ? Cleanup on error
     if (container.parentNode) {
       document.body.removeChild(container);
     }
-    
+
     if (showToast) toast.error('Failed to export routine.');
     onError?.(error);
     return false;
@@ -137,7 +141,7 @@ export const useExportRoutinePNG = ({
     }
 
     setIsExporting(true);
-    
+
     try {
       const result = await exportRoutineToPNG({
         routineRef,
@@ -156,11 +160,11 @@ export const useExportRoutinePNG = ({
 // ? Download Icon SVG Component
 const DownloadIcon = ({ className = "w-4 h-4" }) => (
   <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path 
-      strokeLinecap="round" 
-      strokeLinejoin="round" 
-      strokeWidth={2} 
-      d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" 
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
     />
   </svg>
 );
@@ -168,8 +172,8 @@ const DownloadIcon = ({ className = "w-4 h-4" }) => (
 // ! The same Export PNG Button Component which has been used a thousands of times :v
 // ? Drop-in button that handles validation, loading state, and export.
 // ? Props: routineRef, courses, filename, label, className, showIcon, disabled
-const ExportRoutinePNG = ({ 
-  routineRef, 
+const ExportRoutinePNG = ({
+  routineRef,
   courses = [],
   filename = 'routine',
   label = 'Save as PNG',
@@ -184,7 +188,7 @@ const ExportRoutinePNG = ({
     filename,
     ...exportOptions,
   });
-  
+
   return (
     <button
       onClick={exportToPNG}

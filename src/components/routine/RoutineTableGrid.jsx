@@ -156,8 +156,7 @@ const RoutineTableGrid = ({
                                     : isLab
                                       ? 'bg-purple-50/90 dark:bg-purple-900/30 border-l-4 border-purple-500 text-purple-900 dark:text-purple-100 shadow-[0_2px_10px_-3px_rgba(168,85,247,0.2)] hover:shadow-[0_4px_12px_-2px_rgba(168,85,247,0.3)]'
                                       : 'bg-blue-50/90 dark:bg-blue-900/30 border-l-4 border-blue-500 text-blue-900 dark:text-blue-100 shadow-[0_2px_10px_-3px_rgba(59,130,246,0.2)] hover:shadow-[0_4px_12px_-2px_rgba(59,130,246,0.3)]'
-                                    } ${onRemoveCourse ? 'cursor-pointer hover:bg-white/40 dark:hover:bg-gray-800/40' : ''} group relative flex flex-col justify-center min-h-[76px]`}
-                                  onClick={() => onRemoveCourse?.(course)}
+                                    } group relative flex flex-col justify-center min-h-[76px]`}
                                   onMouseEnter={(e) => {
                                     setHoveredCourse(course);
                                     setHoveredCourseTitle(`${course.courseCode}${isLab ? 'L' : ''}`);
@@ -208,8 +207,14 @@ const RoutineTableGrid = ({
                                   )}
 
                                   {showRemoveButtons && onRemoveCourse && (
-                                    <button className="absolute top-1.5 right-1.5 p-1 bg-white/50 dark:bg-black/20 hover:bg-red-500 hover:text-white rounded-md opacity-0 group-hover:opacity-100 transition-all shadow-sm">
-                                      <X className="w-3 h-3" />
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        onRemoveCourse(course);
+                                      }}
+                                      className="export-hide absolute top-1.5 right-1.5 p-1 bg-white/70 dark:bg-black/40 text-red-500 hover:bg-red-500 hover:text-white rounded-md opacity-60 group-hover:opacity-100 transition-all shadow-sm"
+                                    >
+                                      <X className="w-3.5 h-3.5" />
                                     </button>
                                   )}
                                 </div>

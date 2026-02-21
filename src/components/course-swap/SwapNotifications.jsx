@@ -241,7 +241,7 @@ const SwapNotifications = ({ isMobile, swaps = [], courses = [] }) => {
     };
 
     const TriggerButton = React.forwardRef((props, ref) => (
-        <Button ref={ref} {...props} variant="outline" className="relative gap-2 bg-white dark:bg-gray-900 dark:border-gray-700 shadow-sm transition-all hover:bg-blue-50 dark:hover:bg-blue-900/20">
+        <Button ref={ref} {...props} variant="outline" className="relative gap-2 bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 shadow-sm transition-all hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
             <Bell className="w-4 h-4 text-gray-600 dark:text-gray-400" />
             <span className="hidden sm:inline font-medium text-gray-700 dark:text-gray-300">Requests</span>
             {pendingCount > 0 && (
@@ -261,8 +261,11 @@ const SwapNotifications = ({ isMobile, swaps = [], courses = [] }) => {
                     <DrawerTrigger asChild>
                         <TriggerButton />
                     </DrawerTrigger>
-                    <DrawerContent className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
-                        <DrawerHeader className="border-b border-gray-100 dark:border-gray-700 pb-4">
+                    <DrawerContent className="bg-white dark:bg-gray-800 border-none shadow-2xl">
+                        <DrawerClose className="absolute top-3 right-3 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors z-[100]">
+                            <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                        </DrawerClose>
+                        <DrawerHeader className="pb-4 pt-2">
                             <DrawerTitle className="flex items-center gap-2 font-semibold text-gray-900 dark:text-gray-100">
                                 <span className="bg-blue-100 dark:bg-blue-900/50 p-1.5 rounded-lg border border-blue-200 dark:border-blue-800/60">
                                     <Bell className="w-4 h-4 text-blue-600 dark:text-blue-400" />
