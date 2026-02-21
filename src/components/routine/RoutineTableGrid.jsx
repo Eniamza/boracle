@@ -21,7 +21,13 @@ const RoutineTableGrid = ({
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0, showLeft: false });
   const isMobile = useIsMobile();
 
-
+  // Clear hovered course if it gets removed from selectedCourses
+  React.useEffect(() => {
+    if (hoveredCourse && !selectedCourses.find(c => c.sectionId === hoveredCourse.sectionId)) {
+      setHoveredCourse(null);
+      setHoveredCourseTitle(null);
+    }
+  }, [selectedCourses, hoveredCourse]);
 
   const timeSlots = getRoutineTimings();
 
