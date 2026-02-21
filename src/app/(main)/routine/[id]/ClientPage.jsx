@@ -31,13 +31,13 @@ const SharedRoutinePage = () => {
         setMounted(true);
     }, []);
 
+    const { getFacultyDetails, loading: facultyLoading } = useFaculty();
+
     useEffect(() => {
-        if (id) {
+        if (id && !facultyLoading) {
             fetchRoutine();
         }
-    }, [id]);
-
-    const { getFacultyDetails } = useFaculty();
+    }, [id, facultyLoading]);
 
     const fetchRoutine = async () => {
         try {

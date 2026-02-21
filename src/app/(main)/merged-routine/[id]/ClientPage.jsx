@@ -47,11 +47,13 @@ const SharedMergedRoutinePage = () => {
 
     const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-    const { getFacultyDetails } = useFaculty();
+    const { getFacultyDetails, loading: facultyLoading } = useFaculty();
 
     useEffect(() => {
-        if (id) fetchRoutine();
-    }, [id]);
+        if (id && !facultyLoading) {
+            fetchRoutine();
+        }
+    }, [id, facultyLoading]);
 
     // Time conversion utilities - matching the modal exactly
     const timeToMinutes = (timeStr) => {
