@@ -17,6 +17,7 @@ import {
     DrawerHeader,
     DrawerTitle,
     DrawerTrigger,
+    DrawerClose,
 } from "@/components/ui/drawer";
 import { toast } from 'sonner';
 import { copyToClipboard } from '@/lib/utils';
