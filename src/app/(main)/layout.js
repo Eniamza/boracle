@@ -25,7 +25,7 @@ export const metadata = {
   openGraph: {
     title: "Boracle: One-Stop Destination for all your academic needs",
     description: "We aim to provide you with all the tools you need. From live seat status to routine builder, course swapping, faculty reviews and more!",
-    url: "https://boracle.eniamza.com",
+    url: "https://boracle.app",
     siteName: "B.O.R.A.C.L.E",
     image: "https://usis-cdn.eniamza.com/boracleOG.png",
   }

@@ -940,7 +940,7 @@ const MergedRoutineGrid = ({ courses, friends }) => {
 
         {/* Footer */}
         <div className="mt-4 text-center text-sm text-gray-500">
-          Made with 💖 from https://oracle.eniamza.com
+          Made with 💖 from https://boracle.app
         </div>
       </div>
     </div>

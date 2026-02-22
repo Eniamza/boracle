@@ -481,7 +481,7 @@ const SharedMergedRoutinePage = () => {
                                 </div>
                                 {/* Watermark */}
                                 <div className="text-center py-3 text-gray-500 dark:text-gray-600 text-xs">
-                                    Made with 💖 from https://oracle.eniamza.com
+                                    Made with 💖 from https://boracle.app
                                 </div>
                             </div>
                         </div>
@@ -613,7 +613,7 @@ const SharedMergedRoutinePage = () => {
 
                         {/* Watermark */}
                         <div className="text-center py-3 text-gray-500 dark:text-gray-600 text-xs">
-                            Made with 💖 from https://oracle.eniamza.com
+                            Made with 💖 from https://boracle.app
                         </div>
                     </div>
                 )}
