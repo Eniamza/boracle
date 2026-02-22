@@ -1,8 +1,8 @@
 "use client"
 
-import { Home,Sigma,Star,ChevronsLeftRightEllipsis,Calendar, Settings, LogOut, BookOpen, Users } from "lucide-react"
+import { Home, Sigma, Star, ChevronsLeftRightEllipsis, Calendar, Settings, LogOut, BookOpen, Users } from "lucide-react"
 import { useSession, signOut } from "next-auth/react"
- 
+
 import {
   Sidebar,
   SidebarContent,
@@ -23,7 +23,7 @@ export function AppSidebar() {
   const { data: session, status } = useSession()
 
   console.log("Session data in Sidebar:", session)
-  
+
   // Get user role from session - handle both 'role' and 'userrole' properties
   const userRole = session?.user?.userrole?.toLowerCase()
   const isAdmin = userRole === 'admin'
@@ -34,22 +34,22 @@ export function AppSidebar() {
   // Filter admin items based on user role - only if session is loaded
   const getFilteredAdminGroups = () => {
     if (status === "loading" || !hasAdminAccess) return []
-    
+
     return sidebarAdminGroups.map(group => ({
       ...group,
       items: group.items.filter(item => {
         if (!item.enabled) return false
-        
+
         // If forAdminOnly is true, only show to admins
         if (item.forAdminOnly === true) {
           return isAdmin
         }
-        
+
         // If forAdminOnly is false, show to both admins and moderators
         if (item.forAdminOnly === false) {
           return hasAdminAccess
         }
-        
+
         // Default: show to admins only
         return isAdmin
       })
@@ -64,10 +64,10 @@ export function AppSidebar() {
       <SidebarHeader className="p-4 border-b border-gray-200 dark:border-gray-800 group-data-[collapsible=icon]:px-3">
         <a href="/" className="flex items-center gap-3 group-data-[collapsible=icon]:justify-center hover:opacity-80 transition-opacity">
           <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shrink-0">
-            <span className="text-white font-bold text-sm">O</span>
+            <span className="text-white font-bold text-sm">B</span>
           </div>
           <div className="group-data-[collapsible=icon]:hidden">
-            <h2 className="font-semibold text-gray-900 dark:text-white text-sm">O.R.A.C.L.E</h2>
+            <h2 className="font-semibold text-gray-900 dark:text-white text-sm">B.O.R.A.C.L.E</h2>
             <p className="text-xs text-gray-500 dark:text-gray-400">Student Portal</p>
           </div>
         </a>
@@ -83,8 +83,8 @@ export function AppSidebar() {
               <SidebarMenu className="space-y-1">
                 {group.items.filter(item => item.enabled !== false).map((item, index) => (
                   <SidebarMenuItem key={index}>
-                    <SidebarMenuButton 
-                      asChild 
+                    <SidebarMenuButton
+                      asChild
                       className="w-full hover:bg-blue-50 hover:text-blue-700 dark:hover:bg-blue-950/50 dark:hover:text-blue-300 rounded-lg px-3 py-2.5 transition-all duration-200 group data-[active=true]:bg-blue-600 data-[active=true]:text-white dark:data-[active=true]:bg-blue-600 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0"
                       tooltip={item.title}
                     >
@@ -99,7 +99,7 @@ export function AppSidebar() {
             </SidebarGroupContent>
           </SidebarGroup>
         ))}
-        
+
       </SidebarContent>
 
       <SidebarFooter className="p-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 group-data-[collapsible=icon]:px-2">
@@ -108,9 +108,9 @@ export function AppSidebar() {
             {/* User Profile */}
             <div className="flex items-center gap-3 px-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
               {session.user.image ? (
-                <img 
-                  src={session.user.image} 
-                  alt={session.user.name || 'User'} 
+                <img
+                  src={session.user.image}
+                  alt={session.user.name || 'User'}
                   className="w-8 h-8 rounded-full object-cover shrink-0"
                   onError={(e) => {
                     e.target.style.display = 'none';
@@ -118,7 +118,7 @@ export function AppSidebar() {
                   }}
                 />
               ) : null}
-              <div 
+              <div
                 className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full items-center justify-center shrink-0"
                 style={{ display: session.user.image ? 'none' : 'flex' }}
               >
@@ -135,9 +135,9 @@ export function AppSidebar() {
                 </p>
               </div>
             </div>
-            
+
             {/* Logout Button */}
-            <SidebarMenuButton 
+            <SidebarMenuButton
               onClick={() => signOut({ callbackUrl: '/' })}
               className="w-full hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-950/50 dark:hover:text-red-300 rounded-lg px-3 py-2.5 transition-all duration-200 cursor-pointer group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0"
               tooltip="Sign Out"

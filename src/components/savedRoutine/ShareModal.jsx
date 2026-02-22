@@ -7,7 +7,7 @@ import { copyToClipboard } from '@/lib/utils';
 const ShareModal = ({ routineId, type = 'routine', onClose }) => {
     const [linkCopied, setLinkCopied] = useState(false);
     const shareUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/${type}/${routineId}`;
-    const shareText = `Check out my routine on BRACU O.R.A.C.L.E!`;
+    const shareText = `Check out my routine on B.O.R.A.C.L.E!`;
 
     const copyLink = async () => {
         const success = await copyToClipboard(shareUrl);

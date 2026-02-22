@@ -38,8 +38,8 @@ export default function NavigationBar() {
 
   return (
     <header className={`sticky top-0 z-50 transition-all duration-300 ${scrolled
-        ? 'bg-white/95 dark:bg-gray-900/95 backdrop-blur-md shadow-md'
-        : 'bg-white dark:bg-gray-900'
+      ? 'bg-white/95 dark:bg-gray-900/95 backdrop-blur-md shadow-md'
+      : 'bg-white dark:bg-gray-900'
       }`}>
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16 relative">
@@ -96,11 +96,11 @@ export default function NavigationBar() {
 
             {/* Logo */}
             <Link href="/" className="flex items-center gap-2 group">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
-                <span className="text-white font-bold text-sm">O</span>
-              </div>
+              {/* <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
+                <span className="text-white font-bold text-sm">B</span>
+              </div> */}
               <span className="font-bold text-lg text-gray-900 dark:text-white hidden sm:block">
-                O.R.A.C.L.E
+                B.O.R.A.C.L.E
               </span>
             </Link>
           </div>

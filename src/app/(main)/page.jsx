@@ -15,13 +15,13 @@ export default function Home() {
             <span className="text-sm font-medium text-blue-700 dark:text-blue-300">Live & Running</span>
           </div>
           <h1 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-blue-600 via-blue-500 to-blue-700 dark:from-blue-400 dark:via-blue-300 dark:to-blue-500 bg-clip-text text-transparent">
-            BRACU O.R.A.C.L.E
+            B.O.R.A.C.L.E
           </h1>
           <p className="text-lg sm:text-xl text-gray-600 dark:text-gray-400">
             Euphoria for BRACU Students
           </p>
         </div>
-        
+
         <SignInOrDashboard />
         <FeatureCards />
         <Counts />
