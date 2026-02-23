@@ -44,3 +44,4 @@ next-env.d.ts
 #supabase
 supabase/.temp/
 .vscode/settings.json
+.env*.local
