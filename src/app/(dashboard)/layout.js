@@ -26,7 +26,7 @@ export default async function RootLayout({ children }) {
     <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <Providers>{children}
-        <Toaster position="top-right" richColors />
+          <Toaster position="top-right" richColors duration={3000} closeButton />
         </Providers>
       </body>
     </html>
