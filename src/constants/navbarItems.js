@@ -11,12 +11,12 @@ const navbarItems = [
         description: 'Updates and changes to the Oracle platform',
         enabled: true
     },
-    // {
-    //     title: 'Swap',
-    //     href: '/swap',
-    //     description: 'A centralized platform to swap courses with other students. No more endless emails and waiting for replies!',
-    //     enabled: true
-    // },
+    {
+        title: 'Changelog',
+        href: '/changelog',
+        description: 'Track all updates and changes to the Boracle platform',
+        enabled: true
+    },
     // {
     //     title: 'Review',
     //     href: '/faculty-review',
