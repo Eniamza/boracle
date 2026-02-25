@@ -5,6 +5,7 @@ import { userinfo } from '@/lib/db/schema';
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   trustHost: true,
+  checks: ["state"],
   providers: [
     Google({
       profile(profile) {
