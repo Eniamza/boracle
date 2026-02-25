@@ -806,7 +806,7 @@ const PreRegistrationPage = () => {
                       </td>
                       <td className="py-3 px-2 text-sm relative text-gray-900 dark:text-gray-100">
                         <span
-                          className="cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                          className="cursor-pointer font-medium text-blue-600 dark:text-blue-400 underline decoration-dashed decoration-blue-300 dark:decoration-blue-700 hover:decoration-blue-600 dark:hover:decoration-blue-400 underline-offset-4 transition-colors"
                           onMouseEnter={(e) => {
                             if (course.faculties) {
                               const rect = e.currentTarget.getBoundingClientRect();
