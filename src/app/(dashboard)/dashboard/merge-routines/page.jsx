@@ -39,6 +39,7 @@ import { copyToClipboard } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import MobileMergedRoutineView from '@/components/routine/MobileMergedRoutineView';
 import RoutineSelectorSheet from '@/components/routine/RoutineSelectorSheet';
+import MergedRoutineGrid from '@/components/routine/MergedRoutineGrid';
 
 const MergeRoutinesPage = () => {
   const isMobile = useIsMobile();
@@ -380,7 +381,7 @@ const MergeRoutinesPage = () => {
 
   return (
     <div className="w-full flex-1">
-      <div className="max-w-7xl mx-auto px-1.5 sm:px-4 py-4 sm:py-8 w-full min-w-0">
+      <div className="w-full max-w-none mx-auto px-1 sm:px-2 py-2 sm:py-4 min-w-0">
         {/* <div className="mb-8 px-2 sm:px-0">
           <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
             <Users className="h-8 w-8 sm:h-10 sm:w-10" />
@@ -394,14 +395,14 @@ const MergeRoutinesPage = () => {
         <div className="grid grid-cols-1 gap-6 w-full">
           <div className="col-span-1 min-w-0 flex flex-col gap-6">
             {/* Input Section - Now on top */}
-            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-xl rounded-xl py-6 [overflow-x:clip] w-full min-w-0">
-              <div className="px-3 sm:px-6 pb-1.5">
+            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-xl rounded-xl py-3 sm:py-4 [overflow-x:clip] w-full min-w-0">
+              <div className="px-2 sm:px-3 pb-1">
                 <h3 className="leading-none font-semibold text-gray-900 dark:text-white">Add Routines</h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1.5">
                   Enter routine IDs and friend names to merge their schedules
                 </p>
               </div>
-              <div className="px-1.5 pb-4 sm:px-6 sm:pb-6 pt-4">
+              <div className="p-2 sm:p-3">
                 <Alert className="mb-4 bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800">
                   <AlertCircle className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                   <AlertDescription className="text-gray-700 dark:text-gray-300">
@@ -412,7 +413,7 @@ const MergeRoutinesPage = () => {
                 {/* Horizontal scrollable cards for friend inputs */}
                 <div className="overflow-hidden w-full min-w-0 max-w-full">
                   <div
-                    className="flex gap-4 overflow-x-auto pb-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] snap-x snap-mandatory scroll-smooth w-full min-w-0 max-w-full"
+                    className="flex gap-4 overflow-x-auto pb-2 sm:pb-4 max-sm:[&::-webkit-scrollbar]:hidden max-sm:[-ms-overflow-style:none] max-sm:[scrollbar-width:none] snap-x snap-mandatory scroll-smooth w-full min-w-0 max-w-full"
                     onScroll={(e) => {
                       if (isMobile) {
                         const container = e.target;
@@ -655,8 +656,8 @@ const MergeRoutinesPage = () => {
             </div>
 
             {/* Merged Routine Display - Now below */}
-            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-xl rounded-xl py-6 [overflow-x:clip] w-full min-w-0">
-              <div className="px-3 sm:px-6 pb-1.5">
+            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-xl rounded-xl py-3 sm:py-4 [overflow-x:clip] w-full min-w-0">
+              <div className="px-2 sm:px-3 pb-1">
                 <div className="flex justify-between items-center">
                   <div>
                     <h3 className="leading-none font-semibold text-gray-900 dark:text-white">Merged Routine</h3>
@@ -693,7 +694,7 @@ const MergeRoutinesPage = () => {
                   )}
                 </div>
               </div>
-              <div className="px-0.5 pb-3 sm:px-6 sm:pb-6 pt-4">
+              <div className="p-1 sm:p-2">
                 {/* The Routine Gets Loaded Here*/}
                 {/* Saihan: why was this so hard to find :| */}
                 {mergedCourses.length > 0 ? (
@@ -763,187 +764,6 @@ const MergeRoutinesPage = () => {
             }
           }}
         />
-      </div>
-    </div>
-  );
-};
-
-// Modified RoutineTableGrid Component for Merged View
-const MergedRoutineGrid = ({ courses, friends }) => {
-  const [hoveredCourse, setHoveredCourse] = useState(null);
-  const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
-  const [hoveredCourseTitle, setHoveredCourseTitle] = useState(null);
-
-  const timeSlots = getRoutineTimings();
-
-  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-
-  // Time conversion utilities
-  const timeToMinutes = (timeStr) => {
-    const [time, period] = timeStr.split(' ');
-    const [hours, minutes] = time.split(':').map(Number);
-    let totalMinutes = hours * 60 + minutes;
-    if (period === 'PM' && hours !== 12) totalMinutes += 12 * 60;
-    if (period === 'AM' && hours === 12) totalMinutes -= 12 * 60;
-    return totalMinutes;
-  };
-
-  const formatTime = (time) => {
-    if (!time) return '';
-    const [hours, minutes] = time.split(':');
-    const hour = parseInt(hours);
-    const ampm = hour >= 12 ? 'PM' : 'AM';
-    const displayHour = hour % 12 || 12;
-    return `${displayHour}:${minutes} ${ampm}`;
-  };
-
-  // Get courses for a specific slot
-  const getCoursesForSlot = (day, timeSlot) => {
-    const [slotStart, slotEnd] = timeSlot.split('-');
-    const slotStartMin = timeToMinutes(slotStart);
-    const slotEndMin = timeToMinutes(slotEnd);
-
-    return courses.filter(course => {
-      // Check class schedules
-      const classMatch = course.sectionSchedule?.classSchedules?.some(schedule => {
-        if (schedule.day !== day.toUpperCase()) return false;
-        const scheduleStart = timeToMinutes(formatTime(schedule.startTime));
-        const scheduleEnd = timeToMinutes(formatTime(schedule.endTime));
-        return scheduleStart < slotEndMin && scheduleEnd > slotStartMin;
-      });
-
-      // Check lab schedules
-      const labMatch = course.labSchedules?.some(schedule => {
-        if (schedule.day !== day.toUpperCase()) return false;
-        const scheduleStart = timeToMinutes(formatTime(schedule.startTime));
-        const scheduleEnd = timeToMinutes(formatTime(schedule.endTime));
-        return scheduleStart < slotEndMin && scheduleEnd > slotStartMin;
-      });
-
-      return classMatch || labMatch;
-    });
-  };
-
-  return (
-    <div className="w-full min-w-0 overflow-hidden">
-      <div className="bg-gray-50 dark:bg-gray-900 p-2 sm:p-4 rounded-lg border border-gray-200 dark:border-gray-700 w-full overflow-hidden">
-        {/* Friend Legend */}
-        <div className="mb-4 flex flex-wrap gap-3">
-          {friends.map(friend => (
-            <div key={friend.id} className="flex items-center gap-2">
-              <div
-                className="w-4 h-4 rounded-full"
-                style={{ backgroundColor: friend.color }}
-              />
-              <span className="text-sm text-gray-600 dark:text-gray-400">{friend.friendName}</span>
-            </div>
-          ))}
-        </div>
-
-        <div className="overflow-x-auto max-w-full w-full">
-          <table className="w-full border-collapse border border-gray-300 dark:border-gray-700 min-w-[800px]">
-            <thead>
-              <tr className="border-b border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-800">
-                <th className="text-left py-4 px-4 text-sm font-medium text-gray-600 dark:text-gray-400 w-36 border-r border-gray-300 dark:border-gray-700 sticky left-0 bg-gray-100 dark:bg-gray-800 z-10">Time/Day</th>
-                {days.map(day => (
-                  <th key={day} className="text-center py-4 px-3 text-sm font-medium text-gray-600 dark:text-gray-400 border-r border-gray-300 dark:border-gray-700 last:border-r-0">
-                    {day}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {timeSlots.map((timeSlot, index) => {
-                const matchSlot = REGULAR_TIMINGS[index];
-                return (
-                  <tr key={timeSlot} className="border-b border-gray-300 dark:border-gray-700">
-                    <td className="py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400 whitespace-nowrap border-r border-gray-300 dark:border-gray-700 sticky left-0 bg-white dark:bg-gray-900 z-10">
-                      {timeSlot}
-                    </td>
-                    {days.map(day => {
-                      const slotCourses = getCoursesForSlot(day, matchSlot);
-
-                      return (
-                        <td key={`${day}-${timeSlot}`} className="p-2 border-r border-gray-300 dark:border-gray-700 last:border-r-0 relative">
-                          {slotCourses.length > 0 && (
-                            <div className="space-y-1">
-                              {slotCourses.map((course, idx) => {
-                                // Check if this specific time slot is for a lab
-                                const isLab = course.labSchedules?.some(s => {
-                                  if (s.day !== day.toUpperCase()) return false;
-                                  const scheduleStart = timeToMinutes(formatTime(s.startTime));
-                                  const scheduleEnd = timeToMinutes(formatTime(s.endTime));
-                                  const slotStartMin = timeToMinutes(matchSlot.split('-')[0]);
-                                  const slotEndMin = timeToMinutes(matchSlot.split('-')[1]);
-                                  return scheduleStart < slotEndMin && scheduleEnd > slotStartMin;
-                                });
-
-                                return (
-                                  <div
-                                    key={`${course.sectionId}-${idx}`}
-                                    className="p-2 rounded text-xs transition-opacity hover:opacity-90 cursor-pointer text-gray-900 dark:text-gray-100"
-                                    style={{
-                                      backgroundColor: `${course.friendColor}30`,
-                                      borderLeft: `3px solid ${course.friendColor}`
-                                    }}
-                                    onMouseEnter={(e) => {
-                                      setHoveredCourse(course);
-                                      setHoveredCourseTitle(`${course.courseCode}${isLab ? 'L' : ''}`);
-                                      const rect = e.currentTarget.getBoundingClientRect();
-                                      const viewportWidth = window.innerWidth;
-                                      const tooltipWidth = 384; // w-96 = 384px
-                                      const shouldShowLeft = rect.right + tooltipWidth + 10 > viewportWidth;
-
-                                      setTooltipPosition({
-                                        x: shouldShowLeft ? rect.left - tooltipWidth - 10 : rect.right + 10,
-                                        y: rect.top
-                                      });
-                                    }}
-                                    onMouseLeave={() => {
-                                      setHoveredCourse(null);
-                                      setHoveredCourseTitle(null);
-                                    }}
-                                  >
-                                    <div className="font-semibold">
-                                      {course.courseCode}{isLab && 'L'}-{course.sectionName}
-                                    </div>
-                                    <div className="text-gray-600 dark:text-gray-400 text-xs mt-0.5">
-                                      {course.friendName}
-                                    </div>
-                                    {course.roomName && (
-                                      <div className="text-gray-500 text-xs flex flex-col">
-                                        {(isLab ? course.labRoomName || course.labRoomNumber || 'TBA' : course.roomName || course.roomNumber || 'TBA').split(';').map((part, i) => (
-                                          <div key={i}>{part.trim()}</div>
-                                        ))}
-                                      </div>
-                                    )}
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          )}
-                        </td>
-                      );
-                    })}
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Tooltip */}
-        <CourseHoverTooltip
-          course={hoveredCourse}
-          position={tooltipPosition}
-          courseTitle={hoveredCourseTitle}
-          extraFields={hoveredCourse ? [{ label: 'Friend', value: hoveredCourse.friendName }] : []}
-        />
-
-        {/* Footer */}
-        <div className="mt-4 text-center text-sm text-gray-500">
-          Made with 💖 from https://boracle.app
-        </div>
       </div>
     </div>
   );
