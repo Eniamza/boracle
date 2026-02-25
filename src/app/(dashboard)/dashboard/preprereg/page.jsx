@@ -26,7 +26,8 @@ const PreRegistrationPage = () => {
   const [customToast, setCustomToast] = useState({ show: false, message: '', type: 'success' });
   const [filters, setFilters] = useState({
     hideFilled: false,
-    avoidFaculties: []
+    avoidFaculties: [],
+    labFilter: 'all', // 'all', 'with-lab', 'without-lab'
   });
   const [facultySearch, setFacultySearch] = useState('');
   const [facultyDropdownOpen, setFacultyDropdownOpen] = useState(false);
@@ -158,6 +159,12 @@ const PreRegistrationPage = () => {
           course.faculties?.toLowerCase().includes(faculty.toLowerCase())
         )
       );
+    }
+
+    if (filters.labFilter === 'with-lab') {
+      filtered = filtered.filter(course => course.labSchedules && course.labSchedules.length > 0);
+    } else if (filters.labFilter === 'without-lab') {
+      filtered = filtered.filter(course => !course.labSchedules || course.labSchedules.length === 0);
     }
 
     // Apply sorting
@@ -513,9 +520,8 @@ const PreRegistrationPage = () => {
 
             {/* Active Filters Dropdown - Shows when filters are applied */}
             {/* Saihan: Why are these comments so hard to read, ugh */}
-            {(filters.hideFilled || filters.avoidFaculties.length > 0) && (
+            {(filters.hideFilled || filters.avoidFaculties.length > 0 || filters.labFilter !== 'all') && (
               <div className="relative" ref={filterDropdownRef}>
-                {/* Dropdown Trigger Button */}
                 <button
                   onClick={() => setFilterDropdownOpen(!filterDropdownOpen)}
                   className="h-[50px] px-4 bg-red-600 hover:bg-red-700 text-white rounded-lg flex items-center gap-2 transition-colors"
@@ -525,7 +531,7 @@ const PreRegistrationPage = () => {
                     <Filter className="w-5 h-5" />
                     {/* Badge showing count of active filters */}
                     <span className="absolute -top-1.5 -right-1.5 bg-white text-red-600 text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold">
-                      {(filters.hideFilled ? 1 : 0) + filters.avoidFaculties.length}
+                      {(filters.hideFilled ? 1 : 0) + filters.avoidFaculties.length + (filters.labFilter !== 'all' ? 1 : 0)}
                     </span>
                   </div>
                 </button>
@@ -540,7 +546,7 @@ const PreRegistrationPage = () => {
                         {/* Clear All Button */}
                         <button
                           onClick={() => {
-                            setFilters({ hideFilled: false, avoidFaculties: [] });
+                            setFilters({ hideFilled: false, avoidFaculties: [], labFilter: 'all' });
                             setFilterDropdownOpen(false);
                           }}
                           className="text-xs text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 font-medium"
@@ -562,6 +568,22 @@ const PreRegistrationPage = () => {
                           <div className="flex items-center gap-2">
                             <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                             <span className="text-sm text-gray-700 dark:text-gray-300">Hide Filled Sections</span>
+                          </div>
+                          <X className="w-4 h-4 text-gray-400 group-hover:text-red-500 transition-colors" />
+                        </button>
+                      )}
+
+                      {/* Lab Filter Status */}
+                      {filters.labFilter !== 'all' && (
+                        <button
+                          onClick={() => setFilters(prev => ({ ...prev, labFilter: 'all' }))}
+                          className="w-full flex items-center justify-between px-3 py-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors group mt-1"
+                        >
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                            <span className="text-sm text-gray-700 dark:text-gray-300">
+                              {filters.labFilter === 'with-lab' ? 'Only Courses with Labs' : 'Only Courses without Labs'}
+                            </span>
                           </div>
                           <X className="w-4 h-4 text-gray-400 group-hover:text-red-500 transition-colors" />
                         </button>
@@ -596,8 +618,6 @@ const PreRegistrationPage = () => {
               </div>
             )}
           </div>
-
-          {/* Selected Courses Tags */}
           {selectedCourses.length > 0 && (
             isMobile ? (
               <div className="mt-3">
@@ -860,219 +880,254 @@ const PreRegistrationPage = () => {
       </div>
 
       {/* Filter Modal */}
-      {showFilterModal && (
-        <div
-          className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[60] p-4"
-          onClick={() => setShowFilterModal(false)}
-        >
+      {
+        showFilterModal && (
           <div
-            className="bg-white dark:bg-[#0f172a] border border-gray-200 dark:border-blue-800/50 rounded-lg max-w-md w-full shadow-xl z-[70]"
-            onClick={(e) => e.stopPropagation()}
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[60] p-4"
+            onClick={() => setShowFilterModal(false)}
           >
-            {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-blue-800/50">
-              <div>
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Filters</h2>
-                <p className="text-sm text-gray-500 dark:text-blue-300/70">Customize your course view</p>
-              </div>
-              <button
-                onClick={() => setShowFilterModal(false)}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-blue-800/30 rounded-lg transition-colors"
-              >
-                <X className="w-5 h-5 text-gray-500 dark:text-blue-300" />
-              </button>
-            </div>
-
-            {/* Content */}
-            <div className="p-4 space-y-5">
-              {/* Hide Filled Sections - Material Design Checkbox */}
-              <label className="flex items-center gap-3 cursor-pointer p-3 bg-gray-100 dark:bg-[#1e3a5f] rounded-lg hover:bg-gray-200 dark:hover:bg-[#234b7a] transition-colors">
-                <div className="relative">
-                  <input
-                    type="checkbox"
-                    checked={filters.hideFilled}
-                    onChange={(e) => setFilters(prev => ({ ...prev, hideFilled: e.target.checked }))}
-                    className="sr-only peer"
-                  />
-                  <div className="w-5 h-5 border-2 border-blue-500 dark:border-blue-400 rounded bg-transparent peer-checked:bg-blue-500 peer-checked:border-blue-500 transition-all duration-200 flex items-center justify-center">
-                    {filters.hideFilled && (
-                      <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                      </svg>
-                    )}
-                  </div>
-                  <div className="absolute inset-0 -m-2 rounded-full peer-focus-visible:ring-2 peer-focus-visible:ring-blue-400 peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-gray-100 dark:peer-focus-visible:ring-offset-[#1e3a5f]"></div>
-                </div>
+            <div
+              className="bg-white dark:bg-[#0f172a] border border-gray-200 dark:border-blue-800/50 rounded-lg max-w-md w-full shadow-xl z-[70]"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-blue-800/50">
                 <div>
-                  <span className="font-medium text-gray-900 dark:text-white">Hide Filled Sections</span>
-                  <p className="text-xs text-gray-500 dark:text-blue-300/70">Only show sections with available seats</p>
+                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Filters</h2>
+                  <p className="text-sm text-gray-500 dark:text-blue-300/70">Customize your course view</p>
                 </div>
-              </label>
+                <button
+                  onClick={() => setShowFilterModal(false)}
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-blue-800/30 rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5 text-gray-500 dark:text-blue-300" />
+                </button>
+              </div>
 
-              {/* Avoid Faculties - Dropdown */}
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700 dark:text-blue-200">Avoid Faculties</label>
-
-                {/* Selected Faculties Tags - above input */}
-                {filters.avoidFaculties.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mb-2">
-                    {filters.avoidFaculties.map(faculty => (
-                      <span
-                        key={faculty}
-                        className="px-3 py-1.5 bg-red-100 dark:bg-red-500/20 border border-red-300 dark:border-red-500/50 rounded-full text-sm flex items-center gap-2 text-red-700 dark:text-red-300"
-                      >
-                        {faculty}
-                        <button
-                          onClick={() => removeFaculty(faculty)}
-                          className="hover:text-red-500 dark:hover:text-red-200 transition-colors"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                )}
-
-                <div className="relative" ref={facultyDropdownRef}>
-                  {/* Input with dropdown trigger */}
-                  <div className="w-full bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-gray-100 flex items-center">
+              {/* Content */}
+              <div className="p-4 space-y-5">
+                {/* Hide Filled Sections - Material Design Checkbox */}
+                <label className="flex items-center gap-3 cursor-pointer p-3 bg-gray-100 dark:bg-[#1e3a5f] rounded-lg hover:bg-gray-200 dark:hover:bg-[#234b7a] transition-colors">
+                  <div className="relative">
                     <input
-                      type="text"
-                      placeholder="Search faculties..."
-                      value={facultySearch}
-                      onChange={(e) => {
-                        setFacultySearch(e.target.value);
-                        setFacultyDropdownOpen(true);
-                      }}
-                      onFocus={() => setFacultyDropdownOpen(true)}
-                      onKeyDown={(e) => {
-                        const filteredList = cdnFacultyList.filter(initial =>
-                          initial.toLowerCase().includes(facultySearch.toLowerCase())
-                        );
-
-                        if (e.key === 'ArrowDown') {
-                          e.preventDefault();
-                          setHighlightedIndex(prev => Math.min(prev + 1, filteredList.length - 1));
-                        } else if (e.key === 'ArrowUp') {
-                          e.preventDefault();
-                          setHighlightedIndex(prev => Math.max(prev - 1, 0));
-                        } else if (e.key === 'Enter' && filteredList.length > 0) {
-                          e.preventDefault();
-                          const selected = filteredList[highlightedIndex];
-                          if (selected) {
-                            const isSelected = filters.avoidFaculties.includes(selected);
-                            if (isSelected) {
-                              removeFaculty(selected);
-                            } else {
-                              setFilters(prev => ({
-                                ...prev,
-                                avoidFaculties: [...prev.avoidFaculties, selected]
-                              }));
-                            }
-                            setFacultySearch('');
-                          }
-                        } else if (e.key === 'Escape') {
-                          setFacultyDropdownOpen(false);
-                        }
-                      }}
-                      className="flex-1 px-4 py-2.5 bg-transparent text-gray-900 dark:text-gray-100 placeholder-gray-500 focus:outline-none text-sm"
+                      type="checkbox"
+                      checked={filters.hideFilled}
+                      onChange={(e) => setFilters(prev => ({ ...prev, hideFilled: e.target.checked }))}
+                      className="sr-only peer"
                     />
+                    <div className="w-5 h-5 border-2 border-blue-500 dark:border-blue-400 rounded bg-transparent peer-checked:bg-blue-500 peer-checked:border-blue-500 transition-all duration-200 flex items-center justify-center">
+                      {filters.hideFilled && (
+                        <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                    </div>
+                    <div className="absolute inset-0 -m-2 rounded-full peer-focus-visible:ring-2 peer-focus-visible:ring-blue-400 peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-gray-100 dark:peer-focus-visible:ring-offset-[#1e3a5f]"></div>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-900 dark:text-white">Hide Filled Sections</span>
+                    <p className="text-xs text-gray-500 dark:text-blue-300/70">Only show sections with available seats</p>
+                  </div>
+                </label>
+
+                {/* Lab Filter - Segmented Control */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-blue-200">Lab requirement</label>
+                  <div className="flex bg-gray-100 dark:bg-[#1e3a5f] rounded-lg p-1 gap-1">
                     <button
-                      type="button"
-                      onClick={() => setFacultyDropdownOpen(!facultyDropdownOpen)}
-                      className="px-3 py-2.5 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors rounded-r-lg"
+                      onClick={() => setFilters(prev => ({ ...prev, labFilter: 'all' }))}
+                      className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all duration-200 ${filters.labFilter === 'all'
+                        ? 'bg-white dark:bg-[#2a4d7d] text-gray-900 dark:text-white shadow-sm'
+                        : 'text-gray-500 dark:text-blue-300 hover:text-gray-700 dark:hover:text-blue-200'
+                        }`}
                     >
-                      <ChevronDown className={`h-4 w-4 text-gray-500 dark:text-gray-400 transition-transform ${facultyDropdownOpen ? 'rotate-180' : ''}`} />
+                      All Courses
+                    </button>
+                    <button
+                      onClick={() => setFilters(prev => ({ ...prev, labFilter: 'with-lab' }))}
+                      className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all duration-200 ${filters.labFilter === 'with-lab'
+                        ? 'bg-white dark:bg-[#2a4d7d] text-purple-700 dark:text-purple-300 shadow-sm'
+                        : 'text-gray-500 dark:text-blue-300 hover:text-gray-700 dark:hover:text-blue-200'
+                        }`}
+                    >
+                      With Labs
+                    </button>
+                    <button
+                      onClick={() => setFilters(prev => ({ ...prev, labFilter: 'without-lab' }))}
+                      className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all duration-200 ${filters.labFilter === 'without-lab'
+                        ? 'bg-white dark:bg-[#2a4d7d] text-blue-700 dark:text-blue-300 shadow-sm'
+                        : 'text-gray-500 dark:text-blue-300 hover:text-gray-700 dark:hover:text-blue-200'
+                        }`}
+                    >
+                      Without Labs
                     </button>
                   </div>
+                </div>
 
-                  {/* Dropdown - positioned to overflow modal */}
-                  {facultyDropdownOpen && (
-                    <div
-                      className="absolute z-[9999] mt-1 w-full rounded-lg border border-gray-200 dark:border-blue-700/50 bg-white dark:bg-[#0f172a] shadow-xl"
-                      style={{ maxHeight: '320px' }}
-                    >
-                      <div
-                        ref={facultyListRef}
-                        className="overflow-y-auto max-h-[320px] faculty-dropdown-scroll"
-                      >
-                        {cdnFacultyList
-                          .filter(initial =>
-                            initial.toLowerCase().includes(facultySearch.toLowerCase())
-                          )
-                          .slice(0, 100)
-                          .map((initial, index) => {
-                            const isSelected = filters.avoidFaculties.includes(initial);
-                            const isHighlighted = index === highlightedIndex;
-                            return (
-                              <div
-                                key={initial}
-                                data-index={index}
-                                className={`flex items-center px-3 py-2.5 cursor-pointer transition-colors ${isHighlighted ? 'bg-blue-600 text-white' : isSelected ? 'bg-blue-300/60 dark:bg-blue-800/40' : 'hover:bg-gray-100 dark:hover:bg-[#1e3a5f]'
-                                  }`}
-                                onClick={() => {
-                                  if (isSelected) {
-                                    removeFaculty(initial);
-                                  } else {
-                                    setFilters(prev => ({
-                                      ...prev,
-                                      avoidFaculties: [...prev.avoidFaculties, initial]
-                                    }));
-                                  }
-                                  setFacultySearch('');
-                                }}
-                                onMouseEnter={() => setHighlightedIndex(index)}
-                              >
-                                <div className="flex-1 min-w-0">
-                                  <div className={`font-medium text-sm ${isHighlighted ? 'text-white' : 'text-gray-900 dark:text-white'}`}>{initial}</div>
-                                </div>
-                                {isSelected && (
-                                  <div className={`ml-2 ${isHighlighted ? 'text-white' : 'text-blue-600 dark:text-blue-400'}`}>
-                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                    </svg>
-                                  </div>
-                                )}
-                              </div>
-                            );
-                          })}
-                        {cdnFacultyList.length === 0 && (
-                          <div className="py-4 text-center text-sm text-gray-500 dark:text-blue-300/70">Loading faculties...</div>
-                        )}
-                        {cdnFacultyList.length > 0 &&
-                          cdnFacultyList.filter(initial =>
-                            initial.toLowerCase().includes(facultySearch.toLowerCase())
-                          ).length === 0 && (
-                            <div className="py-4 text-center text-sm text-gray-500 dark:text-blue-300/70">No faculty found</div>
-                          )}
-                      </div>
+                {/* Avoid Faculties - Dropdown */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-blue-200">Avoid Faculties</label>
+
+                  {/* Selected Faculties Tags - above input */}
+                  {filters.avoidFaculties.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mb-2">
+                      {filters.avoidFaculties.map(faculty => (
+                        <span
+                          key={faculty}
+                          className="px-3 py-1.5 bg-red-100 dark:bg-red-500/20 border border-red-300 dark:border-red-500/50 rounded-full text-sm flex items-center gap-2 text-red-700 dark:text-red-300"
+                        >
+                          {faculty}
+                          <button
+                            onClick={() => removeFaculty(faculty)}
+                            className="hover:text-red-500 dark:hover:text-red-200 transition-colors"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </span>
+                      ))}
                     </div>
                   )}
+
+                  <div className="relative" ref={facultyDropdownRef}>
+                    {/* Input with dropdown trigger */}
+                    <div className="w-full bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-gray-100 flex items-center">
+                      <input
+                        type="text"
+                        placeholder="Search faculties..."
+                        value={facultySearch}
+                        onChange={(e) => {
+                          setFacultySearch(e.target.value);
+                          setFacultyDropdownOpen(true);
+                        }}
+                        onFocus={() => setFacultyDropdownOpen(true)}
+                        onKeyDown={(e) => {
+                          const filteredList = cdnFacultyList.filter(initial =>
+                            initial.toLowerCase().includes(facultySearch.toLowerCase())
+                          );
+
+                          if (e.key === 'ArrowDown') {
+                            e.preventDefault();
+                            setHighlightedIndex(prev => Math.min(prev + 1, filteredList.length - 1));
+                          } else if (e.key === 'ArrowUp') {
+                            e.preventDefault();
+                            setHighlightedIndex(prev => Math.max(prev - 1, 0));
+                          } else if (e.key === 'Enter' && filteredList.length > 0) {
+                            e.preventDefault();
+                            const selected = filteredList[highlightedIndex];
+                            if (selected) {
+                              const isSelected = filters.avoidFaculties.includes(selected);
+                              if (isSelected) {
+                                removeFaculty(selected);
+                              } else {
+                                setFilters(prev => ({
+                                  ...prev,
+                                  avoidFaculties: [...prev.avoidFaculties, selected]
+                                }));
+                              }
+                              setFacultySearch('');
+                            }
+                          } else if (e.key === 'Escape') {
+                            setFacultyDropdownOpen(false);
+                          }
+                        }}
+                        className="flex-1 px-4 py-2.5 bg-transparent text-gray-900 dark:text-gray-100 placeholder-gray-500 focus:outline-none text-sm"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setFacultyDropdownOpen(!facultyDropdownOpen)}
+                        className="px-3 py-2.5 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors rounded-r-lg"
+                      >
+                        <ChevronDown className={`h-4 w-4 text-gray-500 dark:text-gray-400 transition-transform ${facultyDropdownOpen ? 'rotate-180' : ''}`} />
+                      </button>
+                    </div>
+
+                    {/* Dropdown - positioned to overflow modal */}
+                    {facultyDropdownOpen && (
+                      <div
+                        className="absolute z-[9999] mt-1 w-full rounded-lg border border-gray-200 dark:border-blue-700/50 bg-white dark:bg-[#0f172a] shadow-xl"
+                        style={{ maxHeight: '320px' }}
+                      >
+                        <div
+                          ref={facultyListRef}
+                          className="overflow-y-auto max-h-[320px] faculty-dropdown-scroll"
+                        >
+                          {cdnFacultyList
+                            .filter(initial =>
+                              initial.toLowerCase().includes(facultySearch.toLowerCase())
+                            )
+                            .map((initial, index) => {
+                              const isSelected = filters.avoidFaculties.includes(initial);
+                              const isHighlighted = index === highlightedIndex;
+                              return (
+                                <div
+                                  key={initial}
+                                  data-index={index}
+                                  className={`flex items-center px-3 py-2.5 cursor-pointer transition-colors ${isHighlighted ? 'bg-blue-600 text-white' : isSelected ? 'bg-blue-300/60 dark:bg-blue-800/40' : 'hover:bg-gray-100 dark:hover:bg-[#1e3a5f]'
+                                    }`}
+                                  onClick={() => {
+                                    if (isSelected) {
+                                      removeFaculty(initial);
+                                    } else {
+                                      setFilters(prev => ({
+                                        ...prev,
+                                        avoidFaculties: [...prev.avoidFaculties, initial]
+                                      }));
+                                    }
+                                    setFacultySearch('');
+                                  }}
+                                  onMouseEnter={() => setHighlightedIndex(index)}
+                                >
+                                  <div className="flex-1 min-w-0">
+                                    <div className={`font-medium text-sm ${isHighlighted ? 'text-white' : 'text-gray-900 dark:text-white'}`}>{initial}</div>
+                                  </div>
+                                  {isSelected && (
+                                    <div className={`ml-2 ${isHighlighted ? 'text-white' : 'text-blue-600 dark:text-blue-400'}`}>
+                                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                      </svg>
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          {cdnFacultyList.length === 0 && (
+                            <div className="py-4 text-center text-sm text-gray-500 dark:text-blue-300/70">Loading faculties...</div>
+                          )}
+                          {cdnFacultyList.length > 0 &&
+                            cdnFacultyList.filter(initial =>
+                              initial.toLowerCase().includes(facultySearch.toLowerCase())
+                            ).length === 0 && (
+                              <div className="py-4 text-center text-sm text-gray-500 dark:text-blue-300/70">No faculty found</div>
+                            )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Footer */}
-            <div className="flex gap-2 p-4 border-t border-gray-200 dark:border-blue-800/50 bg-gray-50 dark:bg-[#0c1629]">
-              <button
-                onClick={() => {
-                  setFilters({ hideFilled: false, avoidFaculties: [] });
-                  setShowFilterModal(false);
-                }}
-                className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 rounded-lg transition-colors font-medium text-white"
-              >
-                Reset Filters
-              </button>
-              <button
-                onClick={() => setShowFilterModal(false)}
-                className="flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors font-medium text-white"
-              >
-                Apply
-              </button>
+              {/* Footer */}
+              <div className="flex gap-2 p-4 border-t border-gray-200 dark:border-blue-800/50 bg-gray-50 dark:bg-[#0c1629]">
+                <button
+                  onClick={() => {
+                    setFilters({ hideFilled: false, avoidFaculties: [] });
+                    setShowFilterModal(false);
+                  }}
+                  className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 rounded-lg transition-colors font-medium text-white"
+                >
+                  Reset Filters
+                </button>
+                <button
+                  onClick={() => setShowFilterModal(false)}
+                  className="flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors font-medium text-white"
+                >
+                  Apply
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* Routine Modal — always rendered, uses isOpen for animated transitions */}
       <RoutineView
@@ -1094,51 +1149,53 @@ const PreRegistrationPage = () => {
       />
 
       {/* Faculty Hover Tooltip */}
-      {hoveredFaculty && (
-        <div
-          className="fixed z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg p-4 shadow-xl w-80 pointer-events-none"
-          style={{
-            left: `${Math.min(facultyTooltipPosition.x, window.innerWidth - 340)}px`,
-            top: `${facultyTooltipPosition.y}px`
-          }}
-        >
-          <div className="flex gap-4">
-            {/* Faculty Image */}
-            <div className="shrink-0">
-              {hoveredFaculty.imgUrl && hoveredFaculty.imgUrl !== 'N/A' && !facultyImageError ? (
-                <img
-                  src={hoveredFaculty.imgUrl}
-                  alt={hoveredFaculty.facultyName || 'Faculty'}
-                  className="w-16 h-16 rounded-full object-cover border-2 border-blue-500"
-                  onError={() => setFacultyImageError(true)}
-                />
-              ) : (
-                <div className="w-16 h-16 rounded-full bg-blue-500 dark:bg-blue-400 flex items-center justify-center border-2 border-blue-600 dark:border-blue-500">
-                  <svg className="w-10 h-10 text-white dark:text-blue-100" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-                  </svg>
-                </div>
-              )}
-            </div>
+      {
+        hoveredFaculty && (
+          <div
+            className="fixed z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg p-4 shadow-xl w-80 pointer-events-none"
+            style={{
+              left: `${Math.min(facultyTooltipPosition.x, window.innerWidth - 340)}px`,
+              top: `${facultyTooltipPosition.y}px`
+            }}
+          >
+            <div className="flex gap-4">
+              {/* Faculty Image */}
+              <div className="shrink-0">
+                {hoveredFaculty.imgUrl && hoveredFaculty.imgUrl !== 'N/A' && !facultyImageError ? (
+                  <img
+                    src={hoveredFaculty.imgUrl}
+                    alt={hoveredFaculty.facultyName || 'Faculty'}
+                    className="w-16 h-16 rounded-full object-cover border-2 border-blue-500"
+                    onError={() => setFacultyImageError(true)}
+                  />
+                ) : (
+                  <div className="w-16 h-16 rounded-full bg-blue-500 dark:bg-blue-400 flex items-center justify-center border-2 border-blue-600 dark:border-blue-500">
+                    <svg className="w-10 h-10 text-white dark:text-blue-100" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                    </svg>
+                  </div>
+                )}
+              </div>
 
-            {/* Faculty Details */}
-            <div className="flex-1 space-y-1 text-sm">
-              <div>
-                <span className="text-gray-500 dark:text-gray-400">Initial:</span>{' '}
-                <span className="font-medium text-blue-600 dark:text-blue-400">{hoveredFaculty.initial || 'Not Found'}</span>
-              </div>
-              <div>
-                <span className="text-gray-500 dark:text-gray-400">Name:</span>{' '}
-                <span className="font-medium text-gray-900 dark:text-white">{hoveredFaculty.facultyName || 'Not Found'}</span>
-              </div>
-              <div>
-                <span className="text-gray-500 dark:text-gray-400">Email:</span>{' '}
-                <span className="font-medium text-xs text-gray-700 dark:text-gray-300">{hoveredFaculty.facultyEmail || 'Not Found'}</span>
+              {/* Faculty Details */}
+              <div className="flex-1 space-y-1 text-sm">
+                <div>
+                  <span className="text-gray-500 dark:text-gray-400">Initial:</span>{' '}
+                  <span className="font-medium text-blue-600 dark:text-blue-400">{hoveredFaculty.initial || 'Not Found'}</span>
+                </div>
+                <div>
+                  <span className="text-gray-500 dark:text-gray-400">Name:</span>{' '}
+                  <span className="font-medium text-gray-900 dark:text-white">{hoveredFaculty.facultyName || 'Not Found'}</span>
+                </div>
+                <div>
+                  <span className="text-gray-500 dark:text-gray-400">Email:</span>{' '}
+                  <span className="font-medium text-xs text-gray-700 dark:text-gray-300">{hoveredFaculty.facultyEmail || 'Not Found'}</span>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* Mobile Course Bottom Sheet */}
       <CourseBottomSheet
@@ -1161,7 +1218,7 @@ const PreRegistrationPage = () => {
         </div>
         <span className="text-sm font-medium">View Routine</span>
       </button>
-    </div>
+    </div >
   );
 };
 
