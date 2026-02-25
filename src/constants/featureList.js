@@ -5,19 +5,19 @@ const featureList = [
         index: 1,
         title: "PrePreReg",
         description: "The PrePreReg we love is now in Oracle! Build your routine with ease and get the best possible schedule based on live data",
-        footer: "🟢 In Progress"
+        footer: "🟢 Live"
     },
     {
         index: 2,
         title: "Merge Routines",
         description: "Easily merge your friends' routines and optimize your schedule. Homies Unite!",
-        footer: "🟢 In Progress"
+        footer: "🟢 Live"
     },
     {
         index: 3,
         title: "Swap Courses",
         description: "A centralized platform to swap courses with other students. No more endless emails and waiting for replies!",
-        footer: "🟢 In Progress"
+        footer: "🟢 Live"
     },
     {
         index: 4,
