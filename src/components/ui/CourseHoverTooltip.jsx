@@ -121,6 +121,19 @@ const CourseHoverTooltip = ({ course: propCourse, position: propPosition, course
         return `${displayHour}:${minutes} ${ampm}`;
     };
 
+    // Helper to split exam details into Day and Time lines
+    const formatExamDate = (examString) => {
+        if (!examString || examString === 'TBA') return { day: 'TBA', time: null };
+        const timeMatch = examString.match(/\s(\d{1,2}:\d{2}\s(?:AM|PM)\s*-\s*\d{1,2}:\d{2}\s(?:AM|PM))/);
+
+        if (timeMatch) {
+            const time = timeMatch[1];
+            const day = examString.replace(timeMatch[0], '').trim();
+            return { day, time };
+        }
+        return { day: examString, time: null };
+    };
+
     const displayTitle = courseTitle || `${course.courseCode}`;
 
     return createPortal(
@@ -286,12 +299,28 @@ const CourseHoverTooltip = ({ course: propCourse, position: propPosition, course
                 {/* Schedule Info */}
                 <div className="grid grid-cols-2 gap-2 text-xs bg-blue-50 dark:bg-blue-900/20 p-2 rounded border border-blue-100 dark:border-blue-800/30">
                     <div>
-                        <span className="text-blue-600 dark:text-blue-400 font-medium block">Mid Exam</span>
-                        <span className="text-gray-700 dark:text-gray-300">{course.sectionSchedule?.midExamDetail || 'TBA'}</span>
+                        <span className="text-blue-600 dark:text-blue-400 font-medium block mb-0.5">Mid Exam</span>
+                        {(() => {
+                            const { day, time } = formatExamDate(course.sectionSchedule?.midExamDetail);
+                            return (
+                                <div className="text-gray-700 dark:text-gray-300">
+                                    <div className="font-semibold">{day}</div>
+                                    {time && <div className="text-[11px] mt-0.5 text-gray-500 dark:text-gray-400">{time}</div>}
+                                </div>
+                            );
+                        })()}
                     </div>
                     <div>
-                        <span className="text-blue-600 dark:text-blue-400 font-medium block">Final Exam</span>
-                        <span className="text-gray-700 dark:text-gray-300">{course.sectionSchedule?.finalExamDetail || 'TBA'}</span>
+                        <span className="text-blue-600 dark:text-blue-400 font-medium block mb-0.5">Final Exam</span>
+                        {(() => {
+                            const { day, time } = formatExamDate(course.sectionSchedule?.finalExamDetail);
+                            return (
+                                <div className="text-gray-700 dark:text-gray-300">
+                                    <div className="font-semibold">{day}</div>
+                                    {time && <div className="text-[11px] mt-0.5 text-gray-500 dark:text-gray-400">{time}</div>}
+                                </div>
+                            );
+                        })()}
                     </div>
                 </div>
 
