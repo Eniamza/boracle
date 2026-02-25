@@ -1000,7 +1000,6 @@ const PreRegistrationPage = () => {
                           .filter(initial =>
                             initial.toLowerCase().includes(facultySearch.toLowerCase())
                           )
-                          .slice(0, 100)
                           .map((initial, index) => {
                             const isSelected = filters.avoidFaculties.includes(initial);
                             const isHighlighted = index === highlightedIndex;
