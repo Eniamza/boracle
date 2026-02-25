@@ -197,7 +197,7 @@ const RoutineTableGrid = ({
                                       </svg>
                                       <div className="flex flex-col">
                                         {(isLab ? course.labRoomName || course.labRoomNumber || 'TBA' : course.roomName || course.roomNumber || 'TBA').split(';').map((part, i) => (
-                                          <span key={i} className="leading-tight">{part.trim()}</span>
+                                          <div key={i} className="leading-tight">{part.trim()}</div>
                                         ))}
                                       </div>
                                     </div>

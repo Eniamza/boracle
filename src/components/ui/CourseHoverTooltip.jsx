@@ -211,9 +211,19 @@ const CourseHoverTooltip = ({ course: propCourse, position: propPosition, course
                         <div className="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-2.5 border border-orange-200 dark:border-orange-800/30">
                             <div className="flex justify-between items-center mb-1.5">
                                 <span className="text-xs font-bold text-orange-700 dark:text-orange-400 uppercase tracking-wider">Class Schedule</span>
-                                <span className="text-xs font-bold text-orange-700 dark:text-orange-300 bg-white dark:bg-orange-900/40 px-2 py-0.5 rounded border border-orange-200 dark:border-orange-800/50 shadow-sm">
-                                    Room: {course.roomName || 'TBA'}
-                                </span>
+                                <div className="text-xs font-bold text-orange-700 dark:text-orange-300 bg-white dark:bg-orange-900/40 px-2 py-0.5 rounded border border-orange-200 dark:border-orange-800/50 shadow-sm text-right">
+                                    {course.roomName && course.roomName.includes(';') ? (
+                                        course.roomName.split(';').map((part, index, array) => (
+                                            <React.Fragment key={index}>
+                                                {index === 0 && 'Room: '}
+                                                {part.trim()}
+                                                {index < array.length - 1 && <br />}
+                                            </React.Fragment>
+                                        ))
+                                    ) : (
+                                        `Room: ${course.roomName || 'TBA'}`
+                                    )}
+                                </div>
                             </div>
                             <div className="space-y-1">
                                 {course.sectionSchedule.classSchedules.map((sched, idx) => (
@@ -231,9 +241,19 @@ const CourseHoverTooltip = ({ course: propCourse, position: propPosition, course
                         <div className="bg-teal-50 dark:bg-teal-900/20 rounded-lg p-2.5 border border-teal-200 dark:border-teal-800/30">
                             <div className="flex justify-between items-center mb-1.5">
                                 <span className="text-xs font-bold text-teal-700 dark:text-teal-400 uppercase tracking-wider">Lab Schedule</span>
-                                <span className="text-xs font-bold text-teal-700 dark:text-teal-300 bg-white dark:bg-teal-900/40 px-2 py-0.5 rounded border border-teal-200 dark:border-teal-800/50 shadow-sm">
-                                    Room: {course.labRoomName || 'TBA'}
-                                </span>
+                                <div className="text-xs font-bold text-teal-700 dark:text-teal-300 bg-white dark:bg-teal-900/40 px-2 py-0.5 rounded border border-teal-200 dark:border-teal-800/50 shadow-sm text-right">
+                                    {course.labRoomName && course.labRoomName.includes(';') ? (
+                                        course.labRoomName.split(';').map((part, index, array) => (
+                                            <React.Fragment key={index}>
+                                                {index === 0 && 'Room: '}
+                                                {part.trim()}
+                                                {index < array.length - 1 && <br />}
+                                            </React.Fragment>
+                                        ))
+                                    ) : (
+                                        `Room: ${course.labRoomName || 'TBA'}`
+                                    )}
+                                </div>
                             </div>
                             <div className="space-y-1">
                                 {course.labSchedules.map((sched, idx) => (

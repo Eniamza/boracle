@@ -459,7 +459,7 @@ const SharedMergedRoutinePage = () => {
                                                                                                     </svg>
                                                                                                     <div className="flex flex-col">
                                                                                                         {(isLab ? course.labRoomName || course.labRoomNumber || course.roomName : course.roomName).split(';').map((part, i) => (
-                                                                                                            <span key={i} className="leading-tight">{part.trim()}</span>
+                                                                                                            <div key={i} className="leading-tight">{part.trim()}</div>
                                                                                                         ))}
                                                                                                     </div>
                                                                                                 </div>
@@ -583,7 +583,7 @@ const SharedMergedRoutinePage = () => {
                                                                                             </svg>
                                                                                             <div className="flex flex-col">
                                                                                                 {(isLab ? course.labRoomName || course.labRoomNumber || course.roomName : course.roomName).split(';').map((part, i) => (
-                                                                                                    <span key={i} className="leading-tight">{part.trim()}</span>
+                                                                                                    <div key={i} className="leading-tight">{part.trim()}</div>
                                                                                                 ))}
                                                                                             </div>
                                                                                         </div>

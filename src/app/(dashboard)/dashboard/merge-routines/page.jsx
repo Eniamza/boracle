@@ -911,8 +911,10 @@ const MergedRoutineGrid = ({ courses, friends }) => {
                                       {course.friendName}
                                     </div>
                                     {course.roomName && (
-                                      <div className="text-gray-500 text-xs">
-                                        {isLab ? course.labRoomName || course.labRoomNumber || 'TBA' : course.roomName || course.roomNumber || 'TBA'}
+                                      <div className="text-gray-500 text-xs flex flex-col">
+                                        {(isLab ? course.labRoomName || course.labRoomNumber || 'TBA' : course.roomName || course.roomNumber || 'TBA').split(';').map((part, i) => (
+                                          <div key={i}>{part.trim()}</div>
+                                        ))}
                                       </div>
                                     )}
                                   </div>

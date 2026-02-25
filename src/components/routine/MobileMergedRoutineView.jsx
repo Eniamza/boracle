@@ -232,8 +232,15 @@ const MobileMergedRoutineView = ({
                                         <div className="font-semibold text-base text-gray-900 dark:text-gray-100">
                                             {course.courseCode}{isLab && 'L'}-{course.sectionName}
                                         </div>
-                                        <div className="text-sm text-gray-500 dark:text-gray-400 mt-0.5 flex items-center gap-2">
-                                            <span>📍 {room}</span>
+                                        <div className="text-sm text-gray-500 dark:text-gray-400 mt-0.5 flex items-start gap-2">
+                                            <div className="flex items-start gap-1">
+                                                <span>📍</span>
+                                                <div className="flex flex-col">
+                                                    {room.split(';').map((part, i) => (
+                                                        <div key={i}>{part.trim()}</div>
+                                                    ))}
+                                                </div>
+                                            </div>
                                             {course.faculties && (
                                                 <>
                                                     <span className="text-gray-300 dark:text-gray-600">·</span>
