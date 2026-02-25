@@ -911,20 +911,20 @@ const SavedRoutinesPage = () => {
             >
               {/* Routine Header */}
               <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-blue-100 dark:bg-blue-600/20 rounded-lg">
+                <div className="flex items-start gap-3 w-full min-w-0">
+                  <div className="p-2 bg-blue-100 dark:bg-blue-600/20 rounded-lg shrink-0">
                     <Calendar className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                   </div>
-                  <div className="flex flex-col">
+                  <div className="flex flex-col w-full min-w-0">
                     {/* User's First name with routine number */}
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 min-w-0 w-full mb-1">
                       {editingRoutineId === routine.id ? (
-                        <div className="flex flex-col gap-1">
-                          <div className="flex items-center gap-2">
+                        <div className="flex flex-col gap-1 w-full min-w-0">
+                          <div className="flex items-center gap-2 w-full min-w-0">
                             <Input
                               value={editNameInput}
                               onChange={(e) => setEditNameInput(e.target.value)}
-                              className={`h-8 w-48 text-sm bg-gray-50 dark:bg-gray-800 ${editNameInput.length === 40 ? 'border-red-500 focus:border-red-500' : 'border-gray-300 dark:border-gray-700 focus:border-blue-500'} focus:ring-blue-500 text-gray-900 dark:text-white`}
+                              className={`h-8 w-full min-w-0 text-sm bg-gray-50 dark:bg-gray-800 ${editNameInput.length === 40 ? 'border-red-500 focus:border-red-500' : 'border-gray-300 dark:border-gray-700 focus:border-blue-500'} focus:ring-blue-500 text-gray-900 dark:text-white`}
                               placeholder="Enter routine name"
                               maxLength={40}
                               autoFocus
@@ -933,7 +933,7 @@ const SavedRoutinesPage = () => {
                                 if (e.key === 'Escape') setEditingRoutineId(null);
                               }}
                             />
-                            <div className="flex items-center gap-1">
+                            <div className="flex items-center gap-1 shrink-0">
                               <button
                                 onClick={() => updateRoutineName(routine.id)}
                                 disabled={isSavingName}
@@ -972,7 +972,7 @@ const SavedRoutinesPage = () => {
                                 ? `${session.user.name.split(' ')[0].charAt(0).toUpperCase() + session.user.name.split(' ')[0].slice(1).toLowerCase()}'s Routine #${routine.routineNumber}`
                                 : `Routine #${routine.routineNumber}`));
                             }}
-                            className="p-1 opacity-0 group-hover/name:opacity-100 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg text-gray-500 dark:text-gray-400 transition-all duration-200"
+                            className="p-1 group-hover/name:opacity-100 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg text-gray-500 dark:text-gray-400 transition-all duration-200"
                           >
                             <Pencil className="w-3.5 h-3.5" />
                           </button>
