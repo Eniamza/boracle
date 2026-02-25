@@ -7,7 +7,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   trustHost: true,
   providers: [
     Google({
-      checks: ["state"],
       profile(profile) {
         return {
           id: profile.sub,
