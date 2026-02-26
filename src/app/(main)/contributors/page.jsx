@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Loader2, ExternalLink, Github, Sparkles } from "lucide-react";
+import { Loader2, ExternalLink, Github, Sparkles, ChevronDown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { ideaOwners } from "@/constants/ideaOwners";
 
 const ContributorsPage = () => {
     const [contributors, setContributors] = useState([]);
@@ -147,6 +148,67 @@ const ContributorsPage = () => {
                         );
                     })}
                 </div>
+
+                {/* Idea Owners Section */}
+                {ideaOwners && ideaOwners.length > 0 && (
+                    <div className="pt-8 pb-4 space-y-8">
+                        <div className="text-center space-y-4 max-w-2xl mx-auto">
+                            <Badge variant="outline" className="px-3 py-1 bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-800">
+                                <Sparkles className="w-3 h-3 mr-1" />
+                                Idea Owners
+                            </Badge>
+                            <h2 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-4xl">
+                                Features Inspired by <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-400 dark:to-pink-400">Our Community</span>
+                            </h2>
+                            <p className="text-lg text-gray-600 dark:text-gray-400">
+                                Recognizing the brilliant minds whose ideas shaped B.O.R.A.C.L.E
+                            </p>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
+                            {ideaOwners.map((owner, idx) => (
+                                <Card key={idx} className="bg-white dark:bg-gray-950/50 border-gray-200 dark:border-gray-800 hover:shadow-md transition-shadow">
+                                    <CardHeader className="pb-3 flex flex-row justify-between items-start gap-4 space-y-0">
+                                        <div className="space-y-1">
+                                            <CardTitle className="text-xl font-semibold text-gray-900 dark:text-white leading-tight">
+                                                {owner.featureTitle}
+                                            </CardTitle>
+                                            {owner.githubLink && (
+                                                <CardDescription className="font-medium text-purple-600 dark:text-purple-400">
+                                                    @{owner.githubLink.split('/').pop()}
+                                                </CardDescription>
+                                            )}
+                                        </div>
+                                        <a href={owner.githubLink} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-gray-900 dark:text-gray-500 dark:hover:text-white transition-colors flex-shrink-0 mt-1">
+                                            <Github className="w-5 h-5" />
+                                        </a>
+                                    </CardHeader>
+                                    <CardContent className="space-y-4">
+                                        <details className="group [&>summary::-webkit-details-marker]:hidden">
+                                            <summary className="cursor-pointer font-medium text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 list-none flex items-center justify-between gap-1 select-none text-sm">
+                                                <span className="group-open:hidden">View Description</span>
+                                                <span className="hidden group-open:inline">Hide Description</span>
+                                                <ChevronDown className="w-4 h-4 transition-transform group-open:rotate-180" />
+                                            </summary>
+                                            <div className="mt-3 text-sm text-gray-600 dark:text-gray-300 leading-relaxed overflow-hidden">
+                                                {owner.description}
+                                            </div>
+                                        </details>
+
+                                        {owner.originalProjectLink && (
+                                            <div className="pt-3 border-t border-gray-100 dark:border-gray-800">
+                                                <a href={owner.originalProjectLink} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
+                                                    <ExternalLink className="w-4 h-4" />
+                                                    Original Project
+                                                </a>
+                                            </div>
+                                        )}
+                                    </CardContent>
+                                </Card>
+                            ))}
+                        </div>
+                    </div>
+                )}
 
                 {/* Contribution CTA */}
                 <div className="text-center py-12 px-4">
