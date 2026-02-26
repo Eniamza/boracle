@@ -24,6 +24,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Skeleton } from '@/components/ui/skeleton';
 
 /**
  * Wrapper that renders children in a mobile bottom-sheet or desktop centered modal.
@@ -890,9 +891,25 @@ const SavedRoutinesPage = () => {
       <h1 className="text-3xl font-bold mb-8 text-center text-gray-900 dark:text-white">Saved Routines</h1>
       {/* sonner toast handles notifications globally */}
       {loading ? (
-        <div className="flex flex-col items-center justify-center py-24">
-          <RefreshCw className="w-8 h-8 animate-spin text-blue-400 mb-4" />
-          <p className="text-gray-500 dark:text-gray-400">Loading saved routines...</p>
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl p-6 shadow-sm">
+              <div className="flex items-start gap-3 mb-4">
+                <Skeleton className="w-9 h-9 rounded-lg shrink-0" />
+                <div className="flex flex-col gap-2 w-full">
+                  <Skeleton className="h-5 w-3/4" />
+                  <Skeleton className="h-4 w-1/2" />
+                  <Skeleton className="h-3 w-2/5" />
+                  <Skeleton className="h-3 w-1/4" />
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Skeleton className="h-9 flex-1 rounded-lg" />
+                <Skeleton className="h-9 w-10 rounded-lg" />
+                <Skeleton className="h-9 w-10 rounded-lg" />
+              </div>
+            </div>
+          ))}
         </div>
       ) : routines.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-24">
@@ -1082,9 +1099,29 @@ const SavedRoutinesPage = () => {
         </h2>
 
         {loadingMerged ? (
-          <div className="flex flex-col items-center justify-center py-24">
-            <RefreshCw className="w-6 h-6 animate-spin text-purple-400 mb-4" />
-            <p className="text-gray-500 dark:text-gray-400">Loading merged routines...</p>
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {[1, 2].map((i) => (
+              <div key={i} className="bg-white dark:bg-gray-800/50 border border-purple-200 dark:border-purple-700/50 rounded-xl p-6 shadow-sm">
+                <div className="flex items-start gap-3 mb-4">
+                  <Skeleton className="w-9 h-9 rounded-lg shrink-0" />
+                  <div className="flex flex-col gap-2 w-full">
+                    <Skeleton className="h-5 w-3/4" />
+                    <Skeleton className="h-4 w-1/2" />
+                    <Skeleton className="h-3 w-2/5" />
+                    <div className="flex gap-1 mt-1">
+                      <Skeleton className="h-5 w-16 rounded" />
+                      <Skeleton className="h-5 w-14 rounded" />
+                    </div>
+                    <Skeleton className="h-3 w-2/5" />
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <Skeleton className="h-9 flex-1 rounded-lg" />
+                  <Skeleton className="h-9 w-10 rounded-lg" />
+                  <Skeleton className="h-9 w-10 rounded-lg" />
+                </div>
+              </div>
+            ))}
           </div>
         ) : mergedRoutines.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24">

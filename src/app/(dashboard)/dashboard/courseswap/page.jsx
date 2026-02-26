@@ -9,6 +9,7 @@ import SwapCard from '@/components/course-swap/SwapCard';
 import SwapFilter from '@/components/course-swap/SwapFilter';
 import { toast } from 'sonner';
 import globalInfo from '@/constants/globalInfo';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useIsMobile } from '@/hooks/use-mobile';
 import CourseBottomSheet from '@/components/ui/CourseBottomSheet';
 import { useFaculty } from '@/app/contexts/FacultyContext';
@@ -359,9 +360,50 @@ const CourseSwapPage = () => {
         </div>
 
         {loading ? (
-          <div className="text-center py-16">
-            <Loader2 className="h-12 w-12 animate-spin mx-auto text-blue-600 dark:text-blue-400" />
-            <p className="mt-4 text-gray-600 dark:text-gray-400">Loading swaps...</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
+                {/* Status badge */}
+                <div className="px-3 md:px-6 pt-5 pb-4">
+                  <div className="flex justify-end mb-3">
+                    <Skeleton className="h-5 w-14 rounded-full" />
+                  </div>
+                  {/* Offering section */}
+                  <div className="space-y-4">
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Skeleton className="w-4 h-4" />
+                        <Skeleton className="h-3 w-16" />
+                      </div>
+                      <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
+                        <Skeleton className="h-5 w-3/4 mb-2" />
+                        <Skeleton className="h-3 w-1/2" />
+                      </div>
+                    </div>
+                    {/* Looking For section */}
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Skeleton className="w-4 h-4" />
+                        <Skeleton className="h-3 w-20" />
+                      </div>
+                      <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
+                        <div className="flex flex-wrap gap-2">
+                          <Skeleton className="h-7 w-36 rounded-full" />
+                          <Skeleton className="h-7 w-28 rounded-full" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                {/* Footer */}
+                <div className="px-3 md:px-6 py-3 border-t bg-gray-200/60 dark:bg-gray-800/50">
+                  <div className="flex items-center justify-between py-2">
+                    <Skeleton className="h-3 w-20" />
+                    <Skeleton className="h-8 w-28 rounded-lg" />
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         ) : filteredSwaps.length === 0 ? (
           <Card className="bg-white/50 dark:bg-gray-900/50 backdrop-blur border-0 shadow-xl">

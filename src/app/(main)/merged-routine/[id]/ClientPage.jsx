@@ -18,6 +18,7 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Skeleton } from '@/components/ui/skeleton';
 
 const SharedMergedRoutinePage = () => {
     const { id } = useParams();
@@ -234,9 +235,51 @@ const SharedMergedRoutinePage = () => {
     // Loading state
     if (loading) {
         return (
-            <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-gray-50 via-white to-gray-100 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
-                <RefreshCw className="w-8 h-8 animate-spin text-purple-400 mb-4" />
-                <p className="text-gray-500 dark:text-gray-400">Loading shared merged routine...</p>
+            <div className="min-h-screen bg-gradient-to-b from-gray-50 via-white to-gray-100 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 text-gray-900 dark:text-white p-4 sm:p-8">
+                {/* Header Skeleton */}
+                <div className="max-w-7xl mx-auto mb-6">
+                    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-purple-800/50 rounded-xl p-6">
+                        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                            <div className="flex flex-col sm:flex-row items-center gap-3">
+                                <Skeleton className="w-11 h-11 rounded-lg" />
+                                <div className="flex flex-col items-center sm:items-start gap-2">
+                                    <Skeleton className="h-7 w-56" />
+                                    <Skeleton className="h-4 w-64" />
+                                    <Skeleton className="h-3 w-32" />
+                                    <Skeleton className="h-3 w-36" />
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Skeleton className="h-9 w-32 rounded-lg" />
+                                <Skeleton className="h-9 w-32 rounded-lg" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {/* Routine Grid Skeleton */}
+                <div className="max-w-7xl mx-auto">
+                    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4">
+                        {/* Friend legend skeleton */}
+                        <div className="mb-4 flex gap-3">
+                            {[1, 2, 3].map((i) => (
+                                <div key={i} className="flex items-center gap-2">
+                                    <Skeleton className="w-4 h-4 rounded-full" />
+                                    <Skeleton className="h-3 w-16" />
+                                </div>
+                            ))}
+                        </div>
+                        <div className="space-y-3">
+                            {[1, 2, 3, 4, 5, 6].map((i) => (
+                                <div key={i} className="flex gap-3">
+                                    <Skeleton className="h-6 w-24 shrink-0" />
+                                    {[1, 2, 3, 4, 5, 6, 7].map((j) => (
+                                        <Skeleton key={j} className="h-6 flex-1" />
+                                    ))}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
             </div>
         );
     }

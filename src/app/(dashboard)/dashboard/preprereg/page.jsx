@@ -10,6 +10,7 @@ import MobileCourseCard from '@/components/ui/MobileCourseCard';
 import CourseBottomSheet from '@/components/ui/CourseBottomSheet';
 import { useFaculty } from '@/app/contexts/FacultyContext';
 import { useLocalStorage } from '@/hooks/use-local-storage';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const PreRegistrationPage = () => {
   const { data: session } = useSession();
@@ -672,7 +673,34 @@ const PreRegistrationPage = () => {
       {/* Course Table / Mobile Cards */}
       <div className="container mx-auto mt-6">
         {loading ? (
-          <div className="text-center py-8 text-gray-600 dark:text-gray-300">Loading courses...</div>
+          <div className="space-y-0">
+            {/* Skeleton table header */}
+            <div className="flex gap-2 py-3 border-b border-gray-200 dark:border-gray-800">
+              <Skeleton className="h-4 w-[140px]" />
+              <Skeleton className="h-4 w-[100px]" />
+              <Skeleton className="h-4 w-[150px]" />
+              <Skeleton className="h-4 w-[80px]" />
+              <Skeleton className="h-4 w-[80px]" />
+              <Skeleton className="h-4 w-[80px]" />
+              <Skeleton className="h-4 w-[140px]" />
+              <Skeleton className="h-4 w-[140px]" />
+              <Skeleton className="h-4 w-[80px]" />
+            </div>
+            {/* Skeleton rows */}
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+              <div key={i} className="flex items-center gap-2 py-3 border-b border-gray-200 dark:border-gray-800">
+                <Skeleton className="h-4 w-[140px]" />
+                <Skeleton className="h-4 w-[100px]" />
+                <Skeleton className="h-4 w-[150px]" />
+                <Skeleton className="h-4 w-[80px]" />
+                <Skeleton className="h-4 w-[80px]" />
+                <Skeleton className="h-4 w-[80px]" />
+                <Skeleton className="h-5 w-[140px]" />
+                <Skeleton className="h-5 w-[140px]" />
+                <Skeleton className="h-8 w-8 rounded-lg mx-auto" />
+              </div>
+            ))}
+          </div>
         ) : isMobile ? (
           /* Mobile: Card layout */
           <div className="space-y-3 px-1">
