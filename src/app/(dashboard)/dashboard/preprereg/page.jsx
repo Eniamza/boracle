@@ -334,8 +334,8 @@ const PreRegistrationPage = () => {
       // Adding new course - check credit limit
       const newTotalCredits = selectedCourses.reduce((sum, c) => sum + (c.courseCredit || 0), 0) + (course.courseCredit || 0);
 
-      if (newTotalCredits > 15) {
-        toast.error('Cannot add more than 15 credits!');
+      if (newTotalCredits > 25) {
+        toast.error('Cannot add more than 25 credits!');
         return; // Don't proceed further
       }
 
@@ -1169,8 +1169,8 @@ const PreRegistrationPage = () => {
         showRemoveButtons={true}
         headerExtras={
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            Total Credits: <span className={`font-bold ${totalCredits > 15 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
-              {totalCredits}/15
+            Total Credits: <span className={`font-bold ${totalCredits > 25 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
+              {totalCredits}/25
             </span>
           </p>
         }
