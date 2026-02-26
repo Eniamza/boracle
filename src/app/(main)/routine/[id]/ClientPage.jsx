@@ -268,7 +268,7 @@ const SharedRoutinePage = () => {
                                                     <code className={`px-2 py-0.5 rounded font-mono ${copied
                                                         ? 'bg-green-100 dark:bg-green-900/50 text-green-600 dark:text-green-400'
                                                         : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300'
-                                                        }`}>{id}</code>
+                                                        }`}>{id.substring(0, 4)}...{id.substring(id.length - 4)}</code>
                                                     <span className="flex items-center gap-1">
                                                         {copied ? 'Copied' : 'Copy'}
                                                         {copied ? (
