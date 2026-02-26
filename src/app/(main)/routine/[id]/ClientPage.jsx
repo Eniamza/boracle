@@ -11,6 +11,12 @@ import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
 import RoutineTableGrid from '@/components/routine/RoutineTableGrid';
 import { useFaculty } from '@/app/contexts/FacultyContext';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const SharedRoutinePage = () => {
     const { id } = useParams();
@@ -213,26 +219,35 @@ const SharedRoutinePage = () => {
                                         : 'Shared Routine'}
                                 </h1>
                                 {/* Copy ID button — matching saved routines page pattern */}
-                                <button
-                                    onClick={copyRoutineId}
-                                    className={`flex items-center gap-1.5 mt-1 text-xs transition-colors ${copied
-                                        ? 'text-green-500 dark:text-green-400'
-                                        : 'text-gray-500 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-400'
-                                        }`}
-                                >
-                                    <code className={`px-2 py-0.5 rounded font-mono ${copied
-                                        ? 'bg-green-100 dark:bg-green-900/50 text-green-600 dark:text-green-400'
-                                        : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300'
-                                        }`}>{id}</code>
-                                    <span className="flex items-center gap-1">
-                                        {copied ? 'Copied' : 'Copy'}
-                                        {copied ? (
-                                            <Check className="w-3 h-3" />
-                                        ) : (
-                                            <Copy className="w-3 h-3" />
-                                        )}
-                                    </span>
-                                </button>
+                                <TooltipProvider delayDuration={100}>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <button
+                                                onClick={copyRoutineId}
+                                                className={`flex items-center gap-1.5 mt-1 text-xs transition-colors ${copied
+                                                    ? 'text-green-500 dark:text-green-400'
+                                                    : 'text-gray-500 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-400'
+                                                    }`}
+                                            >
+                                                <code className={`px-2 py-0.5 rounded font-mono ${copied
+                                                    ? 'bg-green-100 dark:bg-green-900/50 text-green-600 dark:text-green-400'
+                                                    : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300'
+                                                    }`}>{id}</code>
+                                                <span className="flex items-center gap-1">
+                                                    {copied ? 'Copied' : 'Copy'}
+                                                    {copied ? (
+                                                        <Check className="w-3 h-3" />
+                                                    ) : (
+                                                        <Copy className="w-3 h-3" />
+                                                    )}
+                                                </span>
+                                            </button>
+                                        </TooltipTrigger>
+                                        <TooltipContent className="max-w-xs text-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white shadow-xl">
+                                            Share this Routine ID with your friends. They can use it to Import and View your routine as well as use it in their merge routine page!
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
                                 <div className="flex items-center gap-2 mt-1.5">
                                     {routine?.createdAt && (
                                         <p className="text-xs text-gray-400 dark:text-gray-500">
