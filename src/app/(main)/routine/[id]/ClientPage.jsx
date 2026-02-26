@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect, useRef } from 'react';
-import { Calendar, Download, RefreshCw, AlertCircle, Copy, Check, Save } from 'lucide-react';
+import { Calendar, Download, RefreshCw, AlertCircle, Copy, Check, Save, Info } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import RoutineView from '@/components/routine/RoutineView';
@@ -27,6 +27,7 @@ const SharedRoutinePage = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [copied, setCopied] = useState(false);
+    const [infoTooltipOpen, setInfoTooltipOpen] = useState(false);
     const [importing, setImporting] = useState(false);
     const [imported, setImported] = useState(false);
     const routineRef = useRef(null);
@@ -253,35 +254,52 @@ const SharedRoutinePage = () => {
                                         : 'Shared Routine'}
                                 </h1>
                                 {/* Copy ID button — matching saved routines page pattern */}
-                                <TooltipProvider delayDuration={100}>
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <button
-                                                onClick={copyRoutineId}
-                                                className={`flex items-center gap-1.5 mt-1 text-xs transition-colors ${copied
-                                                    ? 'text-green-500 dark:text-green-400'
-                                                    : 'text-gray-500 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-400'
-                                                    }`}
-                                            >
-                                                <code className={`px-2 py-0.5 rounded font-mono ${copied
-                                                    ? 'bg-green-100 dark:bg-green-900/50 text-green-600 dark:text-green-400'
-                                                    : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300'
-                                                    }`}>{id}</code>
-                                                <span className="flex items-center gap-1">
-                                                    {copied ? 'Copied' : 'Copy'}
-                                                    {copied ? (
-                                                        <Check className="w-3 h-3" />
-                                                    ) : (
-                                                        <Copy className="w-3 h-3" />
-                                                    )}
-                                                </span>
-                                            </button>
-                                        </TooltipTrigger>
-                                        <TooltipContent className="max-w-xs text-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white shadow-xl">
-                                            Share this Routine ID with your friends. They can use it to Import and View your routine as well as use it in their merge routine page!
-                                        </TooltipContent>
-                                    </Tooltip>
-                                </TooltipProvider>
+                                <div className="flex items-center">
+                                    <TooltipProvider delayDuration={100}>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <button
+                                                    onClick={copyRoutineId}
+                                                    className={`flex items-center gap-1.5 mt-1 text-xs transition-colors ${copied
+                                                        ? 'text-green-500 dark:text-green-400'
+                                                        : 'text-gray-500 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-400'
+                                                        }`}
+                                                >
+                                                    <code className={`px-2 py-0.5 rounded font-mono ${copied
+                                                        ? 'bg-green-100 dark:bg-green-900/50 text-green-600 dark:text-green-400'
+                                                        : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300'
+                                                        }`}>{id}</code>
+                                                    <span className="flex items-center gap-1">
+                                                        {copied ? 'Copied' : 'Copy'}
+                                                        {copied ? (
+                                                            <Check className="w-3 h-3" />
+                                                        ) : (
+                                                            <Copy className="w-3 h-3" />
+                                                        )}
+                                                    </span>
+                                                </button>
+                                            </TooltipTrigger>
+                                            <TooltipContent className="max-w-xs text-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white shadow-xl">
+                                                Share this Routine ID with your friends. They can use it to Import and View your routine as well as use it in their merge routine page!
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                    <TooltipProvider delayDuration={100}>
+                                        <Tooltip open={infoTooltipOpen} onOpenChange={(open) => { if (!open) setInfoTooltipOpen(false); }}>
+                                            <TooltipTrigger asChild>
+                                                <button
+                                                    onClick={() => setInfoTooltipOpen(!infoTooltipOpen)}
+                                                    className="ml-2.5 mt-1 text-blue-400 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+                                                >
+                                                    <Info className="w-3.5 h-3.5" />
+                                                </button>
+                                            </TooltipTrigger>
+                                            <TooltipContent className="max-w-xs text-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white shadow-xl">
+                                                Share this Routine ID with your friends. They can use it to Import and View your routine as well as use it in their merge routine page!
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                </div>
                                 <div className="flex items-center gap-2 mt-1.5">
                                     {routine?.createdAt && (
                                         <p className="text-xs text-gray-400 dark:text-gray-500">

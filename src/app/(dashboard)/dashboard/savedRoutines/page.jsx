@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect, useRef } from 'react';
-import { Calendar, Clock, Trash2, Eye, Download, RefreshCw, AlertCircle, X, Users, Share2, Copy, Check, Link, Plus, Cable, Hammer, Pencil, Save } from 'lucide-react';
+import { Calendar, Clock, Trash2, Eye, Download, RefreshCw, AlertCircle, X, Users, Share2, Copy, Check, Link, Plus, Cable, Hammer, Pencil, Save, Info } from 'lucide-react';
 import CourseHoverTooltip from '@/components/ui/CourseHoverTooltip';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
@@ -439,6 +439,7 @@ const SavedRoutinesPage = () => {
   const [loadingRoutine, setLoadingRoutine] = useState(false);
   const [copiedRoutineId, setCopiedRoutineId] = useState(null);
   const [copiedMergedRoutineId, setCopiedMergedRoutineId] = useState(null);
+  const [infoTooltipId, setInfoTooltipId] = useState(null);
 
   // Floating button states
   const [showFloatingOptions, setShowFloatingOptions] = useState(false);
@@ -1003,48 +1004,65 @@ const SavedRoutinesPage = () => {
                       )}
                     </div>
                     {/* Routine ID as copyable code subtitle */}
-                    <TooltipProvider delayDuration={100}>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <button
-                            onClick={async () => {
-                              const success = await copyToClipboard(routine.id.toString());
-                              if (success) {
-                                setCopiedRoutineId(routine.id);
-                                setTimeout(() => setCopiedRoutineId(null), 3000);
-                              } else {
-                                toast.error('Failed to copy ID');
-                              }
-                            }}
-                            className={`flex items-center gap-1.5 mt-1 text-xs transition-colors ${copiedRoutineId === routine.id
-                              ? 'text-green-600 dark:text-green-400'
-                              : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400'
-                              }`}
-                          >
-                            <code className={`px-2 py-0.5 rounded font-mono text-left ${copiedRoutineId === routine.id
-                              ? 'bg-green-100 dark:bg-green-900/50 text-green-600 dark:text-green-400'
-                              : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
-                              }`}>{routine.id.substring(0, 4)}...{routine.id.substring(32, 36)}</code>
-                            <span className="flex items-center gap-1">
-                              {copiedRoutineId === routine.id ? 'Copied' : 'Copy'}
-                              {copiedRoutineId === routine.id ? (
-                                <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                </svg>
-                              ) : (
-                                <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                                  <rect x="9" y="9" width="13" height="13" rx="2" />
-                                  <rect x="3" y="3" width="13" height="13" rx="2" />
-                                </svg>
-                              )}
-                            </span>
-                          </button>
-                        </TooltipTrigger>
-                        <TooltipContent className="max-w-xs text-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white shadow-xl">
-                          Share this Routine ID with your friends. They can use it to Import and View your routine as well as use it in the Merge Routine Page!
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
+                    <div className="flex items-center">
+                      <TooltipProvider delayDuration={100}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              onClick={async () => {
+                                const success = await copyToClipboard(routine.id.toString());
+                                if (success) {
+                                  setCopiedRoutineId(routine.id);
+                                  setTimeout(() => setCopiedRoutineId(null), 3000);
+                                } else {
+                                  toast.error('Failed to copy ID');
+                                }
+                              }}
+                              className={`flex items-center gap-1.5 mt-1 text-xs transition-colors ${copiedRoutineId === routine.id
+                                ? 'text-green-600 dark:text-green-400'
+                                : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400'
+                                }`}
+                            >
+                              <code className={`px-2 py-0.5 rounded font-mono text-left ${copiedRoutineId === routine.id
+                                ? 'bg-green-100 dark:bg-green-900/50 text-green-600 dark:text-green-400'
+                                : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
+                                }`}>{routine.id.substring(0, 4)}...{routine.id.substring(32, 36)}</code>
+                              <span className="flex items-center gap-1">
+                                {copiedRoutineId === routine.id ? 'Copied' : 'Copy'}
+                                {copiedRoutineId === routine.id ? (
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                  </svg>
+                                ) : (
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                    <rect x="9" y="9" width="13" height="13" rx="2" />
+                                    <rect x="3" y="3" width="13" height="13" rx="2" />
+                                  </svg>
+                                )}
+                              </span>
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-xs text-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white shadow-xl">
+                            Share this Routine ID with your friends. They can use it to Import and View your routine as well as use it in the Merge Routine Page!
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                      <TooltipProvider delayDuration={100}>
+                        <Tooltip open={infoTooltipId === `routine-${routine.id}`} onOpenChange={(open) => { if (!open) setInfoTooltipId(null); }}>
+                          <TooltipTrigger asChild>
+                            <button
+                              onClick={() => setInfoTooltipId(infoTooltipId === `routine-${routine.id}` ? null : `routine-${routine.id}`)}
+                              className="ml-2.5 mt-1 text-blue-400 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+                            >
+                              <Info className="w-3.5 h-3.5" />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-xs text-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white shadow-xl">
+                            Share this Routine ID with your friends. They can use it to Import and View your routine as well as use it in the Merge Routine Page!
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
                     <div className="flex items-center gap-2 mt-1.5">
                       <p className="text-xs text-gray-500">
                         {routine.createdAt ? new Date(Number(routine.createdAt) * 1000).toLocaleString() : 'N/A'}
@@ -1160,48 +1178,65 @@ const SavedRoutinesPage = () => {
                             : `Merged Routine #${routine.routineNumber}`}
                         </h3>
                         {/* Routine ID as copyable code subtitle */}
-                        <TooltipProvider delayDuration={100}>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <button
-                                onClick={async () => {
-                                  const success = await copyToClipboard(routine.id.toString());
-                                  if (success) {
-                                    setCopiedMergedRoutineId(routine.id);
-                                    setTimeout(() => setCopiedMergedRoutineId(null), 3000);
-                                  } else {
-                                    toast.error('Failed to copy ID');
-                                  }
-                                }}
-                                className={`flex items-center gap-1.5 mt-1 text-xs transition-colors ${copiedMergedRoutineId === routine.id
-                                  ? 'text-green-600 dark:text-green-400'
-                                  : 'text-gray-600 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400'
-                                  }`}
-                              >
-                                <code className={`px-2 py-0.5 rounded font-mono text-left ${copiedMergedRoutineId === routine.id
-                                  ? 'bg-green-100 dark:bg-green-900/50 text-green-600 dark:text-green-400'
-                                  : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
-                                  }`}>{routine.id.substring(0, 4)}...{routine.id.substring(32, 36)}</code>
-                                <span className="flex items-center gap-1">
-                                  {copiedMergedRoutineId === routine.id ? 'Copied' : 'Copy'}
-                                  {copiedMergedRoutineId === routine.id ? (
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                    </svg>
-                                  ) : (
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                                      <rect x="9" y="9" width="13" height="13" rx="2" />
-                                      <rect x="3" y="3" width="13" height="13" rx="2" />
-                                    </svg>
-                                  )}
-                                </span>
-                              </button>
-                            </TooltipTrigger>
-                            <TooltipContent className="max-w-xs text-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white shadow-xl">
-                              The routine ID can be shared with friends for them to use this in the merge routine page to import their routine.
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
+                        <div className="flex items-center">
+                          <TooltipProvider delayDuration={100}>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <button
+                                  onClick={async () => {
+                                    const success = await copyToClipboard(routine.id.toString());
+                                    if (success) {
+                                      setCopiedMergedRoutineId(routine.id);
+                                      setTimeout(() => setCopiedMergedRoutineId(null), 3000);
+                                    } else {
+                                      toast.error('Failed to copy ID');
+                                    }
+                                  }}
+                                  className={`flex items-center gap-1.5 mt-1 text-xs transition-colors ${copiedMergedRoutineId === routine.id
+                                    ? 'text-green-600 dark:text-green-400'
+                                    : 'text-gray-600 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400'
+                                    }`}
+                                >
+                                  <code className={`px-2 py-0.5 rounded font-mono text-left ${copiedMergedRoutineId === routine.id
+                                    ? 'bg-green-100 dark:bg-green-900/50 text-green-600 dark:text-green-400'
+                                    : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
+                                    }`}>{routine.id.substring(0, 4)}...{routine.id.substring(32, 36)}</code>
+                                  <span className="flex items-center gap-1">
+                                    {copiedMergedRoutineId === routine.id ? 'Copied' : 'Copy'}
+                                    {copiedMergedRoutineId === routine.id ? (
+                                      <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                      </svg>
+                                    ) : (
+                                      <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                        <rect x="9" y="9" width="13" height="13" rx="2" />
+                                        <rect x="3" y="3" width="13" height="13" rx="2" />
+                                      </svg>
+                                    )}
+                                  </span>
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent className="max-w-xs text-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white shadow-xl">
+                                The routine ID can be shared with friends for them to use this in the merge routine page to import their routine.
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                          <TooltipProvider delayDuration={100}>
+                            <Tooltip open={infoTooltipId === `merged-${routine.id}`} onOpenChange={(open) => { if (!open) setInfoTooltipId(null); }}>
+                              <TooltipTrigger asChild>
+                                <button
+                                  onClick={() => setInfoTooltipId(infoTooltipId === `merged-${routine.id}` ? null : `merged-${routine.id}`)}
+                                  className="ml-2.5 mt-1 text-blue-400 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+                                >
+                                  <Info className="w-3.5 h-3.5" />
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent className="max-w-xs text-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white shadow-xl">
+                                The routine ID can be shared with friends for them to use this in the merge routine page to import their routine.
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </div>
                         <div className="flex items-center gap-2 mt-1.5">
                           <p className="text-xs text-gray-500">
                             {routine.createdAt ? new Date(Number(routine.createdAt) * 1000).toLocaleString() : 'N/A'}
