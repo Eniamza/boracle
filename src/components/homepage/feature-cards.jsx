@@ -1,13 +1,5 @@
 'use client';
 
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-    CardFooter
-} from "@/components/ui/card"
 import Link from "next/link"
 import { useSession } from "next-auth/react"
 import { ArrowRight } from "lucide-react"
@@ -25,17 +17,24 @@ export default function FeatureCards() {
                     : null;
 
                 return (
-                    <Card
-                        className="bg-blue-50 dark:bg-blue-950/20 border-blue-300 dark:border-blue-800 h-[280px] w-[220px] flex flex-col"
+                    <div
                         key={feature.index}
+                        className="bg-blue-50 dark:bg-blue-950/20 border border-blue-300 dark:border-blue-800 rounded-xl shadow-sm h-[280px] w-[220px] flex flex-col p-5"
                     >
-                        <CardHeader className="text-center pb-2 text-blue-400">
-                            <CardTitle>{feature.title}</CardTitle>
-                        </CardHeader>
-                        <CardContent className="text-center flex-grow flex flex-col justify-center pt-0 dark:text-blue-200">
-                            <CardDescription><span className="text-gray-500 dark:text-blue-200">{feature.description}</span></CardDescription>
-                        </CardContent>
-                        <CardFooter className="pt-2 w-full flex flex-col items-center gap-2 mt-auto">
+                        {/* Title */}
+                        <h3 className="text-center font-semibold text-blue-400 mb-2">
+                            {feature.title}
+                        </h3>
+
+                        {/* Description — takes remaining space, centers text vertically */}
+                        <div className="flex-1 flex items-center justify-center text-center">
+                            <p className="text-sm text-gray-500 dark:text-blue-200">
+                                {feature.description}
+                            </p>
+                        </div>
+
+                        {/* Footer — always pinned at the bottom */}
+                        <div className="flex flex-col items-center gap-2 pt-2">
                             {visitHref && (
                                 <Link
                                     href={visitHref}
@@ -46,8 +45,8 @@ export default function FeatureCards() {
                                 </Link>
                             )}
                             <span className="text-sm text-gray-400">{feature.footer}</span>
-                        </CardFooter>
-                    </Card>
+                        </div>
+                    </div>
                 );
             })}
         </div>
