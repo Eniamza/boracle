@@ -98,19 +98,24 @@ const MobileMergedRoutineView = ({
         // Sort by time
         result.sort((a, b) => a.sortKey - b.sortKey);
 
-        // Detect conflicts
+        // Detect conflicts and matches
         for (let i = 0; i < result.length; i++) {
             const aStart = result[i].sortKey;
             const aEnd = timeToMinutes(formatTime(result[i].endTime));
             result[i].hasConflict = false;
+            result[i].hasMatch = false;
 
             for (let j = 0; j < result.length; j++) {
                 if (i === j) continue;
                 const bStart = result[j].sortKey;
                 const bEnd = timeToMinutes(formatTime(result[j].endTime));
                 if (aStart < bEnd && aEnd > bStart) {
-                    result[i].hasConflict = true;
-                    break;
+                    // Overlapping: check if same friend or different friend
+                    if (result[i].course.friendName === result[j].course.friendName) {
+                        result[i].hasConflict = true;
+                    } else {
+                        result[i].hasMatch = true;
+                    }
                 }
             }
         }
@@ -196,21 +201,25 @@ const MobileMergedRoutineView = ({
                     </div>
                 ) : (
                     coursesForDay.map((entry, idx) => {
-                        const { course, type, startTime, endTime, room, hasConflict } = entry;
+                        const { course, type, startTime, endTime, room, hasConflict, hasMatch } = entry;
                         const isLab = type === 'lab';
                         const friendColor = course.friendColor || '#6B7280';
 
                         return (
                             <div
                                 key={`${course.sectionId}-${type}-${idx}`}
-                                className="rounded-xl p-3.5 border transition-all active:scale-[0.98]"
+                                className="rounded-xl p-3.5 border transition-all active:scale-[0.98] relative"
                                 style={{
                                     backgroundColor: hasConflict
                                         ? 'rgba(239,68,68,0.08)'
-                                        : colorWithAlpha(friendColor, 0.1),
+                                        : hasMatch
+                                            ? 'rgba(34,197,94,0.08)'
+                                            : colorWithAlpha(friendColor, 0.1),
                                     borderColor: hasConflict
                                         ? 'rgba(239,68,68,0.4)'
-                                        : colorWithAlpha(friendColor, 0.35),
+                                        : hasMatch
+                                            ? 'rgba(34,197,94,0.4)'
+                                            : colorWithAlpha(friendColor, 0.35),
                                 }}
                                 onClick={() => {
                                     setBottomSheetCourse(course);
@@ -219,11 +228,16 @@ const MobileMergedRoutineView = ({
                             >
                                 {/* Time */}
                                 <div
-                                    className="text-xs font-mono font-medium mb-1.5"
-                                    style={{ color: hasConflict ? '#EF4444' : friendColor }}
+                                    className="text-xs font-mono font-medium mb-1.5 flex items-center gap-2"
+                                    style={{ color: hasConflict ? '#EF4444' : hasMatch ? '#16A34A' : friendColor }}
                                 >
-                                    {getAdjustedTime(formatTime(startTime))} – {getAdjustedTime(formatTime(endTime))}
-                                    {hasConflict && <span className="ml-2 text-red-500 font-bold">⚠ Conflict</span>}
+                                    <span>{getAdjustedTime(formatTime(startTime))} – {getAdjustedTime(formatTime(endTime))}</span>
+                                    {hasConflict && <span className="ml-1 text-red-500 font-bold">⚠ Conflict</span>}
+                                    {hasMatch && !hasConflict && (
+                                        <span className="text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-md border border-green-500 dark:border-green-400 bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400">
+                                            Match
+                                        </span>
+                                    )}
                                 </div>
 
                                 {/* Course info */}
