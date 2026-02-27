@@ -155,7 +155,7 @@ const MergedRoutineModalWrapper = ({ isMobile, isOpen, onClose, children }) => {
 };
 
 // Merged Routine Table Modal with color-coded cells
-const MergedRoutineTableModal = ({ courses, friends, onClose, isOpen, isMobile }) => {
+const MergedRoutineTableModal = ({ courses, friends, onClose, isOpen, isMobile, onEdit }) => {
   const routineRef = useRef(null);
   const exportRef = useRef(null);
   const [hoveredCourse, setHoveredCourse] = useState(null);
@@ -378,6 +378,16 @@ const MergedRoutineTableModal = ({ courses, friends, onClose, isOpen, isMobile }
               </svg>
               {!isMobile && 'Save as PNG'}
             </button>
+            {onEdit && (
+              <button
+                onClick={onEdit}
+                className={`hover:bg-purple-100 dark:hover:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-lg flex items-center gap-2 transition-colors border border-purple-200 dark:border-purple-800 ${isMobile ? 'p-2' : 'px-4 py-2'}`}
+                title="Edit in Merge Routines"
+              >
+                <Pencil className="w-4 h-4" />
+                {!isMobile && 'Edit'}
+              </button>
+            )}
             <button
               onClick={onClose}
               className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors text-gray-600 dark:text-gray-300"
@@ -787,6 +797,36 @@ const SavedRoutinesPage = () => {
     }
   };
 
+  // Edit routine - load courses into preprereg page
+  const editRoutine = async (routine) => {
+    try {
+      toast.loading('Loading routine for editing...', { id: 'edit-routine' });
+
+      // Decode the routine string to get section IDs
+      const sectionIds = JSON.parse(atob(routine.routineStr));
+
+      // Fetch course data from the API
+      const response = await fetch('https://usis-cdn.eniamza.com/connect.json');
+      const allCourses = await response.json();
+
+      // Filter courses that match the section IDs
+      const matchedCourses = allCourses.filter(course =>
+        sectionIds.includes(course.sectionId)
+      );
+
+      // Write matched courses to localStorage (same key preprereg uses)
+      localStorage.setItem('boracle_selected_courses', JSON.stringify(matchedCourses));
+
+      toast.success(`Loaded ${matchedCourses.length} courses. Redirecting...`, { id: 'edit-routine' });
+
+      // Navigate to preprereg page
+      router.push('/dashboard/preprereg');
+    } catch (err) {
+      console.error('Error editing routine:', err);
+      toast.error('Failed to load routine for editing', { id: 'edit-routine' });
+    }
+  };
+
   // View merged routine details - fetch course data and show in modal
   const viewMergedRoutine = async (routine) => {
     try {
@@ -841,11 +881,48 @@ const SavedRoutinesPage = () => {
     }
   };
 
+  // Edit merged routine - load data into merge-routines page
+  const editMergedRoutine = async (routine) => {
+    try {
+      toast.loading('Loading merged routine for editing...', { id: 'edit-merged' });
 
+      const data = JSON.parse(routine.routineData);
 
+      // Predefined color palette (same as merge page)
+      const colorPalette = [
+        '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6',
+        '#EC4899', '#14B8A6', '#F97316', '#06B6D4', '#84CC16',
+      ];
 
+      // Build routineInputs for the merge page
+      const routineInputs = data.map((item, index) => ({
+        id: index + 1,
+        routineId: item.routineId || '',
+        friendName: item.friendName || '',
+        color: colorPalette[index % colorPalette.length],
+      }));
 
+      // Store the routineInputs in the merge page's localStorage key
+      localStorage.setItem('boracle_merge_inputs', JSON.stringify(routineInputs));
 
+      // Store the raw sectionIds + friendNames for direct re-build (Option 2)
+      localStorage.setItem('boracle_merge_edit_data', JSON.stringify(
+        data.map((item, index) => ({
+          friendName: item.friendName,
+          sectionIds: item.sectionIds || [],
+          color: colorPalette[index % colorPalette.length],
+        }))
+      ));
+
+      toast.success('Loaded merged routine. Redirecting...', { id: 'edit-merged' });
+
+      // Navigate to merge-routines page with autoMerge flag
+      router.push('/dashboard/merge-routines?autoMerge=true');
+    } catch (err) {
+      console.error('Error editing merged routine:', err);
+      toast.error('Failed to load merged routine for editing', { id: 'edit-merged' });
+    }
+  };
   // Helper to close modal
   const closeRoutineModal = () => {
     setViewingRoutine(null);
@@ -1305,6 +1382,11 @@ const SavedRoutinesPage = () => {
         isOpen={!!viewingRoutine}
         onClose={closeRoutineModal}
         isModal={true}
+        onEdit={viewingRoutine ? () => {
+          const routine = viewingRoutine;
+          closeRoutineModal();
+          editRoutine(routine);
+        } : undefined}
       />
 
       {/* Merged Routine View Modal — always rendered, uses isOpen */}
@@ -1314,6 +1396,11 @@ const SavedRoutinesPage = () => {
         isOpen={!!viewingMergedRoutine}
         onClose={closeMergedRoutineModal}
         isMobile={isMobileDevice}
+        onEdit={viewingMergedRoutine ? () => {
+          const routine = viewingMergedRoutine;
+          closeMergedRoutineModal();
+          editMergedRoutine(routine);
+        } : undefined}
       />
 
       {/* Backdrop overlay when floating menu is open */}

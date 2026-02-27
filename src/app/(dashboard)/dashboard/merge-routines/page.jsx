@@ -2,6 +2,7 @@
 import Link from 'next/link';
 
 import React, { useState, useRef, useMemo } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -86,6 +87,70 @@ const MergeRoutinesPage = () => {
       fetchSavedRoutines();
     }
   }, [session]);
+
+  // Auto-merge from edit flow (sectionIds stored directly in localStorage)
+  const searchParams = useSearchParams();
+  const autoMergeTriggered = useRef(false);
+
+  useEffect(() => {
+    if (autoMergeTriggered.current) return;
+    const shouldAutoMerge = searchParams.get('autoMerge') === 'true';
+    if (!shouldAutoMerge) return;
+
+    const editDataStr = localStorage.getItem('boracle_merge_edit_data');
+    if (!editDataStr) return;
+
+    autoMergeTriggered.current = true;
+
+    const autoLoad = async () => {
+      try {
+        setLoading(true);
+        const editData = JSON.parse(editDataStr);
+
+        // Fetch all available courses from CDN
+        const coursesResponse = await fetch('https://usis-cdn.eniamza.com/connect.json');
+        const allAvailableCourses = await coursesResponse.json();
+
+        const allCourses = [];
+
+        editData.forEach(entry => {
+          const friendCourses = (entry.sectionIds || []).map(sectionId => {
+            const course = allAvailableCourses.find(c => c.sectionId === sectionId);
+            if (course) {
+              return {
+                ...course,
+                friendName: entry.friendName,
+                friendColor: entry.color,
+                employeeName: getFacultyDetails(course.faculties).facultyName,
+                employeeEmail: getFacultyDetails(course.faculties).facultyEmail,
+                imgUrl: getFacultyDetails(course.faculties).imgUrl,
+              };
+            }
+            return null;
+          }).filter(Boolean);
+
+          allCourses.push(...friendCourses);
+        });
+
+        if (allCourses.length > 0) {
+          setMergedCourses(allCourses);
+          toast.success(`Loaded ${allCourses.length} courses from saved merged routine`);
+        } else {
+          toast.error('No matching courses found');
+        }
+
+        // Clean up the edit data flag
+        localStorage.removeItem('boracle_merge_edit_data');
+      } catch (error) {
+        console.error('Error auto-loading merged routine:', error);
+        toast.error('Failed to auto-load merged routine');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    autoLoad();
+  }, [searchParams, getFacultyDetails]);
 
   const mergedRoutineRef = useRef(null);
   const exportRef = useRef(null);
@@ -196,6 +261,7 @@ const MergeRoutinesPage = () => {
           const friendCourses = mergedCourses.filter(c => c.friendName === input.friendName);
           return {
             friendName: input.friendName,
+            routineId: input.routineId || '',
             sectionIds: friendCourses.map(c => c.sectionId)
           };
         })

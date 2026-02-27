@@ -1,6 +1,6 @@
 'use client';
 import React, { useRef, useState, useEffect } from 'react';
-import { X, Save, Download } from 'lucide-react';
+import { X, Save, Download, Pencil } from 'lucide-react';
 import RoutineTableGrid from '@/components/routine/RoutineTableGrid';
 import { exportRoutineToPNG } from '@/components/routine/ExportRoutinePNG';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -20,6 +20,7 @@ const RoutineView = ({
     mobileAction,
     routineRefProp, // Allow parent to access ref
     showExportButton = true,
+    onEdit,
 }) => {
     const internalRoutineRef = useRef(null);
     // Use prop ref if available, otherwise internal
@@ -164,6 +165,17 @@ const RoutineView = ({
                         </button>
                     )}
 
+                    {onEdit && (
+                        <button
+                            onClick={onEdit}
+                            className="px-4 py-2 hover:bg-blue-100 dark:hover:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg flex items-center gap-2 transition-colors border border-blue-200 dark:border-blue-800"
+                            title="Edit Routine"
+                        >
+                            <Pencil className="w-4 h-4" />
+                            Edit
+                        </button>
+                    )}
+
                     {onClose && (
                         <button
                             onClick={handleClose}
@@ -232,6 +244,16 @@ const RoutineView = ({
                                 title="Save as PNG"
                             >
                                 <Download className="w-4 h-4" />
+                            </button>
+                        )}
+
+                        {onEdit && (
+                            <button
+                                onClick={onEdit}
+                                className="p-2.5 hover:bg-blue-100 dark:hover:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg transition-colors border border-blue-200 dark:border-blue-800"
+                                title="Edit Routine"
+                            >
+                                <Pencil className="w-4 h-4" />
                             </button>
                         )}
 
