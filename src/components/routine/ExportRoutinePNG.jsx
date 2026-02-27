@@ -54,7 +54,10 @@ export const exportRoutineToPNG = async ({
   container.style.top = '-9999px';
   container.style.left = '-9999px';
   container.style.width = `${width}px`;
-  container.style.zoom = zoom;
+  // ! Use transform instead of zoom - iOS Safari handles zoom inconsistently
+  // ! which can clip the rightmost columns (e.g., Saturday)
+  container.style.transform = `scale(${zoom})`;
+  container.style.transformOrigin = 'top left';
 
   // ! Apply theme class to container so dark: variants work correctly
   if (isDarkMode) {
@@ -72,6 +75,7 @@ export const exportRoutineToPNG = async ({
 
   // ? Force the clonedRoutine to show everything and adjust to desktop resolution
   clonedRoutine.style.width = `${width}px`;
+  clonedRoutine.style.minWidth = `${width}px`;
   clonedRoutine.style.height = 'auto';
   clonedRoutine.style.overflow = 'visible';
   container.appendChild(clonedRoutine);
@@ -81,11 +85,14 @@ export const exportRoutineToPNG = async ({
     // ? which causes html-to-image to capture the image before styles are even applied, resulting in a broken image
     await new Promise(resolve => setTimeout(resolve, waitTime));
 
+    // ! Use scrollWidth to ensure we capture the full width including all columns
+    const captureWidth = Math.max(width, clonedRoutine.scrollWidth);
+
     const dataUrl = await htmlToImage.toPng(clonedRoutine, {
       quality,
       pixelRatio, // ! Higher number -> Higher resolution -> Larger file size
       backgroundColor: resolvedBackgroundColor,
-      width,
+      width: captureWidth,
       height: clonedRoutine.scrollHeight,
     });
 
