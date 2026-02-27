@@ -1,0 +1,65 @@
+# Publicly Accessible Dashboard Pages
+
+## Goal
+Make the **Course Swap**, **Merge Routine**, and **Pre-Prereg** pages available to unauthenticated users via the public Application layout (`/courseswap`, `/merge-routines`, `/preprereg`), while keeping auth-only features protected. Do this with **minimal code replication**.
+
+## Analysis
+The existing pages are located inside the [(dashboard)](file:///Users/eni/Work/boracle/src/auth.js#32-72) route group. Specifically:
+1. [src/app/(dashboard)/dashboard/courseswap/page.jsx](file:///Users/eni/Work/boracle/src/app/%28dashboard%29/dashboard/courseswap/page.jsx)
+2. [src/app/(dashboard)/dashboard/merge-routines/page.jsx](file:///Users/eni/Work/boracle/src/app/%28dashboard%29/dashboard/merge-routines/page.jsx)
+3. [src/app/(dashboard)/dashboard/preprereg/page.jsx](file:///Users/eni/Work/boracle/src/app/%28dashboard%29/dashboard/preprereg/page.jsx)
+
+The [(dashboard)](file:///Users/eni/Work/boracle/src/auth.js#32-72) layout enforces an authentication redirect (`redirect('/api/auth/signin')`). However, the [(main)](file:///Users/eni/Work/boracle/src/auth.js#32-72) layout is completely public and allows guest users.
+
+Crucially, because all three of these page components are standard `"use client"` components, they already gracefully handle undefined user sessions:
+- They use `const { data: session } = useSession()`.
+- Buttons like "Create Swap" or "Save Routine" are conditionally hidden behind checks for `session?.user?.email`.
+- Data fetches for user-specific items check for the session before firing.
+
+## Proposed Strategy: Route Aliasing
+Because they handle [session](file:///Users/eni/Work/boracle/src/auth.js#72-83) correctly, we do **not** need to duplicate or extract thousands of lines of code into a complex component library. We can just alias the components into new public routes under [(main)](file:///Users/eni/Work/boracle/src/auth.js#32-72).
+
+### Step 1: Create Wrapper Routes under [(main)](file:///Users/eni/Work/boracle/src/auth.js#32-72)
+We will create three new files:
+#### [NEW] `src/app/(main)/courseswap/page.jsx`
+```jsx
+import DashboardCourseSwapPage from '@/app/(dashboard)/dashboard/courseswap/page';
+
+export const metadata = { title: "Course Swap | Boracle" };
+
+export default function PublicCourseSwapPage() {
+    return <DashboardCourseSwapPage />;
+}
+```
+
+#### [NEW] `src/app/(main)/merge-routines/page.jsx`
+```jsx
+import DashboardMergeRoutinesPage from '@/app/(dashboard)/dashboard/merge-routines/page';
+
+export const metadata = { title: "Merge Routines | Boracle" };
+
+export default function PublicMergeRoutinesPage() {
+    return <DashboardMergeRoutinesPage />;
+}
+```
+
+#### [NEW] `src/app/(main)/preprereg/page.jsx`
+```jsx
+import DashboardPrepreregPage from '@/app/(dashboard)/dashboard/preprereg/page';
+
+export const metadata = { title: "Pre Preregistration | Boracle" };
+
+export default function PublicPrepreregPage() {
+    return <DashboardPrepreregPage />;
+}
+```
+
+### Step 2: Refine Fallbacks (Optional)
+Currently, if a user is not logged in, certain buttons simply vanish. We will review the dashboard components to ensure that if [session](file:///Users/eni/Work/boracle/src/auth.js#72-83) is null:
+- The missing UI looks intentional (instead of just leaving a blank hole).
+- For example, instead of hiding the "Save Routine" button entirely, we could optionally show a grayed out "Sign in to save" button, depending on your UI preference. But doing nothing is the quickest and safest start!
+
+## Why This Works
+- **Zero code replication**: We are importing the exact same React component tree into a new URL space. Next.js optimizes the bundle so the code is only downloaded once.
+- **Different Layouts**: When viewed at `/dashboard/courseswap` (auth required), it wraps in your [AppSidebar](file:///Users/eni/Work/boracle/src/components/dashboard/app-sidebar.jsx#22-156). When viewed at `/courseswap` (public), it wraps in your generic `NavigationBar`.
+- **Single Source of Truth**: If we add a new feature to the Swap Arena, it automatically deploys to both the authenticated dashboard view and the public view simultaneously.
