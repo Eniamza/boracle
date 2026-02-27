@@ -645,6 +645,17 @@ const SavedRoutinesPage = () => {
       setImporting(true);
       const routineId = routineIdInput.trim();
 
+      // Check if this routine already exists in user's saved routines or merged routines
+      if (routines.some(r => r.id === routineId)) {
+        toast.error('This routine already exists in your saved routines');
+        setImporting(false);
+        return;
+      }
+      if (mergedRoutines.some(r => r.id === routineId)) {
+        toast.error('This merged routine already exists in your saved routines');
+        setImporting(false);
+        return;
+      }
       // ! Hunt routine in saved routines first
       const savedResponse = await fetch(`/api/routine/${routineId}`);
       if (savedResponse.ok) {

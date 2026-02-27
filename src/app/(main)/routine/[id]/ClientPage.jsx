@@ -112,6 +112,18 @@ const SharedRoutinePage = () => {
 
         try {
             setImporting(true);
+
+            // Check if this routine already exists in user's saved routines
+            const checkResponse = await fetch('/api/routine');
+            if (checkResponse.ok) {
+                const checkData = await checkResponse.json();
+                if (checkData.routines?.some(r => r.id === id)) {
+                    toast.error('This routine already exists in your saved routines');
+                    setImporting(false);
+                    return;
+                }
+            }
+
             const importedName = routine.ownerName
                 ? `${routine.ownerName.charAt(0).toUpperCase() + routine.ownerName.slice(1).toLowerCase()}'s Routine`
                 : 'Imported Routine';

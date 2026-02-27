@@ -8,6 +8,7 @@ import { SessionProvider } from "next-auth/react";
 import { ModeToggle } from "@/components/light-toggle";
 import { Description } from "@radix-ui/react-dialog";
 import { FacultyProvider } from "@/app/contexts/FacultyContext";
+import { Toaster } from 'sonner';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -47,6 +48,7 @@ export default function RootLayout({ children, pageProps = {} }) {
               disableTransitionOnChange
             >
               <NavigationBar />
+              <Toaster position="top-right" richColors duration={3000} closeButton />
               {children}
               <div className="fixed bottom-4 right-4">
                 <ModeToggle />

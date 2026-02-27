@@ -192,6 +192,18 @@ const SharedMergedRoutinePage = () => {
 
         try {
             setImporting(true);
+
+            // Check if this merged routine already exists in user's saved merged routines
+            const checkResponse = await fetch('/api/merged-routine');
+            if (checkResponse.ok) {
+                const checkData = await checkResponse.json();
+                if (checkData.routines?.some(r => r.id === id)) {
+                    toast.error('This merged routine already exists in your saved routines');
+                    setImporting(false);
+                    return;
+                }
+            }
+
             const response = await fetch('/api/merged-routine', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
