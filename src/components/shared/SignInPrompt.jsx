@@ -26,7 +26,7 @@ const SignInPrompt = ({ open, onOpenChange, featureDescription }) => {
                         <LogIn className="w-8 h-8 text-white" />
                     </div>
 
-                    <DialogTitle className="text-xl font-bold text-gray-900 dark:text-white">
+                    <DialogTitle className="text-xl font-bold text-gray-900 dark:text-white text-center">
                         Sign in to continue
                     </DialogTitle>
                     <DialogDescription className="text-sm text-gray-500 dark:text-gray-400 mt-2 leading-relaxed">

@@ -197,7 +197,8 @@ const CourseSwapPage = () => {
   const fetchSwaps = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/swap');
+      const endpoint = session?.user?.email ? '/api/swap' : '/api/swap/public';
+      const response = await fetch(endpoint);
       if (response.ok) {
         const data = await response.json();
         setSwaps(data || []);

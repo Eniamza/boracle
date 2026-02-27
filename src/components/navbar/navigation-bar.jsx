@@ -5,7 +5,7 @@ import navbarItems from "@/constants/navbarItems"
 import Link from "next/link"
 import { useSession, signIn } from "next-auth/react"
 import ProfileDropdown from "./profileDropdown"
-import { Menu, ChevronRight } from "lucide-react"
+import { Menu, ChevronRight, ChevronDown, Wrench } from "lucide-react"
 
 import {
   Sheet,
@@ -17,11 +17,30 @@ import {
 
 import { Button } from "@/components/ui/button";
 
+const toolLinks = [
+  { title: 'Course Swap', href: '/courseswap' },
+  { title: 'Merge Routines', href: '/merge-routines' },
+  { title: 'Pre-PreReg', href: '/preprereg' },
+];
+
 export default function NavigationBar() {
   const { data: session, status } = useSession();
   const isLoggedIn = status === "authenticated";
   const [isOpen, setIsOpen] = React.useState(false);
   const [scrolled, setScrolled] = React.useState(false);
+  const [toolsOpen, setToolsOpen] = React.useState(false);
+  const toolsDropdownRef = React.useRef(null);
+
+  // Close tools dropdown on outside click
+  React.useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (toolsDropdownRef.current && !toolsDropdownRef.current.contains(e.target)) {
+        setToolsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Add scroll listener for elevation effect
   React.useEffect(() => {
@@ -79,6 +98,19 @@ export default function NavigationBar() {
                         <ChevronRight className="w-4 h-4 text-gray-400" />
                       </Link>
                     ))}
+                    {/* Tools section in mobile */}
+                    <div className="px-4 py-2 text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mt-2">Tools</div>
+                    {toolLinks.map((tool, index) => (
+                      <Link
+                        key={index}
+                        href={tool.href}
+                        className="flex items-center justify-between px-4 py-3 text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
+                        onClick={() => setIsOpen(false)}
+                      >
+                        <span className="font-medium">{tool.title}</span>
+                        <ChevronRight className="w-4 h-4 text-gray-400" />
+                      </Link>
+                    ))}
                     {isLoggedIn && (
                       <Link
                         href="/dashboard"
@@ -116,6 +148,30 @@ export default function NavigationBar() {
                 {item.title}
               </Link>
             ))}
+            {/* Tools Dropdown */}
+            <div className="relative" ref={toolsDropdownRef}>
+              <button
+                onClick={() => setToolsOpen(!toolsOpen)}
+                className="flex items-center gap-1 px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-all duration-200"
+              >
+                Tools
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${toolsOpen ? 'rotate-180' : ''}`} />
+              </button>
+              {toolsOpen && (
+                <div className="absolute top-full left-0 mt-1 w-48 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-xl overflow-hidden z-50">
+                  {toolLinks.map((tool, index) => (
+                    <Link
+                      key={index}
+                      href={tool.href}
+                      className="block px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                      onClick={() => setToolsOpen(false)}
+                    >
+                      {tool.title}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
           </nav>
 
           {/* Right Side - Auth */}
