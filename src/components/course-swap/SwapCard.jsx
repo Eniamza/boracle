@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import CourseHoverTooltip from "@/components/ui/CourseHoverTooltip";
 import { useSession } from 'next-auth/react';
 import { Calendar, User, ArrowRightLeft, Tag, CheckCircle, Trash2, Mail, ChevronDown, ChevronUp } from 'lucide-react';
+import SignInPrompt from '@/components/shared/SignInPrompt';
 
 const SwapCard = ({ swap, courses = [], onDelete, onMarkComplete, onCourseClick, isMobile = false }) => {
   const { data: session } = useSession();
@@ -14,6 +15,7 @@ const SwapCard = ({ swap, courses = [], onDelete, onMarkComplete, onCourseClick,
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
   const [isRequesting, setIsRequesting] = useState(false);
   const [hasRequested, setHasRequested] = useState(false); // Can be enhanced later to check initial status
+  const [showSignInPrompt, setShowSignInPrompt] = useState(false);
 
   const [isExpanded, setIsExpanded] = useState(false);
   const [showToggle, setShowToggle] = useState(false);
@@ -270,25 +272,38 @@ const SwapCard = ({ swap, courses = [], onDelete, onMarkComplete, onCourseClick,
                 <span className="ml-1">Delete</span>
               </Button>
             </div>
-          ) : session?.user?.email && !swap.isDone ? (
-            <Button
-              size="sm"
-              onClick={handleRequestSwap}
-              disabled={isRequesting || hasRequested}
-              className={`w-full sm:w-auto gap-2 ${hasRequested
-                ? 'bg-gray-400 dark:bg-gray-700 cursor-not-allowed'
-                : 'bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white dark:text-white'
-                }`}
-              title="Request Swap directly"
-            >
-              {isRequesting ? (
-                <>Sending... <span className="animate-spin w-4 h-4 border-2 border-white/30 border-t-white rounded-full"></span></>
-              ) : hasRequested ? (
-                <>Requested <CheckCircle className="w-4 h-4" /></>
-              ) : (
-                <>Request Swap <Mail className="w-4 h-4" /></>
-              )}
-            </Button>
+          ) : !isOwner && !swap.isDone ? (
+            <>
+              <Button
+                size="sm"
+                onClick={() => {
+                  if (!session?.user?.email) {
+                    setShowSignInPrompt(true);
+                    return;
+                  }
+                  handleRequestSwap();
+                }}
+                disabled={isRequesting || hasRequested}
+                className={`w-full sm:w-auto gap-2 ${hasRequested
+                  ? 'bg-gray-400 dark:bg-gray-700 cursor-not-allowed'
+                  : 'bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white dark:text-white'
+                  }`}
+                title="Request Swap directly"
+              >
+                {isRequesting ? (
+                  <>Sending... <span className="animate-spin w-4 h-4 border-2 border-white/30 border-t-white rounded-full"></span></>
+                ) : hasRequested ? (
+                  <>Requested <CheckCircle className="w-4 h-4" /></>
+                ) : (
+                  <>Request Swap <Mail className="w-4 h-4" /></>
+                )}
+              </Button>
+              <SignInPrompt
+                open={showSignInPrompt}
+                onOpenChange={setShowSignInPrompt}
+                featureDescription="Sign in with your BRACU G-Suite account to request swaps and manage your course sections."
+              />
+            </>
           ) : null}
         </div>
       </CardContent>

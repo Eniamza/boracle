@@ -11,6 +11,7 @@ import CourseBottomSheet from '@/components/ui/CourseBottomSheet';
 import { useFaculty } from '@/app/contexts/FacultyContext';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { Skeleton } from '@/components/ui/skeleton';
+import SignInPrompt from '@/components/shared/SignInPrompt';
 
 const PreRegistrationPage = () => {
   const { data: session } = useSession();
@@ -44,6 +45,7 @@ const PreRegistrationPage = () => {
   const [showSelectedDrawer, setShowSelectedDrawer] = useState(false);
   const isMobile = useIsMobile();
   const [mounted, setMounted] = useState(false);
+  const [showSignInPrompt, setShowSignInPrompt] = useState(false);
   const observerRef = useRef();
   const lastCourseRef = useRef();
   const routineRef = useRef(null);
@@ -346,7 +348,7 @@ const PreRegistrationPage = () => {
   // Save routine to database
   const saveRoutine = async () => {
     if (!session?.user?.email) {
-      toast.error('Please login to save your routine');
+      setShowSignInPrompt(true);
       return;
     }
 
@@ -1246,6 +1248,11 @@ const PreRegistrationPage = () => {
         </div>
         <span className="text-sm font-medium">View Routine</span>
       </button>
+      <SignInPrompt
+        open={showSignInPrompt}
+        onOpenChange={setShowSignInPrompt}
+        featureDescription="Sign in with your BRACU G-Suite account to save routines, track your courses, and more."
+      />
     </div >
   );
 };

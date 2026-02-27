@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeftRight, Loader2, User } from "lucide-react";
+import { ArrowLeftRight, Loader2, Plus, User } from "lucide-react";
 import { useSession } from 'next-auth/react';
 import CreateSwapModal from '@/components/course-swap/CreateSwapModal';
 import SwapCard from '@/components/course-swap/SwapCard';
@@ -14,6 +14,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import CourseBottomSheet from '@/components/ui/CourseBottomSheet';
 import { useFaculty } from '@/app/contexts/FacultyContext';
 import SwapNotifications from '@/components/course-swap/SwapNotifications';
+import SignInPrompt from '@/components/shared/SignInPrompt';
 
 const BACKUP_INDEX_URL = 'https://connect-cdn.itzmrz.xyz/connect_backup.json';
 const CURRENT_COURSES_URL = 'https://usis-cdn.eniamza.com/connect.json';
@@ -31,6 +32,7 @@ const CourseSwapPage = () => {
   const { enrichCoursesWithFaculty } = useFaculty();
   const isMobile = useIsMobile();
   const [bottomSheetCourse, setBottomSheetCourse] = useState(null);
+  const [showSignInPrompt, setShowSignInPrompt] = useState(false);
 
   // Current semester from global config
   const currentSemester = globalInfo.semester;
@@ -351,11 +353,22 @@ const CourseSwapPage = () => {
                 isMobile={isMobile}
               />
             )}
-            <CreateSwapModal
-              courses={currentCourses}
-              onSwapCreated={fetchSwaps}
-              isMobile={isMobile}
-            />
+            {session?.user?.email ? (
+              <CreateSwapModal
+                courses={currentCourses}
+                onSwapCreated={fetchSwaps}
+                isMobile={isMobile}
+              />
+            ) : (
+              <div
+                className="flex items-center justify-center gap-2 bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 rounded-lg font-medium shadow-sm transition-all hover:opacity-90 cursor-pointer px-3 py-2.5 md:px-4 md:py-2"
+                title="Create Swap"
+                onClick={() => setShowSignInPrompt(true)}
+              >
+                <Plus className="w-4 h-4 md:w-5 md:h-5" />
+                <span className="hidden md:inline">Create Swap</span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -448,6 +461,11 @@ const CourseSwapPage = () => {
         courseTitle={bottomSheetCourse ? `${bottomSheetCourse.courseCode}-${bottomSheetCourse.sectionName}` : ''}
         extraFields={bottomSheetCourse ? [{ label: 'Faculty', value: bottomSheetCourse.faculties || 'TBA' }] : []}
         onClose={() => setBottomSheetCourse(null)}
+      />
+      <SignInPrompt
+        open={showSignInPrompt}
+        onOpenChange={setShowSignInPrompt}
+        featureDescription="Sign in with your BRACU G-Suite account to create swap requests, manage your swaps, and more."
       />
     </div>
   );

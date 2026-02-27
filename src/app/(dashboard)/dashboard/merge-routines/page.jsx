@@ -23,6 +23,7 @@ import { exportRoutineToPNG } from '@/components/routine/ExportRoutinePNG';
 import { useSession } from 'next-auth/react';
 import { useEffect } from 'react';
 import { useFaculty } from '@/app/contexts/FacultyContext';
+import SignInPrompt from '@/components/shared/SignInPrompt';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -63,6 +64,7 @@ const MergeRoutinesPage = () => {
   // State for the mobile routine selector sheet
   const [selectorSheetOpen, setSelectorSheetOpen] = useState(false);
   const [selectorSheetInputId, setSelectorSheetInputId] = useState(null);
+  const [showSignInPrompt, setShowSignInPrompt] = useState(false);
 
   // Fetch user's saved routines on mount
   useEffect(() => {
@@ -242,7 +244,7 @@ const MergeRoutinesPage = () => {
   // Save merged routine to database
   const saveMergedRoutine = async () => {
     if (!session?.user?.email) {
-      toast.error('Please login to save your merged routine');
+      setShowSignInPrompt(true);
       return;
     }
 
@@ -829,6 +831,11 @@ const MergeRoutinesPage = () => {
               updateRoutineInput(selectorSheetInputId, 'routineId', routineId);
             }
           }}
+        />
+        <SignInPrompt
+          open={showSignInPrompt}
+          onOpenChange={setShowSignInPrompt}
+          featureDescription="Sign in with your BRACU G-Suite account to save merged routines, track your friends' schedules, and more."
         />
       </div>
     </div>
