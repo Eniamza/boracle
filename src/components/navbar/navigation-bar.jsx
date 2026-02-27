@@ -16,12 +16,7 @@ import {
 } from "@/components/ui/sheet";
 
 import { Button } from "@/components/ui/button";
-
-const toolLinks = [
-  { title: 'Course Swap', href: '/courseswap' },
-  { title: 'Merge Routines', href: '/merge-routines' },
-  { title: 'Pre-PreReg', href: '/preprereg' },
-];
+import toolLinks from "@/constants/toolLinks";
 
 export default function NavigationBar() {
   const { data: session, status } = useSession();
