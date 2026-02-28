@@ -6,7 +6,7 @@ const navbarItems = [
         enabled: true
     },
     {
-        title: 'Contibutors',
+        title: 'Contributors',
         href: '/contributors',
         description: 'Updates and changes to the Oracle platform',
         enabled: true
