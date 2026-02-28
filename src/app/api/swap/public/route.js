@@ -6,7 +6,7 @@ import { NextResponse } from "next/server";
 
 export async function GET() {
     try {
-        // Fetch all active (not done) course swaps
+        // Fetch all swaps and all asking sections in just 2 queries
         const swapRequests = await db
             .select({
                 swapId: courseSwap.swapId,
@@ -17,23 +17,28 @@ export async function GET() {
             })
             .from(courseSwap);
 
-        const swaps = [];
+        const allAskingSections = await db
+            .select({
+                swapId: askSectionId.swapId,
+                askSectionId: askSectionId.askSectionId,
+            })
+            .from(askSectionId);
 
-        for (const swap of swapRequests) {
-            const askingSections = await db
-                .select({ askSectionId: askSectionId.askSectionId })
-                .from(askSectionId)
-                .where(eq(askSectionId.swapId, swap.swapId));
-
-            swaps.push({
-                swapId: swap.swapId,
-                isDone: swap.isDone,
-                getSectionId: swap.getSectionId,
-                createdAt: swap.createdAt,
-                semester: swap.semester,
-                askingSections: askingSections.map(item => item.askSectionId),
-            });
+        // Group asking sections by swapId in memory
+        const askingMap = {};
+        for (const row of allAskingSections) {
+            if (!askingMap[row.swapId]) askingMap[row.swapId] = [];
+            askingMap[row.swapId].push(row.askSectionId);
         }
+
+        const swaps = swapRequests.map(swap => ({
+            swapId: swap.swapId,
+            isDone: swap.isDone,
+            getSectionId: swap.getSectionId,
+            createdAt: swap.createdAt,
+            semester: swap.semester,
+            askingSections: askingMap[swap.swapId] || [],
+        }));
 
         return NextResponse.json(swaps, { status: 200 });
     } catch (error) {
