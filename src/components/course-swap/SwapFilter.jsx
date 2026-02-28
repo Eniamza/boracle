@@ -16,19 +16,19 @@ const SwapFilter = ({ courses = [], swaps = [], onFilterChange, isMobile = false
     return `${course.courseCode}-[${course.sectionName}]`;
   };
 
-  // Get unique courses from swaps
+  // Get unique courses by courseCode for the filter list
   const getAvailableCourses = () => {
-    const sectionIds = new Set();
-    swaps.forEach(swap => {
-      if (swap.getSectionId) sectionIds.add(swap.getSectionId);
-      if (swap.askingSections) {
-        swap.askingSections.forEach(id => sectionIds.add(id));
-      }
+    const seen = new Set();
+    return courses.filter(course => {
+      const key = `${course.courseCode}-${course.sectionId}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    }).sort((a, b) => {
+      const codeCompare = (a.courseCode || '').localeCompare(b.courseCode || '');
+      if (codeCompare !== 0) return codeCompare;
+      return (a.sectionName || '').localeCompare(b.sectionName || '', undefined, { numeric: true });
     });
-
-    return courses.filter(course =>
-      sectionIds.has(course.sectionId)
-    );
   };
 
   const availableCourses = getAvailableCourses();

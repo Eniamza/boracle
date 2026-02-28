@@ -18,32 +18,35 @@ export async function GET(request) {
       );
     }
 
-    // Fetch all course swap information (including inactive ones)
+    // Fetch all swaps and all asking sections in just 2 queries
     const swapRequest = await db
       .select()
       .from(courseSwap);
 
-    const currentUserEmail = session.user.email;
-    let swaps = [];
+    const allAskingSections = await db
+      .select({
+        swapId: askSectionId.swapId,
+        askSectionId: askSectionId.askSectionId,
+      })
+      .from(askSectionId);
 
-    for (const element of swapRequest) {
-      const askingSections = await db
-        .select({ askSectionId: askSectionId.askSectionId })
-        .from(askSectionId)
-        .where(eq(askSectionId.swapId, element.swapId));
-
-      const isOwner = currentUserEmail === element.uEmail;
-
-      swaps.push({
-        swapId: element.swapId,
-        isDone: element.isDone,
-        getSectionId: element.getSectionId,
-        createdAt: element.createdAt,
-        semester: element.semester,
-        isOwner: isOwner,
-        askingSections: askingSections.map(item => item.askSectionId)
-      });
+    // Group asking sections by swapId in memory
+    const askingMap = {};
+    for (const row of allAskingSections) {
+      if (!askingMap[row.swapId]) askingMap[row.swapId] = [];
+      askingMap[row.swapId].push(row.askSectionId);
     }
+
+    const currentUserEmail = session.user.email;
+    const swaps = swapRequest.map(element => ({
+      swapId: element.swapId,
+      isDone: element.isDone,
+      getSectionId: element.getSectionId,
+      createdAt: element.createdAt,
+      semester: element.semester,
+      isOwner: currentUserEmail === element.uEmail,
+      askingSections: askingMap[element.swapId] || [],
+    }));
 
     // console.log("Swap Requests:", swaps);
 

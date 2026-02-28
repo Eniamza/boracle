@@ -1,21 +1,10 @@
 // API to get all faculty details with their initials
-import { auth } from "@/auth";
 import { db, eq } from "@/lib/db";
 import { faculty, initial } from "@/lib/db/schema";
 import { NextResponse } from "next/server";
 
 export async function GET() {
   try {
-    // Get authenticated user session
-    const session = await auth();
-    
-    if (!session || !session.user?.email) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
-    }
-
     // Fetch all faculty with their initials in a single query
     const result = await db
       .select({
