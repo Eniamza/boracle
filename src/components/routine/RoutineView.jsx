@@ -79,8 +79,10 @@ const RoutineView = ({
     useEffect(() => {
         if (isOpen) {
             setShouldRender(true);
-            if (isModal && isMobile) {
+            if (isModal) {
                 lockScroll();
+            }
+            if (isModal && isMobile) {
                 const timer = setTimeout(() => setIsVisible(true), 20);
                 return () => clearTimeout(timer);
             }
@@ -96,6 +98,7 @@ const RoutineView = ({
                 return () => clearTimeout(timer);
             } else {
                 setShouldRender(false);
+                unlockScroll();
                 onClose?.();
             }
         }
@@ -111,6 +114,7 @@ const RoutineView = ({
             }, 250);
         } else {
             setShouldRender(false);
+            unlockScroll();
             onClose?.();
         }
     };
