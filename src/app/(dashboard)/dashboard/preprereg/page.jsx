@@ -611,15 +611,6 @@ const PreRegistrationPage = () => {
               />
             </div>
 
-            {/* Live Badge */}
-            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-red-100 dark:bg-red-900/40 border border-red-200 dark:border-red-900/60 rounded-full">
-              <span className="relative flex h-2.5 w-2.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-600 dark:bg-red-500"></span>
-              </span>
-              <span className="text-xs font-semibold text-red-700 dark:text-red-400 uppercase tracking-wide">Live</span>
-            </div>
-
             <button
               onClick={() => setShowFilterModal(true)}
               className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center gap-2 transition-colors"
