@@ -157,6 +157,7 @@ const PreRegistrationPage = () => {
         console.error('Error parsing Mercure seat update', e);
       }
     };
+
     // Flush updates every 2 seconds to avoid overwhelming the UI
     const flushInterval = setInterval(() => {
       if (Object.keys(pendingUpdates).length === 0) return;
@@ -942,12 +943,12 @@ const PreRegistrationPage = () => {
                       ref={isLast && displayCount < filteredCourses.length ? lastCourseRef : null}
                       className={`
                         border-b border-gray-200 dark:border-gray-800 transition-colors duration-500
-                        ${isSelected
-                          ? 'bg-green-200 dark:bg-green-500/30 hover:bg-green-300 dark:hover:bg-green-500/40'
-                          : seatAnimations[course.sectionId] === 'decrease'
-                            ? 'bg-green-100 dark:bg-green-900/40 border-green-300 dark:border-green-700'
-                            : seatAnimations[course.sectionId] === 'increase'
-                              ? 'bg-red-100 dark:bg-red-900/40 border-red-300 dark:border-red-700'
+                        ${seatAnimations[course.sectionId] === 'decrease'
+                          ? 'bg-green-100 dark:bg-green-900/40 border-green-300 dark:border-green-700'
+                          : seatAnimations[course.sectionId] === 'increase'
+                            ? 'bg-red-100 dark:bg-red-900/40 border-red-300 dark:border-red-700'
+                            : isSelected
+                              ? 'bg-green-200 dark:bg-green-500/30 hover:bg-green-300 dark:hover:bg-green-500/40'
                               : 'hover:bg-gray-100 dark:hover:bg-gray-800/50'
                         }
                       `}
