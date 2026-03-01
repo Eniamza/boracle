@@ -114,6 +114,7 @@ const RoutineView = ({
             }, 250);
         } else {
             setShouldRender(false);
+            unlockScroll();
             onClose?.();
         }
     };
