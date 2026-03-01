@@ -23,6 +23,8 @@ const PreRegistrationPage = () => {
   const [loading, setLoading] = useState(true);
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [showRoutineModal, setShowRoutineModal] = useState(false);
+  const [seatUpdates, setSeatUpdates] = useState({}); // Keep track of latest seat updates
+  const [seatAnimations, setSeatAnimations] = useState({}); // Keep track of animations { sectionId: 'decrease' | 'increase' }
   const [selectedCourses, setSelectedCourses] = useLocalStorage('boracle_selected_courses', []);
   const [savingRoutine, setSavingRoutine] = useState(false);
   const [customToast, setCustomToast] = useState({ show: false, message: '', type: 'success' });
@@ -119,6 +121,8 @@ const PreRegistrationPage = () => {
         setFilteredCourses(data);
         setLoading(false);
 
+        console.log(data);
+
 
       } catch (error) {
         console.error('Error fetching courses:', error);
@@ -127,6 +131,99 @@ const PreRegistrationPage = () => {
     };
     fetchCourses();
   }, []);
+
+  // Handle Mercure Real-time Seat Updates
+  useEffect(() => {
+    // Only connect if we have courses loaded
+    if (courses.length === 0) return;
+
+    const url = new URL('https://mercure.eniamza.com/.well-known/mercure');
+    // Using a general topic or specific to pre-reg seats
+    url.searchParams.append('topic', 'seatstatus');
+
+    const eventSource = new EventSource(url);
+    const pendingUpdates = {};
+
+    eventSource.onmessage = (event) => {
+      try {
+        const payload = JSON.parse(event.data);
+        // Expecting format like {"timestamp":"2026...","seatStatus":{"182197":34,"182198":34}}
+        if (payload && payload.seatStatus) {
+          // Accumulate updates
+          Object.assign(pendingUpdates, payload.seatStatus);
+        }
+      } catch (e) {
+        console.error('Error parsing Mercure seat update', e);
+      }
+    };
+    // Flush updates every 2 seconds to avoid overwhelming the UI
+    const flushInterval = setInterval(() => {
+      if (Object.keys(pendingUpdates).length === 0) return;
+
+      const currentUpdates = { ...pendingUpdates };
+
+      // Clear pending updates
+      for (const key in pendingUpdates) delete pendingUpdates[key];
+
+      setCourses(prevCourses => {
+        let hasChanges = false;
+        const newAnimations = {};
+
+        const nextCourses = prevCourses.map(course => {
+          if (currentUpdates[course.sectionId] !== undefined) {
+            const newConsumedSeat = currentUpdates[course.sectionId];
+
+            // Only update if the value actually changed
+            if (course.consumedSeat !== newConsumedSeat) {
+              hasChanges = true;
+
+              // Determine animation type
+              if (newConsumedSeat < course.consumedSeat) {
+                newAnimations[course.sectionId] = 'decrease'; // Seats freed up -> Green
+              } else {
+                newAnimations[course.sectionId] = 'increase'; // Seats taken -> Red
+              }
+
+              return { ...course, consumedSeat: newConsumedSeat };
+            }
+          }
+          return course;
+        });
+
+        if (hasChanges) {
+          // Trigger animations
+          setSeatAnimations(prev => ({ ...prev, ...newAnimations }));
+
+          // Clear this specific batch of animations after 2.5 seconds
+          // Using a detached timeout prevents overlapping updates from keeping the class indefinitely
+          setTimeout(() => {
+            setSeatAnimations(prev => {
+              const cleared = { ...prev };
+              let changed = false;
+              Object.keys(newAnimations).forEach(id => {
+                // Only delete if the animation is STILL the one we set
+                if (cleared[id] === newAnimations[id]) {
+                  delete cleared[id];
+                  changed = true;
+                }
+              });
+              return changed ? cleared : prev;
+            });
+          }, 2500);
+
+          return nextCourses;
+        }
+
+        return prevCourses;
+      });
+
+    }, 2000);
+
+    return () => {
+      eventSource.close();
+      clearInterval(flushInterval);
+    };
+  }, [courses.length > 0]); // Dependency on the fact we have loaded courses at least once
 
   // Debounce search term
   useEffect(() => {
@@ -152,7 +249,7 @@ const PreRegistrationPage = () => {
     // Apply filters
     if (filters.hideFilled) {
       filtered = filtered.filter(course =>
-        course.capacity > course.consumedSeat
+        course.capacity > course.consumedSeat || seatAnimations[course.sectionId] // keep if animating
       );
     }
 
@@ -206,7 +303,7 @@ const PreRegistrationPage = () => {
 
     setFilteredCourses(filtered);
     setDisplayCount(50);
-  }, [debouncedSearchTerm, courses, filters, sortConfig]);
+  }, [debouncedSearchTerm, courses, filters, sortConfig, seatAnimations]);
 
   // Update displayed courses when filtered courses or display count changes
   useEffect(() => {
@@ -513,6 +610,16 @@ const PreRegistrationPage = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
+
+            {/* Live Badge */}
+            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-red-100 dark:bg-red-900/40 border border-red-200 dark:border-red-900/60 rounded-full">
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-600 dark:bg-red-500"></span>
+              </span>
+              <span className="text-xs font-semibold text-red-700 dark:text-red-400 uppercase tracking-wide">Live</span>
+            </div>
+
             <button
               onClick={() => setShowFilterModal(true)}
               className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center gap-2 transition-colors"
@@ -824,10 +931,14 @@ const PreRegistrationPage = () => {
                       key={course.sectionId}
                       ref={isLast && displayCount < filteredCourses.length ? lastCourseRef : null}
                       className={`
-                        border-b border-gray-200 dark:border-gray-800 transition-colors
+                        border-b border-gray-200 dark:border-gray-800 transition-colors duration-500
                         ${isSelected
                           ? 'bg-green-200 dark:bg-green-500/30 hover:bg-green-300 dark:hover:bg-green-500/40'
-                          : 'hover:bg-gray-100 dark:hover:bg-gray-800/50'
+                          : seatAnimations[course.sectionId] === 'decrease'
+                            ? 'bg-green-100 dark:bg-green-900/40 border-green-300 dark:border-green-700'
+                            : seatAnimations[course.sectionId] === 'increase'
+                              ? 'bg-red-100 dark:bg-red-900/40 border-red-300 dark:border-red-700'
+                              : 'hover:bg-gray-100 dark:hover:bg-gray-800/50'
                         }
                       `}
                     >
