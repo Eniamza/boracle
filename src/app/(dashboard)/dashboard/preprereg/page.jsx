@@ -32,6 +32,7 @@ const PreRegistrationPage = () => {
     hideFilled: false,
     avoidFaculties: [],
     labFilter: 'all', // 'all', 'with-lab', 'without-lab'
+    onlySelected: false,
   });
   const [facultySearch, setFacultySearch] = useState('');
   const [facultyDropdownOpen, setFacultyDropdownOpen] = useState(false);
@@ -265,6 +266,10 @@ const PreRegistrationPage = () => {
       filtered = filtered.filter(course => course.labSchedules && course.labSchedules.length > 0);
     } else if (filters.labFilter === 'without-lab') {
       filtered = filtered.filter(course => !course.labSchedules || course.labSchedules.length === 0);
+    }
+
+    if (filters.onlySelected) {
+      filtered = filtered.filter(course => selectedCourses.some(c => c.sectionId === course.sectionId));
     }
 
     // Apply sorting
@@ -621,7 +626,7 @@ const PreRegistrationPage = () => {
 
             {/* Active Filters Dropdown - Shows when filters are applied */}
             {/* Saihan: Why are these comments so hard to read, ugh */}
-            {(filters.hideFilled || filters.avoidFaculties.length > 0 || filters.labFilter !== 'all') && (
+            {(filters.hideFilled || filters.avoidFaculties.length > 0 || filters.labFilter !== 'all' || filters.onlySelected) && (
               <div className="relative" ref={filterDropdownRef}>
                 <button
                   onClick={() => setFilterDropdownOpen(!filterDropdownOpen)}
@@ -632,7 +637,7 @@ const PreRegistrationPage = () => {
                     <Filter className="w-5 h-5" />
                     {/* Badge showing count of active filters */}
                     <span className="absolute -top-1.5 -right-1.5 bg-white text-red-600 text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold">
-                      {(filters.hideFilled ? 1 : 0) + filters.avoidFaculties.length + (filters.labFilter !== 'all' ? 1 : 0)}
+                      {(filters.hideFilled ? 1 : 0) + filters.avoidFaculties.length + (filters.labFilter !== 'all' ? 1 : 0) + (filters.onlySelected ? 1 : 0)}
                     </span>
                   </div>
                 </button>
@@ -647,7 +652,7 @@ const PreRegistrationPage = () => {
                         {/* Clear All Button */}
                         <button
                           onClick={() => {
-                            setFilters({ hideFilled: false, avoidFaculties: [], labFilter: 'all' });
+                            setFilters({ hideFilled: false, avoidFaculties: [], labFilter: 'all', onlySelected: false });
                             setFilterDropdownOpen(false);
                           }}
                           className="text-xs text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 font-medium"
@@ -712,6 +717,20 @@ const PreRegistrationPage = () => {
                             </button>
                           ))}
                         </div>
+                      )}
+
+                      {/* Only Selected Courses Filter Item */}
+                      {filters.onlySelected && (
+                        <button
+                          onClick={() => setFilters(prev => ({ ...prev, onlySelected: false }))}
+                          className="w-full flex items-center justify-between px-3 py-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors group mt-1"
+                        >
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                            <span className="text-sm text-gray-700 dark:text-gray-300">Only Show Selected</span>
+                          </div>
+                          <X className="w-4 h-4 text-gray-400 group-hover:text-red-500 transition-colors" />
+                        </button>
                       )}
                     </div>
                   </div>
@@ -1038,6 +1057,30 @@ const PreRegistrationPage = () => {
 
               {/* Content */}
               <div className="p-4 space-y-5">
+                {/* Only Selected Sections - Material Design Checkbox */}
+                <label className="flex items-center gap-3 cursor-pointer p-3 bg-gray-100 dark:bg-[#1e3a5f] rounded-lg hover:bg-gray-200 dark:hover:bg-[#234b7a] transition-colors mb-3">
+                  <div className="relative">
+                    <input
+                      type="checkbox"
+                      checked={filters.onlySelected}
+                      onChange={(e) => setFilters(prev => ({ ...prev, onlySelected: e.target.checked }))}
+                      className="sr-only peer"
+                    />
+                    <div className="w-5 h-5 border-2 border-green-500 dark:border-green-400 rounded bg-transparent peer-checked:bg-green-500 peer-checked:border-green-500 transition-all duration-200 flex items-center justify-center">
+                      {filters.onlySelected && (
+                        <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                    </div>
+                    <div className="absolute inset-0 -m-2 rounded-full peer-focus-visible:ring-2 peer-focus-visible:ring-green-400 peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-gray-100 dark:peer-focus-visible:ring-offset-[#1e3a5f]"></div>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-900 dark:text-white">Only Show Selected Courses</span>
+                    <p className="text-xs text-gray-500 dark:text-blue-300/70">Filters the list to display only the courses in your routine</p>
+                  </div>
+                </label>
+
                 {/* Hide Filled Sections - Material Design Checkbox */}
                 <label className="flex items-center gap-3 cursor-pointer p-3 bg-gray-100 dark:bg-[#1e3a5f] rounded-lg hover:bg-gray-200 dark:hover:bg-[#234b7a] transition-colors">
                   <div className="relative">
@@ -1242,7 +1285,7 @@ const PreRegistrationPage = () => {
               <div className="flex gap-2 p-4 border-t border-gray-200 dark:border-blue-800/50 bg-gray-50 dark:bg-[#0c1629]">
                 <button
                   onClick={() => {
-                    setFilters({ hideFilled: false, avoidFaculties: [] });
+                    setFilters({ hideFilled: false, avoidFaculties: [], labFilter: 'all', onlySelected: false });
                     setShowFilterModal(false);
                   }}
                   className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 rounded-lg transition-colors font-medium text-white"
