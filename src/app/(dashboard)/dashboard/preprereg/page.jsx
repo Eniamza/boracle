@@ -56,6 +56,12 @@ const PreRegistrationPage = () => {
   const facultyListRef = useRef(null);
   const filterDropdownRef = useRef(null);
 
+  // Ref to track displayed courses for the mock generator without triggering useEffect
+  const displayedCoursesRef = useRef([]);
+  useEffect(() => {
+    displayedCoursesRef.current = displayedCourses;
+  }, [displayedCourses]);
+
   useEffect(() => {
     requestAnimationFrame(() => setMounted(true));
   }, []);
@@ -158,7 +164,6 @@ const PreRegistrationPage = () => {
       }
     };
 
-    // Flush updates every 2 seconds to avoid overwhelming the UI
     const flushInterval = setInterval(() => {
       if (Object.keys(pendingUpdates).length === 0) return;
 
@@ -836,6 +841,7 @@ const PreRegistrationPage = () => {
                   <MobileCourseCard
                     course={course}
                     isSelected={isSelected}
+                    seatAnimation={seatAnimations[course.sectionId]}
                     onToggle={addToRoutine}
                     onCardTap={(c) => {
                       // Enrich with faculty data before showing bottom sheet
