@@ -9,6 +9,7 @@ import { Plus, X } from 'lucide-react';
 const MobileCourseCard = ({
     course,
     isSelected,
+    seatAnimation,
     onToggle,
     onCardTap,
     formatTime,
@@ -29,9 +30,13 @@ const MobileCourseCard = ({
 
     return (
         <div
-            className={`rounded-xl border p-3.5 transition-all active:scale-[0.98] ${isSelected
-                ? 'bg-green-50 dark:bg-green-900/20 border-green-400 dark:border-green-600'
-                : 'bg-white dark:bg-gray-800/50 border-gray-200 dark:border-gray-700'
+            className={`rounded-xl border p-3.5 transition-all duration-500 active:scale-[0.98] ${seatAnimation === 'decrease'
+                    ? 'bg-green-100 dark:bg-green-900/40 border-green-400 dark:border-green-600'
+                    : seatAnimation === 'increase'
+                        ? 'bg-red-100 dark:bg-red-900/40 border-red-400 dark:border-red-600'
+                        : isSelected
+                            ? 'bg-green-50 dark:bg-green-900/20 border-green-400 dark:border-green-600'
+                            : 'bg-white dark:bg-gray-800/50 border-gray-200 dark:border-gray-700'
                 }`}
             onClick={() => onCardTap?.(course)}
         >

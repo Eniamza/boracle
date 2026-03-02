@@ -1,5 +1,28 @@
 export const changelog = [
     {
+        version: "1.26.0",
+        date: "2026-03-02",
+        changes: {
+            new: [
+                "Live Seat Updates (Mercure integration) for real-time tracking in the pre-registration page",
+                "Added 'Only Show Selected Courses' filter to easily find classes in your routine",
+                "New global acknowledgements section for feature inspirations and original owners",
+                "Displayed GitHub username as subheading on the contributors page"
+            ],
+            improved: [
+                "Massive performance optimization on the pre-registration page for smoother scrolling and filtering",
+                "Reordered 'Avoid Faculty' filter to the top of the filters modal for better accessibility",
+                "Consistent background colors across main and dashboard pages",
+                "Homepage feature cards now have consistently aligned 'Visit' buttons"
+            ],
+            fixed: [
+                "Prevented duplicate routine imports by tracking source routine IDs",
+                "Exported PNGs no longer include the 'remove course' buttons",
+                "Cleaned up redundant API swap endpoints"
+            ]
+        }
+    },
+    {
         version: "1.25.0",
         date: "2026-02-27",
         changes: {

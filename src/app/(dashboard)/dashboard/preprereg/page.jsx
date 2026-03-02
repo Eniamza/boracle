@@ -16,13 +16,12 @@ import SignInPrompt from '@/components/shared/SignInPrompt';
 const PreRegistrationPage = () => {
   const { data: session } = useSession();
   const [courses, setCourses] = useState([]);
-  const [filteredCourses, setFilteredCourses] = useState([]);
-  const [displayedCourses, setDisplayedCourses] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [showRoutineModal, setShowRoutineModal] = useState(false);
+  const [seatAnimations, setSeatAnimations] = useState({}); // Keep track of animations { sectionId: 'decrease' | 'increase' }
   const [selectedCourses, setSelectedCourses] = useLocalStorage('boracle_selected_courses', []);
   const [savingRoutine, setSavingRoutine] = useState(false);
   const [customToast, setCustomToast] = useState({ show: false, message: '', type: 'success' });
@@ -30,6 +29,7 @@ const PreRegistrationPage = () => {
     hideFilled: false,
     avoidFaculties: [],
     labFilter: 'all', // 'all', 'with-lab', 'without-lab'
+    onlySelected: false,
   });
   const [facultySearch, setFacultySearch] = useState('');
   const [facultyDropdownOpen, setFacultyDropdownOpen] = useState(false);
@@ -52,6 +52,8 @@ const PreRegistrationPage = () => {
   const facultyDropdownRef = useRef(null);
   const facultyListRef = useRef(null);
   const filterDropdownRef = useRef(null);
+
+
 
   useEffect(() => {
     requestAnimationFrame(() => setMounted(true));
@@ -87,7 +89,8 @@ const PreRegistrationPage = () => {
       }
     });
     return Array.from(facultySet).sort();
-  }, [courses]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [courses.length]);
 
   // Calculate total credits
   const totalCredits = useMemo(() => {
@@ -116,8 +119,9 @@ const PreRegistrationPage = () => {
 
         // Set courses immediately so UI loads
         setCourses(data);
-        setFilteredCourses(data);
         setLoading(false);
+
+        console.log(data);
 
 
       } catch (error) {
@@ -128,6 +132,99 @@ const PreRegistrationPage = () => {
     fetchCourses();
   }, []);
 
+  // Handle Mercure Real-time Seat Updates
+  useEffect(() => {
+    // Only connect if we have courses loaded
+    if (courses.length === 0) return;
+
+    const url = new URL('https://mercure.eniamza.com/.well-known/mercure');
+    // Using a general topic or specific to pre-reg seats
+    url.searchParams.append('topic', 'seatstatus');
+
+    const eventSource = new EventSource(url);
+    const pendingUpdates = {};
+
+    eventSource.onmessage = (event) => {
+      try {
+        const payload = JSON.parse(event.data);
+        // Expecting format like {"timestamp":"2026...","seatStatus":{"182197":34,"182198":34}}
+        if (payload && payload.seatStatus) {
+          // Accumulate updates
+          Object.assign(pendingUpdates, payload.seatStatus);
+        }
+      } catch (e) {
+        console.error('Error parsing Mercure seat update', e);
+      }
+    };
+
+    const flushInterval = setInterval(() => {
+      if (Object.keys(pendingUpdates).length === 0) return;
+
+      const currentUpdates = { ...pendingUpdates };
+
+      // Clear pending updates
+      for (const key in pendingUpdates) delete pendingUpdates[key];
+
+      setCourses(prevCourses => {
+        let hasChanges = false;
+        const newAnimations = {};
+
+        const nextCourses = prevCourses.map(course => {
+          if (currentUpdates[course.sectionId] !== undefined) {
+            const newConsumedSeat = currentUpdates[course.sectionId];
+
+            // Only update if the value actually changed
+            if (course.consumedSeat !== newConsumedSeat) {
+              hasChanges = true;
+
+              // Determine animation type
+              if (newConsumedSeat < course.consumedSeat) {
+                newAnimations[course.sectionId] = 'decrease'; // Seats freed up -> Green
+              } else {
+                newAnimations[course.sectionId] = 'increase'; // Seats taken -> Red
+              }
+
+              return { ...course, consumedSeat: newConsumedSeat };
+            }
+          }
+          return course;
+        });
+
+        if (hasChanges) {
+          // Trigger animations
+          setSeatAnimations(prev => ({ ...prev, ...newAnimations }));
+
+          // Clear this specific batch of animations after 2.5 seconds
+          // Using a detached timeout prevents overlapping updates from keeping the class indefinitely
+          setTimeout(() => {
+            setSeatAnimations(prev => {
+              const cleared = { ...prev };
+              let changed = false;
+              Object.keys(newAnimations).forEach(id => {
+                // Only delete if the animation is STILL the one we set
+                if (cleared[id] === newAnimations[id]) {
+                  delete cleared[id];
+                  changed = true;
+                }
+              });
+              return changed ? cleared : prev;
+            });
+          }, 2500);
+
+          return nextCourses;
+        }
+
+        return prevCourses;
+      });
+
+    }, 2000);
+
+    return () => {
+      eventSource.close();
+      clearInterval(flushInterval);
+    };
+  }, [courses.length > 0]); // Dependency on the fact we have loaded courses at least once
+
   // Debounce search term
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -137,7 +234,7 @@ const PreRegistrationPage = () => {
   }, [searchTerm]);
 
   // Apply filters and search
-  useEffect(() => {
+  const filteredCourses = useMemo(() => {
     let filtered = [...courses];
 
     // Apply search
@@ -152,7 +249,7 @@ const PreRegistrationPage = () => {
     // Apply filters
     if (filters.hideFilled) {
       filtered = filtered.filter(course =>
-        course.capacity > course.consumedSeat
+        course.capacity > course.consumedSeat || seatAnimations[course.sectionId] // keep if animating
       );
     }
 
@@ -168,6 +265,10 @@ const PreRegistrationPage = () => {
       filtered = filtered.filter(course => course.labSchedules && course.labSchedules.length > 0);
     } else if (filters.labFilter === 'without-lab') {
       filtered = filtered.filter(course => !course.labSchedules || course.labSchedules.length === 0);
+    }
+
+    if (filters.onlySelected) {
+      filtered = filtered.filter(course => selectedCourses.some(c => c.sectionId === course.sectionId));
     }
 
     // Apply sorting
@@ -204,14 +305,17 @@ const PreRegistrationPage = () => {
       });
     }
 
-    setFilteredCourses(filtered);
-    setDisplayCount(50);
-  }, [debouncedSearchTerm, courses, filters, sortConfig]);
+    return filtered;
+  }, [debouncedSearchTerm, courses, filters, sortConfig, seatAnimations, selectedCourses]);
 
-  // Update displayed courses when filtered courses or display count changes
-  useEffect(() => {
-    setDisplayedCourses(filteredCourses.slice(0, displayCount));
+  const displayedCourses = useMemo(() => {
+    return filteredCourses.slice(0, displayCount);
   }, [filteredCourses, displayCount]);
+
+  // Reset display count when filters change
+  useEffect(() => {
+    setDisplayCount(50);
+  }, [debouncedSearchTerm, filters, sortConfig, selectedCourses]);
 
   // Infinite scroll observer
   useEffect(() => {
@@ -513,6 +617,7 @@ const PreRegistrationPage = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
+
             <button
               onClick={() => setShowFilterModal(true)}
               className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center gap-2 transition-colors"
@@ -523,7 +628,7 @@ const PreRegistrationPage = () => {
 
             {/* Active Filters Dropdown - Shows when filters are applied */}
             {/* Saihan: Why are these comments so hard to read, ugh */}
-            {(filters.hideFilled || filters.avoidFaculties.length > 0 || filters.labFilter !== 'all') && (
+            {(filters.hideFilled || filters.avoidFaculties.length > 0 || filters.labFilter !== 'all' || filters.onlySelected) && (
               <div className="relative" ref={filterDropdownRef}>
                 <button
                   onClick={() => setFilterDropdownOpen(!filterDropdownOpen)}
@@ -534,7 +639,7 @@ const PreRegistrationPage = () => {
                     <Filter className="w-5 h-5" />
                     {/* Badge showing count of active filters */}
                     <span className="absolute -top-1.5 -right-1.5 bg-white text-red-600 text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold">
-                      {(filters.hideFilled ? 1 : 0) + filters.avoidFaculties.length + (filters.labFilter !== 'all' ? 1 : 0)}
+                      {(filters.hideFilled ? 1 : 0) + filters.avoidFaculties.length + (filters.labFilter !== 'all' ? 1 : 0) + (filters.onlySelected ? 1 : 0)}
                     </span>
                   </div>
                 </button>
@@ -549,7 +654,7 @@ const PreRegistrationPage = () => {
                         {/* Clear All Button */}
                         <button
                           onClick={() => {
-                            setFilters({ hideFilled: false, avoidFaculties: [], labFilter: 'all' });
+                            setFilters({ hideFilled: false, avoidFaculties: [], labFilter: 'all', onlySelected: false });
                             setFilterDropdownOpen(false);
                           }}
                           className="text-xs text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 font-medium"
@@ -614,6 +719,20 @@ const PreRegistrationPage = () => {
                             </button>
                           ))}
                         </div>
+                      )}
+
+                      {/* Only Selected Courses Filter Item */}
+                      {filters.onlySelected && (
+                        <button
+                          onClick={() => setFilters(prev => ({ ...prev, onlySelected: false }))}
+                          className="w-full flex items-center justify-between px-3 py-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors group mt-1"
+                        >
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                            <span className="text-sm text-gray-700 dark:text-gray-300">Only Show Selected</span>
+                          </div>
+                          <X className="w-4 h-4 text-gray-400 group-hover:text-red-500 transition-colors" />
+                        </button>
                       )}
                     </div>
                   </div>
@@ -718,6 +837,7 @@ const PreRegistrationPage = () => {
                   <MobileCourseCard
                     course={course}
                     isSelected={isSelected}
+                    seatAnimation={seatAnimations[course.sectionId]}
                     onToggle={addToRoutine}
                     onCardTap={(c) => {
                       // Enrich with faculty data before showing bottom sheet
@@ -824,10 +944,14 @@ const PreRegistrationPage = () => {
                       key={course.sectionId}
                       ref={isLast && displayCount < filteredCourses.length ? lastCourseRef : null}
                       className={`
-                        border-b border-gray-200 dark:border-gray-800 transition-colors
-                        ${isSelected
-                          ? 'bg-green-200 dark:bg-green-500/30 hover:bg-green-300 dark:hover:bg-green-500/40'
-                          : 'hover:bg-gray-100 dark:hover:bg-gray-800/50'
+                        border-b border-gray-200 dark:border-gray-800 transition-colors duration-500
+                        ${seatAnimations[course.sectionId] === 'decrease'
+                          ? 'bg-green-100 dark:bg-green-900/40 border-green-300 dark:border-green-700'
+                          : seatAnimations[course.sectionId] === 'increase'
+                            ? 'bg-red-100 dark:bg-red-900/40 border-red-300 dark:border-red-700'
+                            : isSelected
+                              ? 'bg-green-200 dark:bg-green-500/30 hover:bg-green-300 dark:hover:bg-green-500/40'
+                              : 'hover:bg-gray-100 dark:hover:bg-gray-800/50'
                         }
                       `}
                     >
@@ -936,64 +1060,6 @@ const PreRegistrationPage = () => {
 
               {/* Content */}
               <div className="p-4 space-y-5">
-                {/* Hide Filled Sections - Material Design Checkbox */}
-                <label className="flex items-center gap-3 cursor-pointer p-3 bg-gray-100 dark:bg-[#1e3a5f] rounded-lg hover:bg-gray-200 dark:hover:bg-[#234b7a] transition-colors">
-                  <div className="relative">
-                    <input
-                      type="checkbox"
-                      checked={filters.hideFilled}
-                      onChange={(e) => setFilters(prev => ({ ...prev, hideFilled: e.target.checked }))}
-                      className="sr-only peer"
-                    />
-                    <div className="w-5 h-5 border-2 border-blue-500 dark:border-blue-400 rounded bg-transparent peer-checked:bg-blue-500 peer-checked:border-blue-500 transition-all duration-200 flex items-center justify-center">
-                      {filters.hideFilled && (
-                        <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                        </svg>
-                      )}
-                    </div>
-                    <div className="absolute inset-0 -m-2 rounded-full peer-focus-visible:ring-2 peer-focus-visible:ring-blue-400 peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-gray-100 dark:peer-focus-visible:ring-offset-[#1e3a5f]"></div>
-                  </div>
-                  <div>
-                    <span className="font-medium text-gray-900 dark:text-white">Hide Filled Sections</span>
-                    <p className="text-xs text-gray-500 dark:text-blue-300/70">Only show sections with available seats</p>
-                  </div>
-                </label>
-
-                {/* Lab Filter - Segmented Control */}
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-blue-200">Lab requirement</label>
-                  <div className="flex bg-gray-100 dark:bg-[#1e3a5f] rounded-lg p-1 gap-1">
-                    <button
-                      onClick={() => setFilters(prev => ({ ...prev, labFilter: 'all' }))}
-                      className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all duration-200 ${filters.labFilter === 'all'
-                        ? 'bg-white dark:bg-[#2a4d7d] text-gray-900 dark:text-white shadow-sm'
-                        : 'text-gray-500 dark:text-blue-300 hover:text-gray-700 dark:hover:text-blue-200'
-                        }`}
-                    >
-                      All Courses
-                    </button>
-                    <button
-                      onClick={() => setFilters(prev => ({ ...prev, labFilter: 'with-lab' }))}
-                      className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all duration-200 ${filters.labFilter === 'with-lab'
-                        ? 'bg-white dark:bg-[#2a4d7d] text-purple-700 dark:text-purple-300 shadow-sm'
-                        : 'text-gray-500 dark:text-blue-300 hover:text-gray-700 dark:hover:text-blue-200'
-                        }`}
-                    >
-                      With Labs
-                    </button>
-                    <button
-                      onClick={() => setFilters(prev => ({ ...prev, labFilter: 'without-lab' }))}
-                      className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all duration-200 ${filters.labFilter === 'without-lab'
-                        ? 'bg-white dark:bg-[#2a4d7d] text-blue-700 dark:text-blue-300 shadow-sm'
-                        : 'text-gray-500 dark:text-blue-300 hover:text-gray-700 dark:hover:text-blue-200'
-                        }`}
-                    >
-                      Without Labs
-                    </button>
-                  </div>
-                </div>
-
                 {/* Avoid Faculties - Dropdown */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700 dark:text-blue-200">Avoid Faculties</label>
@@ -1102,36 +1168,113 @@ const PreRegistrationPage = () => {
                                         ...prev,
                                         avoidFaculties: [...prev.avoidFaculties, initial]
                                       }));
+                                      setFacultySearch('');
+                                      setFacultyDropdownOpen(false);
                                     }
-                                    setFacultySearch('');
                                   }}
                                   onMouseEnter={() => setHighlightedIndex(index)}
                                 >
-                                  <div className="flex-1 min-w-0">
-                                    <div className={`font-medium text-sm ${isHighlighted ? 'text-white' : 'text-gray-900 dark:text-white'}`}>{initial}</div>
+                                  <div className="flex-1">
+                                    <div className="font-medium text-gray-900 dark:text-gray-100 text-sm">{initial}</div>
                                   </div>
                                   {isSelected && (
-                                    <div className={`ml-2 ${isHighlighted ? 'text-white' : 'text-blue-600 dark:text-blue-400'}`}>
-                                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                      </svg>
-                                    </div>
+                                    <X className="w-4 h-4 text-white" />
                                   )}
                                 </div>
                               );
                             })}
-                          {cdnFacultyList.length === 0 && (
-                            <div className="py-4 text-center text-sm text-gray-500 dark:text-blue-300/70">Loading faculties...</div>
-                          )}
-                          {cdnFacultyList.length > 0 &&
-                            cdnFacultyList.filter(initial =>
-                              initial.toLowerCase().includes(facultySearch.toLowerCase())
-                            ).length === 0 && (
-                              <div className="py-4 text-center text-sm text-gray-500 dark:text-blue-300/70">No faculty found</div>
+                          {cdnFacultyList.filter(initial =>
+                            initial.toLowerCase().includes(facultySearch.toLowerCase())
+                          ).length === 0 && (
+                              <div className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 text-center">
+                                No faculties found
+                              </div>
                             )}
                         </div>
                       </div>
                     )}
+                  </div>
+                </div>
+
+                {/* Only Selected Sections - Material Design Checkbox */}
+                <label className="flex items-center gap-3 cursor-pointer p-3 bg-gray-100 dark:bg-[#1e3a5f] rounded-lg hover:bg-gray-200 dark:hover:bg-[#234b7a] transition-colors mb-3">
+                  <div className="relative">
+                    <input
+                      type="checkbox"
+                      checked={filters.onlySelected}
+                      onChange={(e) => setFilters(prev => ({ ...prev, onlySelected: e.target.checked }))}
+                      className="sr-only peer"
+                    />
+                    <div className="w-5 h-5 border-2 border-green-500 dark:border-green-400 rounded bg-transparent peer-checked:bg-green-500 peer-checked:border-green-500 transition-all duration-200 flex items-center justify-center">
+                      {filters.onlySelected && (
+                        <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                    </div>
+                    <div className="absolute inset-0 -m-2 rounded-full peer-focus-visible:ring-2 peer-focus-visible:ring-green-400 peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-gray-100 dark:peer-focus-visible:ring-offset-[#1e3a5f]"></div>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-900 dark:text-white">Only Show Selected Courses</span>
+                    <p className="text-xs text-gray-500 dark:text-blue-300/70">Filters the list to display only the courses in your routine</p>
+                  </div>
+                </label>
+
+                {/* Hide Filled Sections - Material Design Checkbox */}
+                <label className="flex items-center gap-3 cursor-pointer p-3 bg-gray-100 dark:bg-[#1e3a5f] rounded-lg hover:bg-gray-200 dark:hover:bg-[#234b7a] transition-colors">
+                  <div className="relative">
+                    <input
+                      type="checkbox"
+                      checked={filters.hideFilled}
+                      onChange={(e) => setFilters(prev => ({ ...prev, hideFilled: e.target.checked }))}
+                      className="sr-only peer"
+                    />
+                    <div className="w-5 h-5 border-2 border-blue-500 dark:border-blue-400 rounded bg-transparent peer-checked:bg-blue-500 peer-checked:border-blue-500 transition-all duration-200 flex items-center justify-center">
+                      {filters.hideFilled && (
+                        <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                    </div>
+                    <div className="absolute inset-0 -m-2 rounded-full peer-focus-visible:ring-2 peer-focus-visible:ring-blue-400 peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-gray-100 dark:peer-focus-visible:ring-offset-[#1e3a5f]"></div>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-900 dark:text-white">Hide Filled Sections</span>
+                    <p className="text-xs text-gray-500 dark:text-blue-300/70">Only show sections with available seats</p>
+                  </div>
+                </label>
+
+                {/* Lab Filter - Segmented Control */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-blue-200">Lab requirement</label>
+                  <div className="flex bg-gray-100 dark:bg-[#1e3a5f] rounded-lg p-1 gap-1">
+                    <button
+                      onClick={() => setFilters(prev => ({ ...prev, labFilter: 'all' }))}
+                      className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all duration-200 ${filters.labFilter === 'all'
+                        ? 'bg-white dark:bg-[#2a4d7d] text-gray-900 dark:text-white shadow-sm'
+                        : 'text-gray-500 dark:text-blue-300 hover:text-gray-700 dark:hover:text-blue-200'
+                        }`}
+                    >
+                      All Courses
+                    </button>
+                    <button
+                      onClick={() => setFilters(prev => ({ ...prev, labFilter: 'with-lab' }))}
+                      className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all duration-200 ${filters.labFilter === 'with-lab'
+                        ? 'bg-white dark:bg-[#2a4d7d] text-purple-700 dark:text-purple-300 shadow-sm'
+                        : 'text-gray-500 dark:text-blue-300 hover:text-gray-700 dark:hover:text-blue-200'
+                        }`}
+                    >
+                      With Labs
+                    </button>
+                    <button
+                      onClick={() => setFilters(prev => ({ ...prev, labFilter: 'without-lab' }))}
+                      className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all duration-200 ${filters.labFilter === 'without-lab'
+                        ? 'bg-white dark:bg-[#2a4d7d] text-blue-700 dark:text-blue-300 shadow-sm'
+                        : 'text-gray-500 dark:text-blue-300 hover:text-gray-700 dark:hover:text-blue-200'
+                        }`}
+                    >
+                      Without Labs
+                    </button>
                   </div>
                 </div>
               </div>
@@ -1140,7 +1283,7 @@ const PreRegistrationPage = () => {
               <div className="flex gap-2 p-4 border-t border-gray-200 dark:border-blue-800/50 bg-gray-50 dark:bg-[#0c1629]">
                 <button
                   onClick={() => {
-                    setFilters({ hideFilled: false, avoidFaculties: [] });
+                    setFilters({ hideFilled: false, avoidFaculties: [], labFilter: 'all', onlySelected: false });
                     setShowFilterModal(false);
                   }}
                   className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 rounded-lg transition-colors font-medium text-white"
