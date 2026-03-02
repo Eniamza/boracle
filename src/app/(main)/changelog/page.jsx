@@ -47,6 +47,64 @@ const CategorySection = ({ title, type, items }) => {
     );
 };
 
+const SprintSection = ({ title, type, items }) => {
+    const [isOpen, setIsOpen] = useState(type === 'pending');
+
+    if (!items || items.length === 0) return null;
+
+    let sectionBadgeClass = '';
+    if (type === 'pending') {
+        sectionBadgeClass = 'bg-orange-100 text-orange-800 dark:bg-orange-500/10 dark:text-orange-400';
+    } else if (type === 'finished') {
+        sectionBadgeClass = 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-400';
+    }
+
+    const getItemBadge = (itemType) => {
+        if (itemType?.toLowerCase() === 'bug') {
+            return 'bg-red-100 text-red-800 dark:bg-red-500/20 dark:text-red-400 border border-red-200 dark:border-red-500/30';
+        }
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-500/20 dark:text-blue-400 border border-blue-200 dark:border-blue-500/30';
+    };
+
+    return (
+        <div className="mb-6">
+            <button
+                onClick={() => setIsOpen(!isOpen)}
+                className="flex items-center text-left mb-3 group focus:outline-none transition-opacity hover:opacity-80"
+            >
+                <span className={`${sectionBadgeClass} text-xs font-bold mr-2 px-3 py-1 rounded-md uppercase tracking-wider`}>
+                    {title}
+                </span>
+                <span className="text-gray-400 group-hover:text-gray-600 dark:text-gray-500 dark:group-hover:text-gray-300 transition-colors">
+                    <svg
+                        className={`w-4 h-4 transform transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+                        fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                    >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                </span>
+            </button>
+
+            {isOpen && (
+                <div className="space-y-3 pl-2 animate-in fade-in slide-in-from-top-1 duration-200">
+                    {items.map((item, i) => (
+                        <div key={i} className="flex items-start gap-3">
+                            <div className="mt-0.5 flex-shrink-0">
+                                <span className={`text-[10px] leading-none uppercase font-bold px-2 py-1 flex items-center rounded ${getItemBadge(item.type)}`}>
+                                    {item.type || 'Enhancement'}
+                                </span>
+                            </div>
+                            <span className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">
+                                {item.text}
+                            </span>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
+
 export default function ChangelogPage() {
     const [activeTab, setActiveTab] = useState('changelog');
 
@@ -122,10 +180,9 @@ export default function ChangelogPage() {
                                         </span>
                                     </div>
 
-                                    <div className="space-y-4">
-                                        <CategorySection title="NEW" type="new" items={item.changes.new} />
-                                        <CategorySection title="IMPROVED" type="improved" items={item.changes.improved} />
-                                        <CategorySection title="FIXED" type="fixed" items={item.changes.fixed} />
+                                    <div className="space-y-5 mt-2">
+                                        <SprintSection title="PENDING" type="pending" items={item.status?.pending} />
+                                        <SprintSection title="FINISHED" type="finished" items={item.status?.finished} />
                                     </div>
                                 </div>
                             ))}
