@@ -1281,110 +1281,106 @@ const PreRegistrationPage = () => {
                     </button>
                   </div>
                 </div>
-
               </div>
-            </div>
-
-          </div>
 
               {/* Footer */}
-      <div className="flex gap-2 p-4 border-t border-gray-200 dark:border-blue-800/50 bg-gray-50 dark:bg-[#0c1629]">
-        <button
-          onClick={() => {
-            setFilters({ hideFilled: false, avoidFaculties: [], labFilter: 'all', onlySelected: false });
-            setShowFilterModal(false);
-          }}
-          className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 rounded-lg transition-colors font-medium text-white"
-        >
-          Reset Filters
-        </button>
-        <button
-          onClick={() => setShowFilterModal(false)}
-          className="flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors font-medium text-white"
-        >
-          Apply
-        </button>
-      </div>
-    </div>
-          </div >
+              <div className="flex gap-2 p-4 border-t border-gray-200 dark:border-blue-800/50 bg-gray-50 dark:bg-[#0c1629]">
+                <button
+                  onClick={() => {
+                    setFilters({ hideFilled: false, avoidFaculties: [], labFilter: 'all', onlySelected: false });
+                    setShowFilterModal(false);
+                  }}
+                  className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 rounded-lg transition-colors font-medium text-white"
+                >
+                  Reset Filters
+                </button>
+                <button
+                  onClick={() => setShowFilterModal(false)}
+                  className="flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors font-medium text-white"
+                >
+                  Apply
+                </button>
+              </div>
+            </div>
+          </div>
         )
       }
 
-{/* Routine Modal — always rendered, uses isOpen for animated transitions */ }
-<RoutineView
-  title="My Routine"
-  courses={enrichedSelectedCourses}
-  isOpen={showRoutineModal}
-  onClose={() => setShowRoutineModal(false)}
-  onSave={saveRoutine}
-  isSaving={savingRoutine}
-  onRemoveCourse={addToRoutine}
-  showRemoveButtons={true}
-  headerExtras={
-    <p className="text-sm text-gray-600 dark:text-gray-400">
-      Total Credits: <span className={`font-bold ${totalCredits > 25 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
-        {totalCredits}/25
-      </span>
-    </p>
-  }
-/>
+      {/* Routine Modal — always rendered, uses isOpen for animated transitions */}
+      <RoutineView
+        title="My Routine"
+        courses={enrichedSelectedCourses}
+        isOpen={showRoutineModal}
+        onClose={() => setShowRoutineModal(false)}
+        onSave={saveRoutine}
+        isSaving={savingRoutine}
+        onRemoveCourse={addToRoutine}
+        showRemoveButtons={true}
+        headerExtras={
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Total Credits: <span className={`font-bold ${totalCredits > 25 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
+              {totalCredits}/25
+            </span>
+          </p>
+        }
+      />
 
-{/* Faculty Hover Tooltip */ }
-{
-  hoveredFaculty && (
-    <div
-      className="fixed z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg p-4 shadow-xl w-80 pointer-events-none"
-      style={{
-        left: `${Math.min(facultyTooltipPosition.x, window.innerWidth - 340)}px`,
-        top: `${facultyTooltipPosition.y}px`
-      }}
-    >
-      <div className="flex gap-4">
-        {/* Faculty Image */}
-        <div className="shrink-0">
-          {hoveredFaculty.imgUrl && hoveredFaculty.imgUrl !== 'N/A' && !facultyImageError ? (
-            <img
-              src={hoveredFaculty.imgUrl}
-              alt={hoveredFaculty.facultyName || 'Faculty'}
-              className="w-16 h-16 rounded-full object-cover border-2 border-blue-500"
-              onError={() => setFacultyImageError(true)}
-            />
-          ) : (
-            <div className="w-16 h-16 rounded-full bg-blue-500 dark:bg-blue-400 flex items-center justify-center border-2 border-blue-600 dark:border-blue-500">
-              <svg className="w-10 h-10 text-white dark:text-blue-100" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-              </svg>
+      {/* Faculty Hover Tooltip */}
+      {
+        hoveredFaculty && (
+          <div
+            className="fixed z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg p-4 shadow-xl w-80 pointer-events-none"
+            style={{
+              left: `${Math.min(facultyTooltipPosition.x, window.innerWidth - 340)}px`,
+              top: `${facultyTooltipPosition.y}px`
+            }}
+          >
+            <div className="flex gap-4">
+              {/* Faculty Image */}
+              <div className="shrink-0">
+                {hoveredFaculty.imgUrl && hoveredFaculty.imgUrl !== 'N/A' && !facultyImageError ? (
+                  <img
+                    src={hoveredFaculty.imgUrl}
+                    alt={hoveredFaculty.facultyName || 'Faculty'}
+                    className="w-16 h-16 rounded-full object-cover border-2 border-blue-500"
+                    onError={() => setFacultyImageError(true)}
+                  />
+                ) : (
+                  <div className="w-16 h-16 rounded-full bg-blue-500 dark:bg-blue-400 flex items-center justify-center border-2 border-blue-600 dark:border-blue-500">
+                    <svg className="w-10 h-10 text-white dark:text-blue-100" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                    </svg>
+                  </div>
+                )}
+              </div>
+
+              {/* Faculty Details */}
+              <div className="flex-1 space-y-1 text-sm">
+                <div>
+                  <span className="text-gray-500 dark:text-gray-400">Initial:</span>{' '}
+                  <span className="font-medium text-blue-600 dark:text-blue-400">{hoveredFaculty.initial || 'Not Found'}</span>
+                </div>
+                <div>
+                  <span className="text-gray-500 dark:text-gray-400">Name:</span>{' '}
+                  <span className="font-medium text-gray-900 dark:text-white">{hoveredFaculty.facultyName || 'Not Found'}</span>
+                </div>
+                <div>
+                  <span className="text-gray-500 dark:text-gray-400">Email:</span>{' '}
+                  <span className="font-medium text-xs text-gray-700 dark:text-gray-300">{hoveredFaculty.facultyEmail || 'Not Found'}</span>
+                </div>
+              </div>
             </div>
-          )}
-        </div>
-
-        {/* Faculty Details */}
-        <div className="flex-1 space-y-1 text-sm">
-          <div>
-            <span className="text-gray-500 dark:text-gray-400">Initial:</span>{' '}
-            <span className="font-medium text-blue-600 dark:text-blue-400">{hoveredFaculty.initial || 'Not Found'}</span>
           </div>
-          <div>
-            <span className="text-gray-500 dark:text-gray-400">Name:</span>{' '}
-            <span className="font-medium text-gray-900 dark:text-white">{hoveredFaculty.facultyName || 'Not Found'}</span>
-          </div>
-          <div>
-            <span className="text-gray-500 dark:text-gray-400">Email:</span>{' '}
-            <span className="font-medium text-xs text-gray-700 dark:text-gray-300">{hoveredFaculty.facultyEmail || 'Not Found'}</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
+        )
+      }
 
-{/* Mobile Course Bottom Sheet */ }
-<CourseBottomSheet
-  course={bottomSheetCourse}
-  onClose={() => setBottomSheetCourse(null)}
-/>
+      {/* Mobile Course Bottom Sheet */}
+      <CourseBottomSheet
+        course={bottomSheetCourse}
+        onClose={() => setBottomSheetCourse(null)}
+      />
 
-{/* Floating Routine Button */ }
+      {/* Floating Routine Button */}
       <button
         onClick={() => setShowRoutineModal(true)}
         className="fixed bottom-6 z-40 flex items-center gap-3 px-5 py-3 bg-blue-600 hover:bg-blue-700 rounded-full shadow-lg transition-all hover:scale-105 left-1/2 -translate-x-1/2 md:left-auto md:right-6 md:translate-x-0"
