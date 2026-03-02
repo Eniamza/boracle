@@ -16,14 +16,11 @@ import SignInPrompt from '@/components/shared/SignInPrompt';
 const PreRegistrationPage = () => {
   const { data: session } = useSession();
   const [courses, setCourses] = useState([]);
-  const [filteredCourses, setFilteredCourses] = useState([]);
-  const [displayedCourses, setDisplayedCourses] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [showRoutineModal, setShowRoutineModal] = useState(false);
-  const [seatUpdates, setSeatUpdates] = useState({}); // Keep track of latest seat updates
   const [seatAnimations, setSeatAnimations] = useState({}); // Keep track of animations { sectionId: 'decrease' | 'increase' }
   const [selectedCourses, setSelectedCourses] = useLocalStorage('boracle_selected_courses', []);
   const [savingRoutine, setSavingRoutine] = useState(false);
@@ -56,11 +53,7 @@ const PreRegistrationPage = () => {
   const facultyListRef = useRef(null);
   const filterDropdownRef = useRef(null);
 
-  // Ref to track displayed courses for the mock generator without triggering useEffect
-  const displayedCoursesRef = useRef([]);
-  useEffect(() => {
-    displayedCoursesRef.current = displayedCourses;
-  }, [displayedCourses]);
+
 
   useEffect(() => {
     requestAnimationFrame(() => setMounted(true));
@@ -96,7 +89,8 @@ const PreRegistrationPage = () => {
       }
     });
     return Array.from(facultySet).sort();
-  }, [courses]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [courses.length]);
 
   // Calculate total credits
   const totalCredits = useMemo(() => {
@@ -125,7 +119,6 @@ const PreRegistrationPage = () => {
 
         // Set courses immediately so UI loads
         setCourses(data);
-        setFilteredCourses(data);
         setLoading(false);
 
         console.log(data);
@@ -241,7 +234,7 @@ const PreRegistrationPage = () => {
   }, [searchTerm]);
 
   // Apply filters and search
-  useEffect(() => {
+  const filteredCourses = useMemo(() => {
     let filtered = [...courses];
 
     // Apply search
@@ -312,14 +305,17 @@ const PreRegistrationPage = () => {
       });
     }
 
-    setFilteredCourses(filtered);
-    setDisplayCount(50);
-  }, [debouncedSearchTerm, courses, filters, sortConfig, seatAnimations]);
+    return filtered;
+  }, [debouncedSearchTerm, courses, filters, sortConfig, seatAnimations, selectedCourses]);
 
-  // Update displayed courses when filtered courses or display count changes
-  useEffect(() => {
-    setDisplayedCourses(filteredCourses.slice(0, displayCount));
+  const displayedCourses = useMemo(() => {
+    return filteredCourses.slice(0, displayCount);
   }, [filteredCourses, displayCount]);
+
+  // Reset display count when filters change
+  useEffect(() => {
+    setDisplayCount(50);
+  }, [debouncedSearchTerm, filters, sortConfig, selectedCourses]);
 
   // Infinite scroll observer
   useEffect(() => {
