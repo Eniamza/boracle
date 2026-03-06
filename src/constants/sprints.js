@@ -4,10 +4,10 @@ export const sprints = [
         date: "2026-02-26 to currently ongoing",
         status: {
             pending: [
-                { text: "Swap Request Notification System (Email alerts for approved/rejected swaps)", type: "Enhancement" },
                 { text: "Course Directory UI and related Endpoints", type: "Enhancement" },
             ],
             finished: [
+                { text: "Swap Request Notification System (Email alerts for approved/rejected swaps)", type: "Enhancement" },
                 { text: "Background Scroll Lock when routine modal was open on Desktop", type: "Bug" },
                 { text: "Live Pre-Registration Seat Updates via Mercure Integration", type: "Enhancement" },
                 { text: "Dynamic Opengraph metadata for public tooling pages", type: "Enhancement" },

@@ -20,7 +20,7 @@ const BACKUP_INDEX_URL = 'https://connect-cdn.itzmrz.xyz/connect_backup.json';
 const CURRENT_COURSES_URL = 'https://usis-cdn.eniamza.com/connect.json';
 
 const CourseSwapPage = () => {
-  const { data: session } = useSession();
+  const { data: session, status: sessionStatus } = useSession();
   const [currentCourses, setCurrentCourses] = useState([]);
   const [backupIndex, setBackupIndex] = useState(null);
   const [semesterCoursesCache, setSemesterCoursesCache] = useState({});
@@ -94,8 +94,10 @@ const CourseSwapPage = () => {
 
   // Fetch swaps
   useEffect(() => {
-    fetchSwaps();
-  }, []);
+    if (sessionStatus !== 'loading') {
+      fetchSwaps();
+    }
+  }, [sessionStatus]);
 
   // Fetch backup courses for a specific semester
   const fetchBackupCourses = async (semester) => {

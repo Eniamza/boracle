@@ -2,7 +2,11 @@ import { db } from '@/lib/db';
 import { courseSwap, swapRequest, userinfo } from '@/lib/db/schema';
 import { eq, or, desc, and } from 'drizzle-orm';
 import { auth } from '@/auth';
+import { Resend } from 'resend';
+import { swapRequestReceivedTemplate } from '@/constants/mailTemplates';
 
+// We initialize Resend conditionally so the file doesn't crash if the env var is missing
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 // Fetch Notifications (Requests) for the logged-in user
 export async function GET(req) {
     try {
@@ -100,7 +104,7 @@ export async function POST(req) {
             return Response.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const { swapId } = await req.json();
+        const { swapId, courseName } = await req.json();
 
         if (!swapId) {
             return Response.json({ error: 'Swap ID is required' }, { status: 400 });
@@ -140,6 +144,28 @@ export async function POST(req) {
             status: 'PENDING',
             createdAt: Math.floor(Date.now() / 1000), // UNIX epoch seconds
         });
+
+        // 5. Fetch sender's name and send email notification
+        try {
+            if (resend) {
+                const senderResult = await db.select({ userName: userinfo.userName }).from(userinfo).where(eq(userinfo.email, senderEmail));
+                const senderName = senderResult.length > 0 ? senderResult[0].userName : "A student";
+
+                const sectionStr = courseName || (Array.isArray(swapInfo.getSectionId) ? swapInfo.getSectionId.join(', ') : swapInfo.getSectionId);
+
+                await resend.emails.send({
+                    from: 'Boracle <swap@notifications.boracle.app>',
+                    to: receiverEmail,
+                    subject: 'New Swap Request Received',
+                    html: swapRequestReceivedTemplate(senderName, sectionStr)
+                });
+            } else {
+                console.warn('RESEND_API_KEY is not set. Email notification skipped.');
+            }
+        } catch (emailError) {
+            console.error('Error sending swap request email:', emailError);
+            // We don't return an error here so the swap request still succeeds even if email fails
+        }
 
         return Response.json({ message: 'Swap request created successfully' });
     } catch (error) {

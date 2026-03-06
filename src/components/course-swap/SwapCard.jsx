@@ -79,10 +79,11 @@ const SwapCard = ({ swap, courses = [], onDelete, onMarkComplete, onCourseClick,
 
     try {
       setIsRequesting(true);
+      const courseStr = giveCourse ? formatCourse(giveCourse) : `Section ${swap.getSectionId}`;
       const response = await fetch('/api/swap/requests', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ swapId: swap.swapId })
+        body: JSON.stringify({ swapId: swap.swapId, courseName: courseStr })
       });
 
       const data = await response.json();

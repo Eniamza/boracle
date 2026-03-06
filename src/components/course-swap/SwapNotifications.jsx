@@ -31,6 +31,7 @@ const SwapNotifications = ({ isMobile, swaps = [], courses = [] }) => {
     const [open, setOpen] = useState(false);
     const [requests, setRequests] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [processingAction, setProcessingAction] = useState({ id: null, action: null }); // Track specific loading state
 
     const getCourseBySection = (sectionId) => {
         if (!courses || courses.length === 0) return null;
@@ -89,23 +90,26 @@ const SwapNotifications = ({ isMobile, swaps = [], courses = [] }) => {
         return null;
     };
 
-    const handleStatusUpdate = async (requestId, newStatus) => {
+    const handleStatusUpdate = async (requestId, newStatus, courseName) => {
         try {
+            setProcessingAction({ id: requestId, action: newStatus });
             const res = await fetch(`/api/swap/requests/${requestId}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ status: newStatus })
+                body: JSON.stringify({ status: newStatus, courseName })
             });
 
             if (res.ok) {
                 toast.success(`Request ${newStatus.toLowerCase()}!`);
-                fetchRequests();
+                await fetchRequests();
             } else {
                 toast.error('Failed to update request');
             }
         } catch (error) {
             console.error('Error updating status', error);
             toast.error('An error occurred');
+        } finally {
+            setProcessingAction({ id: null, action: null });
         }
     };
 
@@ -220,17 +224,27 @@ const SwapNotifications = ({ isMobile, swaps = [], courses = [] }) => {
                                 <div className="flex w-full gap-3 mt-4 pt-3">
                                     <Button
                                         size="sm"
-                                        className="flex-1 bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white dark:text-white shadow-sm"
-                                        onClick={() => handleStatusUpdate(req.requestId, 'ACCEPTED')}
+                                        className="flex-1 bg-emerald-500 hover:bg-emerald-600 dark:bg-emerald-600 dark:hover:bg-emerald-700 text-white dark:text-white shadow-sm"
+                                        onClick={() => handleStatusUpdate(req.requestId, 'ACCEPTED', displayedName)}
+                                        disabled={processingAction.id === req.requestId}
                                     >
-                                        <CheckCircle className="w-4 h-4 mr-1.5" /> Accept
+                                        {processingAction.id === req.requestId && processingAction.action === 'ACCEPTED' ? (
+                                            <><Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> Accepting...</>
+                                        ) : (
+                                            <><CheckCircle className="w-4 h-4 mr-1.5" /> Accept</>
+                                        )}
                                     </Button>
                                     <Button
                                         size="sm"
                                         className="flex-1 bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 text-white dark:text-white shadow-sm"
-                                        onClick={() => handleStatusUpdate(req.requestId, 'REJECTED')}
+                                        onClick={() => handleStatusUpdate(req.requestId, 'REJECTED', displayedName)}
+                                        disabled={processingAction.id === req.requestId}
                                     >
-                                        <XCircle className="w-4 h-4 mr-1.5" /> Decline
+                                        {processingAction.id === req.requestId && processingAction.action === 'REJECTED' ? (
+                                            <><Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> Rejecting...</>
+                                        ) : (
+                                            <><XCircle className="w-4 h-4 mr-1.5" /> Decline</>
+                                        )}
                                     </Button>
                                 </div>
                             )}
