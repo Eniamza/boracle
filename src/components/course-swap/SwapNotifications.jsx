@@ -89,12 +89,12 @@ const SwapNotifications = ({ isMobile, swaps = [], courses = [] }) => {
         return null;
     };
 
-    const handleStatusUpdate = async (requestId, newStatus) => {
+    const handleStatusUpdate = async (requestId, newStatus, courseName) => {
         try {
             const res = await fetch(`/api/swap/requests/${requestId}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ status: newStatus })
+                body: JSON.stringify({ status: newStatus, courseName })
             });
 
             if (res.ok) {
@@ -221,14 +221,14 @@ const SwapNotifications = ({ isMobile, swaps = [], courses = [] }) => {
                                     <Button
                                         size="sm"
                                         className="flex-1 bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white dark:text-white shadow-sm"
-                                        onClick={() => handleStatusUpdate(req.requestId, 'ACCEPTED')}
+                                        onClick={() => handleStatusUpdate(req.requestId, 'ACCEPTED', displayedName)}
                                     >
                                         <CheckCircle className="w-4 h-4 mr-1.5" /> Accept
                                     </Button>
                                     <Button
                                         size="sm"
                                         className="flex-1 bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 text-white dark:text-white shadow-sm"
-                                        onClick={() => handleStatusUpdate(req.requestId, 'REJECTED')}
+                                        onClick={() => handleStatusUpdate(req.requestId, 'REJECTED', displayedName)}
                                     >
                                         <XCircle className="w-4 h-4 mr-1.5" /> Decline
                                     </Button>
