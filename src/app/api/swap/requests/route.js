@@ -5,8 +5,8 @@ import { auth } from '@/auth';
 import { Resend } from 'resend';
 import { swapRequestReceivedTemplate } from '@/constants/mailTemplates';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
+// We initialize Resend conditionally so the file doesn't crash if the env var is missing
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 // Fetch Notifications (Requests) for the logged-in user
 export async function GET(req) {
     try {
@@ -147,17 +147,21 @@ export async function POST(req) {
 
         // 5. Fetch sender's name and send email notification
         try {
-            const senderResult = await db.select({ userName: userinfo.userName }).from(userinfo).where(eq(userinfo.email, senderEmail));
-            const senderName = senderResult.length > 0 ? senderResult[0].userName : "A student";
+            if (resend) {
+                const senderResult = await db.select({ userName: userinfo.userName }).from(userinfo).where(eq(userinfo.email, senderEmail));
+                const senderName = senderResult.length > 0 ? senderResult[0].userName : "A student";
 
-            const sectionStr = courseName || (Array.isArray(swapInfo.getSectionId) ? swapInfo.getSectionId.join(', ') : swapInfo.getSectionId);
+                const sectionStr = courseName || (Array.isArray(swapInfo.getSectionId) ? swapInfo.getSectionId.join(', ') : swapInfo.getSectionId);
 
-            await resend.emails.send({
-                from: 'Boracle <swap@notifications.boracle.app>',
-                to: receiverEmail,
-                subject: 'New Swap Request Received',
-                html: swapRequestReceivedTemplate(senderName, sectionStr)
-            });
+                await resend.emails.send({
+                    from: 'Boracle <swap@notifications.boracle.app>',
+                    to: receiverEmail,
+                    subject: 'New Swap Request Received',
+                    html: swapRequestReceivedTemplate(senderName, sectionStr)
+                });
+            } else {
+                console.warn('RESEND_API_KEY is not set. Email notification skipped.');
+            }
         } catch (emailError) {
             console.error('Error sending swap request email:', emailError);
             // We don't return an error here so the swap request still succeeds even if email fails
