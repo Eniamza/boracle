@@ -4,6 +4,7 @@ import { db, eq, getCurrentEpoch } from "@/lib/db";
 import { courseSwap, askSectionId } from "@/lib/db/schema";
 import { NextRequest, NextResponse } from "next/server";
 import globalInfo from "@/constants/globalInfo";
+import { publishJson } from "@/scripts/publish";
 
 export async function GET(request) {
   try {
@@ -92,6 +93,20 @@ export async function POST(request) {
           swapId: createSwap[0].swapId,
           askSectionId: element,
         });
+    }
+
+    // SectionID that exists
+
+    try {
+      const response = await publishJson({
+        timestamp: new Date().toISOString(),
+        sectionID: givingSection,
+        askingSection: askingSection,
+        eventType: "swapCreated"
+      }, { topic: "swap", connectLocal: false });
+      console.log("Mercure publish response:", response);
+    } catch (error) {
+      console.error("Error publishing to Mercure:", error);
     }
 
     return NextResponse.json({ success: true, swapId: createSwap[0].swapId }, { status: 200 });
