@@ -117,6 +117,11 @@ export async function POST(req) {
             return NextResponse.json({ error: 'Missing required fields: file, courseCode, semester, postDescription' }, { status: 400 });
         }
 
+        // Validate description length
+        if (postDescription.length > 50) {
+            return NextResponse.json({ error: 'Description must be 50 characters or less' }, { status: 400 });
+        }
+
         // Validate file extension
         const fileName = file.name;
         const extension = fileName.split('.').pop()?.toLowerCase();

@@ -23,10 +23,16 @@ const PostMaterialModal = ({ onMaterialPosted }) => {
 
     // Form state
     const [courseCode, setCourseCode] = useState('');
-    const [semester, setSemester] = useState(globalInfo.semester);
+    const [season, setSeason] = useState(globalInfo.semester?.replace(/\d+/g, '') || 'SPRING');
+    const [year, setYear] = useState(globalInfo.semester?.replace(/\D+/g, '') || new Date().getFullYear().toString());
     const [description, setDescription] = useState('');
     const [file, setFile] = useState(null);
     const [courseSearch, setCourseSearch] = useState('');
+
+    const MAX_DESC = 50;
+    const SEASONS = ['SPRING', 'SUMMER', 'FALL'];
+    const currentYear = new Date().getFullYear();
+    const YEARS = Array.from({ length: 5 }, (_, i) => (currentYear - 1 + i).toString());
 
     useEffect(() => {
         if (open && courseCodes.length === 0) {
@@ -75,8 +81,13 @@ const PostMaterialModal = ({ onMaterialPosted }) => {
     };
 
     const handleSubmit = async () => {
-        if (!courseCode || !semester || !description || !file) {
+        if (!courseCode || !season || !year || !description || !file) {
             toast.error('Please fill all fields and select a file');
+            return;
+        }
+
+        if (description.length > MAX_DESC) {
+            toast.error(`Description must be ${MAX_DESC} characters or less`);
             return;
         }
 
@@ -85,7 +96,7 @@ const PostMaterialModal = ({ onMaterialPosted }) => {
             const formData = new FormData();
             formData.append('file', file);
             formData.append('courseCode', courseCode);
-            formData.append('semester', semester);
+            formData.append('semester', `${season}${year}`);
             formData.append('postDescription', description);
 
             const res = await fetch('/api/materials', {
@@ -111,7 +122,8 @@ const PostMaterialModal = ({ onMaterialPosted }) => {
 
     const resetForm = () => {
         setCourseCode('');
-        setSemester(globalInfo.semester);
+        setSeason(globalInfo.semester?.replace(/\d+/g, '') || 'SPRING');
+        setYear(globalInfo.semester?.replace(/\D+/g, '') || currentYear.toString());
         setDescription('');
         setFile(null);
         setCourseSearch('');
@@ -174,23 +186,54 @@ const PostMaterialModal = ({ onMaterialPosted }) => {
                     {/* Semester */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Semester</label>
-                        <input
-                            type="text"
-                            value={semester}
-                            onChange={(e) => setSemester(e.target.value)}
-                            placeholder="e.g. SPRING2026"
-                            className="w-full px-3 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                        />
+                        <div className="flex gap-3">
+                            {/* Season tags */}
+                            <div className="flex gap-1.5 flex-1">
+                                {SEASONS.map(s => (
+                                    <button
+                                        key={s}
+                                        type="button"
+                                        onClick={() => setSeason(s)}
+                                        className={`flex-1 px-2 py-2.5 rounded-lg text-xs font-semibold transition-colors border ${season === s
+                                                ? 'bg-blue-500 text-white border-blue-500'
+                                                : 'bg-white dark:bg-gray-800/50 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:border-blue-400'
+                                            }`}
+                                    >
+                                        {s.charAt(0) + s.slice(1).toLowerCase()}
+                                    </button>
+                                ))}
+                            </div>
+                            {/* Year dropdown */}
+                            <select
+                                value={year}
+                                onChange={(e) => setYear(e.target.value)}
+                                className="px-3 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                            >
+                                {YEARS.map(y => (
+                                    <option key={y} value={y}>{y}</option>
+                                ))}
+                            </select>
+                        </div>
                     </div>
 
                     {/* Description */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Description</label>
+                        <div className="flex items-center justify-between mb-1.5">
+                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Description</label>
+                            <span className={`text-xs font-medium ${description.length > MAX_DESC ? 'text-red-500' : description.length > MAX_DESC - 10 ? 'text-amber-500' : 'text-gray-400'}`}>
+                                {MAX_DESC - description.length} left
+                            </span>
+                        </div>
                         <textarea
                             value={description}
-                            onChange={(e) => setDescription(e.target.value)}
-                            placeholder="Describe the material (e.g. Midterm notes, Final slide deck, Lab report...)"
-                            rows={3}
+                            onChange={(e) => {
+                                if (e.target.value.length <= MAX_DESC) {
+                                    setDescription(e.target.value);
+                                }
+                            }}
+                            placeholder="e.g. Midterm notes, Final slides..."
+                            rows={2}
+                            maxLength={MAX_DESC}
                             className="w-full px-3 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none"
                         />
                     </div>
@@ -233,7 +276,7 @@ const PostMaterialModal = ({ onMaterialPosted }) => {
                     </Button>
                     <Button
                         onClick={handleSubmit}
-                        disabled={submitting || !courseCode || !semester || !description || !file}
+                        disabled={submitting || !courseCode || !season || !year || !description || !file || description.length > MAX_DESC}
                         className="flex-[2] bg-blue-600 hover:bg-blue-700 text-white transition-colors h-[42px]"
                     >
                         {submitting ? (
