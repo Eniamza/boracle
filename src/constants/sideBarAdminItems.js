@@ -1,7 +1,7 @@
-import { Home,Sigma,FileCheck2,Users, DatabaseZap } from "lucide-react"
+import { Home, Sigma, FileCheck2, Users, DatabaseZap, BookOpen } from "lucide-react"
 
 const sidebarAdminGroups = [
-        {
+    {
         label: "Moderation",
         items: [
             {
@@ -9,6 +9,14 @@ const sidebarAdminGroups = [
                 href: '/dashboard/manage-swaps',
                 description: 'Manage and moderate pending and approved posts from users',
                 icon: FileCheck2,
+                enabled: true,
+                forAdminOnly: false
+            },
+            {
+                title: 'Materials',
+                href: '/dashboard/manage-materials',
+                description: 'Moderate pending course materials',
+                icon: BookOpen,
                 enabled: true,
                 forAdminOnly: false
             }
