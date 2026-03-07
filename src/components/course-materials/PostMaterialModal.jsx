@@ -29,6 +29,10 @@ const PostMaterialModal = ({ onMaterialPosted }) => {
     const [file, setFile] = useState(null);
     const [courseSearch, setCourseSearch] = useState('');
 
+    const [uploadType, setUploadType] = useState('file'); // 'file' or 'link'
+    const [linkUrl, setLinkUrl] = useState('');
+    const [linkType, setLinkType] = useState(null); // 'youtube' or 'drive'
+
     const MAX_DESC = 50;
     const SEASONS = ['SPRING', 'SUMMER', 'FALL'];
     const currentYear = new Date().getFullYear();
@@ -81,8 +85,18 @@ const PostMaterialModal = ({ onMaterialPosted }) => {
     };
 
     const handleSubmit = async () => {
-        if (!courseCode || !season || !year || !description || !file) {
-            toast.error('Please fill all fields and select a file');
+        if (!courseCode || !season || !year || !description) {
+            toast.error('Please fill all required fields');
+            return;
+        }
+
+        if (uploadType === 'file' && !file) {
+            toast.error('Please select a file');
+            return;
+        }
+
+        if (uploadType === 'link' && (!linkUrl || !linkType)) {
+            toast.error('Please enter a valid YouTube or Google Drive link');
             return;
         }
 
@@ -94,7 +108,12 @@ const PostMaterialModal = ({ onMaterialPosted }) => {
         setSubmitting(true);
         try {
             const formData = new FormData();
-            formData.append('file', file);
+            if (uploadType === 'file') {
+                formData.append('file', file);
+            } else {
+                formData.append('link', linkUrl);
+                formData.append('linkType', linkType);
+            }
             formData.append('courseCode', courseCode);
             formData.append('semester', `${season}${year}`);
             formData.append('postDescription', description);
@@ -127,6 +146,9 @@ const PostMaterialModal = ({ onMaterialPosted }) => {
         setDescription('');
         setFile(null);
         setCourseSearch('');
+        setUploadType('file');
+        setLinkUrl('');
+        setLinkType(null);
     };
 
     return (
@@ -241,29 +263,81 @@ const PostMaterialModal = ({ onMaterialPosted }) => {
                         />
                     </div>
 
-                    {/* File Upload */}
+                    {/* File / Link Content Type Selection */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">File</label>
-                        {file ? (
-                            <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg border border-blue-200 dark:border-blue-800/50 bg-blue-50 dark:bg-blue-500/10">
-                                <FileText className="w-4 h-4 text-blue-500 shrink-0" />
-                                <span className="text-sm text-blue-700 dark:text-blue-300 truncate flex-1">{file.name}</span>
-                                <button onClick={() => setFile(null)} className="text-gray-400 hover:text-red-500">
-                                    <X className="w-4 h-4" />
-                                </button>
+                        <div className="flex bg-gray-100 dark:bg-gray-800/50 p-1 rounded-lg mb-4">
+                            <button
+                                type="button"
+                                onClick={() => setUploadType('file')}
+                                className={`flex-1 py-1.5 text-sm font-medium rounded-md transition-all ${uploadType === 'file' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'}`}
+                            >
+                                Upload File
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setUploadType('link')}
+                                className={`flex-1 py-1.5 text-sm font-medium rounded-md transition-all ${uploadType === 'link' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'}`}
+                            >
+                                Add Link
+                            </button>
+                        </div>
+
+                        {uploadType === 'file' ? (
+                            <div>
+                                {file ? (
+                                    <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg border border-blue-200 dark:border-blue-800/50 bg-blue-50 dark:bg-blue-500/10">
+                                        <FileText className="w-4 h-4 text-blue-500 shrink-0" />
+                                        <span className="text-sm text-blue-700 dark:text-blue-300 truncate flex-1">{file.name}</span>
+                                        <button onClick={() => setFile(null)} className="text-gray-400 hover:text-red-500">
+                                            <X className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <label className="flex flex-col items-center gap-2 px-4 py-6 rounded-lg border-2 border-dashed border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-600 cursor-pointer transition-colors bg-gray-50 dark:bg-gray-800/30">
+                                        <Upload className="w-6 h-6 text-gray-400" />
+                                        <span className="text-sm text-gray-500 dark:text-gray-400">Click to upload PDF, PPTX, DOC, or DOCX</span>
+                                        <span className="text-xs text-gray-400">Max 50MB</span>
+                                        <input
+                                            type="file"
+                                            accept=".pdf,.pptx,.doc,.docx"
+                                            onChange={handleFileChange}
+                                            className="hidden"
+                                        />
+                                    </label>
+                                )}
                             </div>
                         ) : (
-                            <label className="flex flex-col items-center gap-2 px-4 py-6 rounded-lg border-2 border-dashed border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-600 cursor-pointer transition-colors bg-gray-50 dark:bg-gray-800/30">
-                                <Upload className="w-6 h-6 text-gray-400" />
-                                <span className="text-sm text-gray-500 dark:text-gray-400">Click to upload PDF, PPTX, DOC, or DOCX</span>
-                                <span className="text-xs text-gray-400">Max 50MB</span>
+                            <div className="flex flex-col gap-2">
                                 <input
-                                    type="file"
-                                    accept=".pdf,.pptx,.doc,.docx"
-                                    onChange={handleFileChange}
-                                    className="hidden"
+                                    type="url"
+                                    placeholder="Paste YouTube or Google Drive link..."
+                                    value={linkUrl}
+                                    onChange={(e) => {
+                                        const url = e.target.value;
+                                        setLinkUrl(url);
+                                        if (url.includes('youtube.com') || url.includes('youtu.be')) {
+                                            setLinkType('youtube');
+                                        } else if (url.includes('drive.google.com') || url.includes('docs.google.com')) {
+                                            setLinkType('drive');
+                                        } else {
+                                            setLinkType(null);
+                                        }
+                                    }}
+                                    className="w-full px-3 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none placeholder:text-gray-400"
                                 />
-                            </label>
+                                {linkType === 'youtube' && (
+                                    <div className="text-xs text-red-500 flex items-center gap-1 font-medium">YouTube Video Detected</div>
+                                )}
+                                {linkType === 'drive' && (
+                                    <div className="text-xs text-blue-500 flex flex-col gap-1">
+                                        <span className="font-semibold">Google Drive Link Detected</span>
+                                        <span className="text-gray-500 dark:text-gray-400">Note: Make a copy of the drive folder in your own account if it was shared by your faculty. Otherwise they often get removed. Make sure the shared link is set to "Anyone with the link can view".</span>
+                                    </div>
+                                )}
+                                {linkUrl && !linkType && (
+                                    <div className="text-xs text-amber-500 font-medium">Only YouTube and Google Drive links are supported.</div>
+                                )}
+                            </div>
                         )}
                     </div>
                 </div>
@@ -279,7 +353,7 @@ const PostMaterialModal = ({ onMaterialPosted }) => {
                     </Button>
                     <Button
                         onClick={handleSubmit}
-                        disabled={submitting || !courseCode || !season || !year || !description || !file || description.length > MAX_DESC}
+                        disabled={submitting || !courseCode || !season || !year || !description || description.length > MAX_DESC || (uploadType === 'file' ? !file : (!linkUrl || !linkType))}
                         className="flex-[2] bg-blue-600 hover:bg-blue-700 text-white transition-colors h-[42px]"
                     >
                         {submitting ? (

@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { BookOpen, Download, FileText, Presentation, Share2, Calendar, GraduationCap, User, ArrowBigUp } from 'lucide-react';
+import { BookOpen, Download, FileText, Presentation, Share2, Calendar, GraduationCap, User, ArrowBigUp, ExternalLink, Youtube, Cloud } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 import { toast } from 'sonner';
 import { copyToClipboard } from '@/lib/utils';
@@ -34,8 +34,12 @@ export default function SharedMaterialClient({ material }) {
         return `https://docs.google.com/gview?url=${encodeURIComponent(material.publicUrl)}&embedded=true`;
     };
 
-    const FileIcon = material.fileExtension === 'pdf' ? FileText : Presentation;
-    const fileLabel = material.fileExtension?.toUpperCase();
+    const isYoutube = material.fileExtension === 'youtube';
+    const isDrive = material.fileExtension === 'drive';
+    const isLink = isYoutube || isDrive;
+
+    const FileIcon = isYoutube ? Youtube : isDrive ? Cloud : (material.fileExtension === 'pdf' ? FileText : Presentation);
+    const fileLabel = isYoutube ? 'YOUTUBE' : isDrive ? 'G DRIVE' : material.fileExtension?.toUpperCase();
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-gray-50 via-white to-gray-100 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 text-gray-900 dark:text-white p-4 sm:p-8">
@@ -109,30 +113,61 @@ export default function SharedMaterialClient({ material }) {
                                 <Share2 className="w-4 h-4" />
                                 Share
                             </button>
-                            <button
-                                onClick={handleDownload}
-                                className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg flex items-center gap-2 transition-colors text-white text-sm font-medium"
-                            >
-                                <Download className="w-4 h-4" />
-                                Download
-                            </button>
+                            {!isLink ? (
+                                <button
+                                    onClick={handleDownload}
+                                    className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg flex items-center gap-2 transition-colors text-white text-sm font-medium"
+                                >
+                                    <Download className="w-4 h-4" />
+                                    Download
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={() => window.open(material.publicUrl, '_blank')}
+                                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg flex items-center gap-2 transition-colors text-white text-sm font-medium"
+                                >
+                                    <ExternalLink className="w-4 h-4" />
+                                    Open
+                                </button>
+                            )}
                         </div>
                     </div>
                 </div>
             </div>
 
             {/* Inline Document Viewer */}
-            <div className="max-w-7xl mx-auto">
-                <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden">
-                    <iframe
-                        src={getViewerUrl()}
-                        className="w-full border-0"
-                        style={{ height: 'calc(100vh - 280px)', minHeight: '500px' }}
-                        title={`${material.courseCode} - ${material.postDescription}`}
-                        allowFullScreen
-                    />
+            {!isLink && (
+                <div className="max-w-7xl mx-auto">
+                    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden">
+                        <iframe
+                            src={getViewerUrl()}
+                            className="w-full border-0"
+                            style={{ height: 'calc(100vh - 280px)', minHeight: '500px' }}
+                            title={`${material.courseCode} - ${material.postDescription}`}
+                            allowFullScreen
+                        />
+                    </div>
                 </div>
-            </div>
+            )}
+
+            {isLink && (
+                <div className="max-w-7xl mx-auto flex flex-col items-center justify-center p-12 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl">
+                    <div className="p-4 bg-blue-100 dark:bg-blue-900/20 rounded-full mb-4">
+                        <ExternalLink className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">External Link</h3>
+                    <p className="text-gray-500 dark:text-gray-400 text-center max-w-md mb-6">
+                        This material is hosted externally. Click the button below to open it in a new tab securely.
+                    </p>
+                    <button
+                        onClick={() => window.open(material.publicUrl, '_blank')}
+                        className="px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg flex items-center gap-2 transition-colors text-white font-medium"
+                    >
+                        <ExternalLink className="w-5 h-5" />
+                        Open {isYoutube ? 'YouTube Video' : 'Google Drive Resource'}
+                    </button>
+                </div>
+            )}
 
             {/* CTA */}
             <div className="max-w-7xl mx-auto mt-4 text-center">

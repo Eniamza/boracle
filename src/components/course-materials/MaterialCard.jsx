@@ -8,7 +8,7 @@ import {
     Dialog,
     DialogContent,
 } from "@/components/ui/dialog";
-import { ChevronUp, ChevronDown, Download, Share2, FileText, Presentation, ArrowBigUp, ArrowBigDown, Loader2, Eye, X, User } from 'lucide-react';
+import { ChevronUp, ChevronDown, Download, Share2, FileText, Presentation, ArrowBigUp, ArrowBigDown, Loader2, Eye, X, User, ExternalLink, Youtube, Cloud } from 'lucide-react';
 import { toast } from 'sonner';
 import { copyToClipboard } from '@/lib/utils';
 
@@ -74,8 +74,12 @@ const MaterialCard = ({ material, isPublic = false, onVote }) => {
         return `https://docs.google.com/gview?url=${encodeURIComponent(material.publicUrl)}&embedded=true`;
     };
 
-    const FileIcon = material.fileExtension === 'pdf' ? FileText : Presentation;
-    const fileLabel = material.fileExtension?.toUpperCase();
+    const isYoutube = material.fileExtension === 'youtube';
+    const isDrive = material.fileExtension === 'drive';
+    const isLink = isYoutube || isDrive;
+
+    const FileIcon = isYoutube ? Youtube : isDrive ? Cloud : (material.fileExtension === 'pdf' ? FileText : Presentation);
+    const fileLabel = isYoutube ? 'YOUTUBE' : isDrive ? 'G DRIVE' : material.fileExtension?.toUpperCase();
 
     return (
         <>
@@ -177,20 +181,22 @@ const MaterialCard = ({ material, isPublic = false, onVote }) => {
                             {/* Action buttons (Stacked on right) */}
                             <div className="flex flex-row sm:flex-col items-center sm:items-end justify-start gap-2 shrink-0 w-full sm:w-auto mt-3 sm:mt-0">
                                 <Button
-                                    onClick={() => setViewerOpen(true)}
+                                    onClick={() => isLink ? window.open(material.publicUrl, '_blank') : setViewerOpen(true)}
                                     size="sm"
                                     className="w-full sm:w-[110px] justify-center items-center gap-1.5 h-8 px-4 text-xs font-medium bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 !text-white transition-colors shadow-sm"
                                 >
-                                    <Eye className="w-3.5 h-3.5" /> View
+                                    {isLink ? <ExternalLink className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />} {isLink ? 'Open' : 'View'}
                                 </Button>
-                                <Button
-                                    size="sm"
-                                    variant="outline"
-                                    className="w-full sm:w-[110px] justify-center items-center h-8 px-4 text-xs gap-1.5 bg-green-500 hover:bg-green-600 dark:bg-green-500 dark:hover:bg-green-600 border-green-500 dark:border-green-500 text-white dark:text-white shadow-sm font-medium"
-                                    onClick={handleDownload}
-                                >
-                                    <Download className="w-3.5 h-3.5" /> Download
-                                </Button>
+                                {!isLink && (
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="w-full sm:w-[110px] justify-center items-center h-8 px-4 text-xs gap-1.5 bg-green-500 hover:bg-green-600 dark:bg-green-500 dark:hover:bg-green-600 border-green-500 dark:border-green-500 text-white dark:text-white shadow-sm font-medium"
+                                        onClick={handleDownload}
+                                    >
+                                        <Download className="w-3.5 h-3.5" /> Download
+                                    </Button>
+                                )}
                                 <Button
                                     size="sm"
                                     variant="ghost"

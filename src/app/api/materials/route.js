@@ -23,6 +23,7 @@ export async function GET(req) {
             .select({
                 materialId: courseMaterials.materialId,
                 fileUuid: courseMaterials.fileUuid,
+                fileUrl: courseMaterials.fileUrl,
                 fileExtension: courseMaterials.fileExtension,
                 courseCode: courseMaterials.courseCode,
                 semester: courseMaterials.semester,
@@ -94,7 +95,7 @@ export async function GET(req) {
             postState: m.postState,
             fileExtension: m.fileExtension,
             createdAt: m.createdAt,
-            publicUrl: getPublicUrl(m.courseCode, m.fileUuid, m.fileExtension),
+            publicUrl: m.fileUrl || getPublicUrl(m.courseCode, m.fileUuid, m.fileExtension),
             voteCount: Number(m.voteCount),
             userVote: userVotes[m.materialId] ?? null,
             isOwner: currentUserEmail ? currentUserEmail === m.uEmail : false,
@@ -123,13 +124,15 @@ export async function POST(req) {
 
         const formData = await req.formData();
         const file = formData.get('file');
+        const link = formData.get('link');
+        const linkType = formData.get('linkType');
         const courseCode = formData.get('courseCode');
         const semester = formData.get('semester');
         const postDescription = formData.get('postDescription');
 
         // Validate required fields
-        if (!file || !courseCode || !semester || !postDescription) {
-            return NextResponse.json({ error: 'Missing required fields: file, courseCode, semester, postDescription' }, { status: 400 });
+        if ((!file && !link) || !courseCode || !semester || !postDescription) {
+            return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
 
         // Validate description length
@@ -137,22 +140,30 @@ export async function POST(req) {
             return NextResponse.json({ error: 'Description must be 50 characters or less' }, { status: 400 });
         }
 
-        // Validate file extension
-        const fileName = file.name;
-        const extension = fileName.split('.').pop()?.toLowerCase();
-        if (!isAllowedExtension(extension)) {
-            return NextResponse.json({ error: 'Invalid file type. Only pdf and pptx are allowed.' }, { status: 400 });
+        let publicUrl;
+        let fileUuid = randomUUID();
+        let extension = linkType;
+
+        if (file) {
+            // Validate file extension
+            const fileName = file.name;
+            extension = fileName.split('.').pop()?.toLowerCase();
+            if (!isAllowedExtension(extension)) {
+                return NextResponse.json({ error: 'Invalid file type. Only pdf, pptx, doc, and docx are allowed.' }, { status: 400 });
+            }
+
+            // Get file buffer and content type
+            const buffer = Buffer.from(await file.arrayBuffer());
+            const contentType = file.type || (extension === 'pdf' ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.presentationml.presentation');
+
+            // Upload to R2
+            publicUrl = await uploadFile(courseCode, fileUuid, extension, buffer, contentType);
+        } else {
+            if (!['youtube', 'drive'].includes(linkType)) {
+                return NextResponse.json({ error: 'Invalid link type' }, { status: 400 });
+            }
+            publicUrl = link;
         }
-
-        // Get file buffer and content type
-        const buffer = Buffer.from(await file.arrayBuffer());
-        const contentType = file.type || (extension === 'pdf' ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.presentationml.presentation');
-
-        // Generate UUID for file
-        const fileUuid = randomUUID();
-
-        // Upload to R2
-        const publicUrl = await uploadFile(courseCode, fileUuid, extension, buffer, contentType);
 
         // Insert into database
         const [material] = await db
@@ -160,6 +171,7 @@ export async function POST(req) {
             .values({
                 uEmail: session.user.email,
                 fileUuid,
+                fileUrl: link || null,
                 fileExtension: extension,
                 courseCode,
                 semester,
