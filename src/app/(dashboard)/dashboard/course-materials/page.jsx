@@ -5,8 +5,10 @@ import { useSession } from 'next-auth/react';
 import { Loader2, FileText, BookOpen, Search, X } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import MaterialCard from '@/components/course-materials/MaterialCard';
+import MobileMaterialCard from '@/components/course-materials/MobileMaterialCard';
 import PostMaterialModal from '@/components/course-materials/PostMaterialModal';
 import SignInPrompt from '@/components/shared/SignInPrompt';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { toast } from 'sonner';
 
 const CourseMaterialsPage = () => {
@@ -17,6 +19,9 @@ const CourseMaterialsPage = () => {
     const [nextCursor, setNextCursor] = useState(null);
     const [hasMore, setHasMore] = useState(true);
     const [showSignInPrompt, setShowSignInPrompt] = useState(false);
+    const [showMyMaterialsOnly, setShowMyMaterialsOnly] = useState(false);
+
+    const isMobile = useIsMobile();
 
     const [searchQuery, setSearchQuery] = useState('');
     const [debouncedQuery, setDebouncedQuery] = useState('');
@@ -46,6 +51,7 @@ const CourseMaterialsPage = () => {
             const params = new URLSearchParams();
             if (debouncedQuery) params.set('q', debouncedQuery);
             if (isLoadMore && nextCursor) params.set('cursor', nextCursor);
+            if (showMyMaterialsOnly) params.set('isMyMaterials', 'true');
 
             const res = await fetch(`/api/materials?${params.toString()}`);
             if (res.ok) {
@@ -77,7 +83,7 @@ const CourseMaterialsPage = () => {
             fetchMaterials(false);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [sessionStatus, debouncedQuery]);
+    }, [sessionStatus, debouncedQuery, showMyMaterialsOnly]);
 
     // Infinite scroll observer
     useEffect(() => {
@@ -124,18 +130,36 @@ const CourseMaterialsPage = () => {
         }));
     };
 
+    const handleMyMaterialsToggle = () => {
+        setShowMyMaterialsOnly(!showMyMaterialsOnly);
+        setNextCursor(null);
+        setHasMore(true);
+    };
+
     return (
         <div className="w-full px-6 sm:px-[50px] py-6">
             {/* Header */}
-            <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
-                    <div className="bg-blue-100 dark:bg-blue-900/50 p-2.5 rounded-xl border border-blue-200 dark:border-blue-800/60">
-                        <BookOpen className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                    </div>
-                    <div>
-                        <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">Course Materials</h1>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 hidden sm:block">Share and discover study resources</p>
-                    </div>
+            <div className="flex items-center justify-between mb-6 gap-3">
+                <div className="flex items-center">
+                    {session?.user?.email && (
+                        <label className="flex items-center gap-2 cursor-pointer bg-blue-50 dark:bg-gray-800 border border-blue-200 dark:border-gray-700 px-3 py-2 rounded-lg">
+                            <span className="text-xs md:text-sm font-medium text-blue-700 dark:text-gray-300 whitespace-nowrap">My Materials</span>
+                            <button
+                                type="button"
+                                role="switch"
+                                aria-checked={showMyMaterialsOnly}
+                                onClick={handleMyMaterialsToggle}
+                                className={`relative inline-flex h-[22px] w-[40px] shrink-0 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-opacity-75 ${showMyMaterialsOnly ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'
+                                    }`}
+                            >
+                                <span className="sr-only">Toggle my materials only</span>
+                                <span
+                                    className={`${showMyMaterialsOnly ? 'translate-x-[20px]' : 'translate-x-[2px]'
+                                        } pointer-events-none inline-block h-[18px] w-[18px] transform rounded-full bg-white shadow-lg ring-0 transition-transform duration-200 ease-in-out`}
+                                />
+                            </button>
+                        </label>
+                    )}
                 </div>
 
                 {/* Post button */}
@@ -191,24 +215,35 @@ const CourseMaterialsPage = () => {
                     </p>
                 </div>
             ) : (
-                <div className="flex flex-col gap-3">
-                    {materials.map(material => (
-                        <MaterialCard
-                            key={material.materialId}
-                            material={material}
-                            isPublic={isPublic}
-                            onVote={handleVote}
-                        />
-                    ))}
+                <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                        {materials.map(material => (
+                            isMobile ? (
+                                <MobileMaterialCard
+                                    key={material.materialId}
+                                    material={material}
+                                    isPublic={isPublic}
+                                    onVote={handleVote}
+                                />
+                            ) : (
+                                <MaterialCard
+                                    key={material.materialId}
+                                    material={material}
+                                    isPublic={isPublic}
+                                    onVote={handleVote}
+                                />
+                            )
+                        ))}
+                    </div>
 
                     {/* Intersection Observer Target */}
-                    <div ref={loadMoreRef} className="py-4 flex justify-center w-full">
+                    <div ref={loadMoreRef} className="py-4 mt-4 flex justify-center w-full">
                         {loadingMore && <Loader2 className="w-6 h-6 text-gray-400 animate-spin" />}
                         {!hasMore && materials.length > 5 && (
                             <span className="text-sm text-gray-400">You've reached the end</span>
                         )}
                     </div>
-                </div>
+                </>
             )}
 
             {/* Sign In Prompt */}

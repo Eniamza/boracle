@@ -32,7 +32,7 @@ export function getPublicUrl(courseCode, fileUuid, fileExtension) {
     const key = buildObjectKey(courseCode, fileUuid, fileExtension);
     // Ensure protocol is present so browsers don't treat it as a relative URL
     const base = PUBLIC_URL.startsWith('http') ? PUBLIC_URL : `https://${PUBLIC_URL}`;
-    return `${base}/${key}`;
+    return `${base}/${BUCKET_NAME}/${key}`;
 }
 
 /**

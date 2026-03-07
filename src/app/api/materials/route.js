@@ -16,6 +16,7 @@ export async function GET(req) {
         const courseCode = searchParams.get('courseCode');
         const q = searchParams.get('q');
         const cursor = searchParams.get('cursor');
+        const isMyMaterials = searchParams.get('isMyMaterials') === 'true';
         const limit = Number(searchParams.get('limit')) || 10;
 
         // Build base query for materials with vote aggregation
@@ -52,6 +53,7 @@ export async function GET(req) {
                 and(
                     eq(courseMaterials.postState, 'published'),
                     courseCode ? eq(courseMaterials.courseCode, courseCode) : undefined,
+                    isMyMaterials && currentUserEmail ? eq(courseMaterials.uEmail, currentUserEmail) : undefined,
                     cursor ? lt(courseMaterials.createdAt, Number(cursor)) : undefined,
                     q ? or(
                         ilike(courseMaterials.courseCode, `%${q}%`),

@@ -33,7 +33,7 @@ const PostMaterialModal = ({ onMaterialPosted }) => {
     const [linkUrl, setLinkUrl] = useState('');
     const [linkType, setLinkType] = useState(null); // 'youtube' or 'drive'
 
-    const MAX_DESC = 50;
+    const MAX_DESC = 100;
     const SEASONS = ['SPRING', 'SUMMER', 'FALL'];
     const currentYear = new Date().getFullYear();
     const YEARS = Array.from({ length: 5 }, (_, i) => (currentYear - 1 + i).toString());

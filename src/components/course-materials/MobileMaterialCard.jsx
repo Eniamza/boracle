@@ -13,7 +13,7 @@ import { toast } from 'sonner';
 import { copyToClipboard } from '@/lib/utils';
 import { useSession } from 'next-auth/react';
 
-const MaterialCard = ({ material, isPublic = false, onVote, onDelete }) => {
+const MobileMaterialCard = ({ material, isPublic = false, onVote, onDelete }) => {
     const { data: session } = useSession();
     const [expanded, setExpanded] = useState(false);
     const [voteLoading, setVoteLoading] = useState(null);
@@ -110,39 +110,35 @@ const MaterialCard = ({ material, isPublic = false, onVote, onDelete }) => {
 
     return (
         <>
-            <Card className="bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow overflow-hidden rounded-xl p-4 md:p-5 flex flex-col gap-4">
+            <Card className="bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow overflow-hidden rounded-xl p-3.5 flex flex-col gap-3">
                 {/* Top Row: User + Votes */}
-                <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center justify-between gap-2">
                     {/* Poster info */}
-                    <div className="flex items-center gap-2 flex-1 min-w-0">
-                        <div className="bg-purple-100 dark:bg-purple-500/10 p-1.5 rounded-full shrink-0">
-                            <User className="w-4 h-4 md:w-5 md:h-5 text-purple-600 dark:text-purple-400" />
-                        </div>
-                        <div className="min-w-0">
-                            <p className="text-sm font-semibold text-gray-900 dark:text-white truncate pb-0.5">
-                                {material.posterName || 'Anonymous'}
-                            </p>
-                            {material.posterNetVotes !== undefined && material.posterNetVotes !== 0 && (
-                                <p className={`text-xs font-medium truncate ${material.posterNetVotes > 0 ? 'text-blue-500' : 'text-red-400'}`}>
-                                    {material.posterNetVotes > 0 ? '+' : ''}{material.posterNetVotes} Aura
-                                </p>
-                            )}
-                        </div>
+                    <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                        <User className="w-3.5 h-3.5 text-purple-500 shrink-0" />
+                        <span className="text-xs font-semibold text-purple-600 dark:text-purple-400 truncate">
+                            {material.posterName || 'Anonymous'}
+                        </span>
+                        {material.posterNetVotes !== undefined && material.posterNetVotes !== 0 && (
+                            <span className={`text-[11px] font-medium shrink-0 ${material.posterNetVotes > 0 ? 'text-blue-500' : 'text-red-400'}`}>
+                                · {material.posterNetVotes > 0 ? '+' : ''}{material.posterNetVotes} Aura
+                            </span>
+                        )}
                     </div>
 
                     {/* Compact Vote Controls */}
-                    <div className="flex items-center gap-1 bg-gray-50 dark:bg-gray-900/60 rounded-lg p-1 border border-gray-100 dark:border-gray-800 shrink-0">
+                    <div className="flex items-center gap-1 bg-gray-50 dark:bg-gray-900/60 rounded-lg p-0.5 border border-gray-100 dark:border-gray-800 shrink-0">
                         <button
                             onClick={() => handleVote(1)}
                             disabled={isPublic || voteLoading === 'up'}
-                            className={`p-1.5 rounded transition-colors ${material.userVote === 1
+                            className={`p-1 rounded transition-colors ${material.userVote === 1
                                 ? 'text-blue-500 bg-blue-100 dark:bg-blue-500/20'
                                 : 'text-gray-400 hover:text-blue-500 hover:bg-gray-200 dark:hover:bg-gray-700'
                                 } ${isPublic ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
                         >
-                            {voteLoading === 'up' ? <Loader2 className="w-5 h-5 animate-spin" /> : <ArrowBigUp className={`w-5 h-5 ${material.userVote === 1 ? 'fill-current' : ''}`} />}
+                            {voteLoading === 'up' ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowBigUp className={`w-4 h-4 ${material.userVote === 1 ? 'fill-current' : ''}`} />}
                         </button>
-                        <span className={`text-sm font-bold w-6 text-center ${material.voteCount > 0 ? 'text-blue-600 dark:text-blue-400' :
+                        <span className={`text-xs font-bold w-4 text-center ${material.voteCount > 0 ? 'text-blue-600 dark:text-blue-400' :
                             material.voteCount < 0 ? 'text-red-500' : 'text-gray-500'
                             }`}>
                             {material.voteCount}
@@ -150,86 +146,86 @@ const MaterialCard = ({ material, isPublic = false, onVote, onDelete }) => {
                         <button
                             onClick={() => handleVote(-1)}
                             disabled={isPublic || voteLoading === 'down'}
-                            className={`p-1.5 rounded transition-colors ${material.userVote === -1
+                            className={`p-1 rounded transition-colors ${material.userVote === -1
                                 ? 'text-red-500 bg-red-100 dark:bg-red-500/20'
                                 : 'text-gray-400 hover:text-red-500 hover:bg-gray-200 dark:hover:bg-gray-700'
                                 } ${isPublic ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
                         >
-                            {voteLoading === 'down' ? <Loader2 className="w-5 h-5 animate-spin" /> : <ArrowBigDown className={`w-5 h-5 ${material.userVote === -1 ? 'fill-current' : ''}`} />}
+                            {voteLoading === 'down' ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowBigDown className={`w-4 h-4 ${material.userVote === -1 ? 'fill-current' : ''}`} />}
                         </button>
                     </div>
                 </div>
 
                 {/* Badges Row */}
-                <div className="flex flex-wrap items-center gap-2">
-                    <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-400 border-blue-200 dark:border-blue-500/30 shadow-none text-xs font-medium px-2.5 py-0.5">
+                <div className="flex flex-wrap items-center gap-1.5">
+                    <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-400 border-blue-200 dark:border-blue-500/30 shadow-none text-xs font-semibold px-2 py-0.5">
                         {material.courseCode}
                     </Badge>
-                    <Badge variant="outline" className="text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 shadow-none text-xs gap-1.5 px-2 py-0.5 uppercase">
-                        <FileIcon className="w-3.5 h-3.5" />
+                    <Badge variant="outline" className="text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 shadow-none text-[10px] gap-1 px-1.5 py-0.5 uppercase">
+                        <FileIcon className="w-3 h-3" />
                         {fileLabel}
                     </Badge>
                     <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 px-1.5">
                         {material.semester}
                     </span>
-                    <span className="text-[11px] text-gray-400 dark:text-gray-500 font-medium ml-auto">
+                    <span className="text-[10px] text-gray-400 dark:text-gray-500 font-medium ml-auto">
                         {formatDate(material.createdAt)}
                     </span>
                 </div>
 
                 {/* Description */}
                 <div>
-                    <p className={`text-sm md:text-base text-gray-700 dark:text-gray-300 leading-relaxed break-words whitespace-pre-wrap ${!expanded ? 'line-clamp-2' : ''}`}>
+                    <p className={`text-sm text-gray-700 dark:text-gray-300 leading-relaxed break-words whitespace-pre-wrap ${!expanded ? 'line-clamp-2' : ''}`}>
                         {material.postDescription}
                     </p>
                     {material.postDescription?.length > 100 && (
                         <button
                             onClick={() => setExpanded(!expanded)}
-                            className="text-xs md:text-sm text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 mt-1 flex items-center gap-0.5 font-medium"
+                            className="text-xs text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 mt-1 flex items-center gap-0.5 font-medium"
                         >
-                            {expanded ? <><ChevronUp className="w-3.5 h-3.5" /> Show less</> : <><ChevronDown className="w-3.5 h-3.5" /> Read more</>}
+                            {expanded ? <><ChevronUp className="w-3 h-3" /> Show less</> : <><ChevronDown className="w-3 h-3" /> Read more</>}
                         </button>
                     )}
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 pt-2 mt-auto">
+                <div className="flex items-center gap-2 pt-1 mt-auto">
                     <Button
                         onClick={() => isLink ? window.open(material.publicUrl, '_blank') : setViewerOpen(true)}
                         size="sm"
-                        className="flex-1 min-w-[100px] h-9 text-xs md:text-sm font-medium bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 !text-white"
+                        className="flex-1 h-8 text-xs font-medium bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 !text-white"
                     >
-                        {isLink ? <ExternalLink className="w-4 h-4 mr-1.5" /> : <Eye className="w-4 h-4 mr-1.5" />} {isLink ? 'Open' : 'View'}
+                        {isLink ? <ExternalLink className="w-3.5 h-3.5 mr-1" /> : <Eye className="w-3.5 h-3.5 mr-1" />} {isLink ? 'Open' : 'View'}
                     </Button>
                     {!isLink && (
                         <Button
                             size="sm"
                             variant="outline"
-                            className="flex-1 min-w-[100px] h-9 text-xs md:text-sm bg-green-500 hover:bg-green-600 dark:bg-green-500 dark:hover:bg-green-600 border-green-500 text-white hover:text-white"
+                            className="flex-1 h-8 text-xs bg-green-500 hover:bg-green-600 dark:bg-green-500 dark:hover:bg-green-600 border-green-500 text-white hover:text-white"
                             onClick={handleDownload}
                         >
-                            <Download className="w-4 h-4 mr-1.5" /> Save
+                            <Download className="w-3.5 h-3.5 mr-1" /> Save
                         </Button>
                     )}
                     <Button
                         size="sm"
                         variant="ghost"
-                        className="flex-none h-9 px-3 text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 bg-gray-50 dark:bg-gray-800/50 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                        className="flex-none h-8 px-2.5 text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 bg-gray-50 dark:bg-gray-800/50 hover:bg-blue-50 dark:hover:bg-blue-900/20"
                         onClick={handleShare}
                         title="Share Link"
                     >
-                        <Share2 className="w-4 h-4" />
+                        <Share2 className="w-3.5 h-3.5" />
                     </Button>
                     {canDelete && (
                         <Button
                             size="sm"
                             variant="ghost"
-                            className="flex-none h-9 px-3 text-gray-400 hover:text-red-600 dark:hover:text-red-400 bg-gray-50 dark:bg-gray-800/50 hover:bg-red-50 dark:hover:bg-red-950"
+                            className="flex-none h-8 px-2.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 bg-gray-50 dark:bg-gray-800/50 hover:bg-red-50 dark:hover:bg-red-950"
                             onClick={handleDelete}
                             disabled={isDeleting}
                             title="Delete Material"
                         >
-                            {isDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                            {isDeleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
                         </Button>
                     )}
                 </div>
@@ -280,4 +276,4 @@ const MaterialCard = ({ material, isPublic = false, onVote, onDelete }) => {
     );
 };
 
-export default MaterialCard;
+export default MobileMaterialCard;
