@@ -25,7 +25,16 @@ export async function GET(request) {
         .where(eq(reviews.uEmail, userEmail))
         .orderBy(desc(reviews.createdAt))
         .limit(5),
-      db.select()
+      db.select({
+        materialId: courseMaterials.materialId,
+        uEmail: courseMaterials.uEmail,
+        fileUrl: courseMaterials.fileUrl,
+        createdAt: courseMaterials.createdAt,
+        courseCode: courseMaterials.courseCode,
+        semester: courseMaterials.semester,
+        postState: courseMaterials.postState,
+        postDescription: courseMaterials.postDescription
+      })
         .from(courseMaterials)
         .where(eq(courseMaterials.uEmail, userEmail))
         .orderBy(desc(courseMaterials.createdAt))
