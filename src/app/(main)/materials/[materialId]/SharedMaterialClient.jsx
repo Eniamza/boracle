@@ -1,36 +1,148 @@
 'use client';
 
 import React from 'react';
-import { BookOpen } from 'lucide-react';
-import MaterialCard from '@/components/course-materials/MaterialCard';
+import { BookOpen, Download, FileText, Presentation, Share2, Calendar, GraduationCap, User, ArrowBigUp } from 'lucide-react';
+import { Badge } from "@/components/ui/badge";
+import { toast } from 'sonner';
+import { copyToClipboard } from '@/lib/utils';
 
 export default function SharedMaterialClient({ material }) {
+
+    const formatDate = (timestamp) => {
+        if (!timestamp) return 'Unknown';
+        const date = new Date(timestamp * 1000);
+        return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    };
+
+    const handleDownload = () => {
+        const a = document.createElement('a');
+        a.href = material.publicUrl;
+        a.download = `${material.courseCode}-${material.materialId.slice(0, 8)}.${material.fileExtension}`;
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+        a.click();
+    };
+
+    const handleShare = async () => {
+        const url = window.location.href;
+        const success = await copyToClipboard(url);
+        if (success) toast.success('Link copied to clipboard!');
+        else toast.error('Failed to copy link');
+    };
+
+    const getViewerUrl = () => {
+        return `https://docs.google.com/gview?url=${encodeURIComponent(material.publicUrl)}&embedded=true`;
+    };
+
+    const FileIcon = material.fileExtension === 'pdf' ? FileText : Presentation;
+    const fileLabel = material.fileExtension?.toUpperCase();
+
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900 p-6">
-            <div className="w-full max-w-2xl mx-auto">
-                {/* Header */}
-                <div className="flex items-center gap-3 mb-6">
-                    <div className="bg-blue-100 dark:bg-blue-900/50 p-2.5 rounded-xl border border-blue-200 dark:border-blue-800/60">
-                        <BookOpen className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                    </div>
-                    <div>
-                        <h1 className="text-xl font-bold text-gray-900 dark:text-white">Shared Material</h1>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">{material.courseCode} · {material.semester}</p>
+        <div className="min-h-screen bg-gradient-to-b from-gray-50 via-white to-gray-100 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 text-gray-900 dark:text-white p-4 sm:p-8">
+            {/* Header Card */}
+            <div className="max-w-7xl mx-auto mb-6">
+                <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6">
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
+                        <div className="flex flex-col sm:flex-row items-center gap-3">
+                            <div className="p-2.5 bg-blue-100 dark:bg-blue-600/20 rounded-lg">
+                                <BookOpen className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                            </div>
+                            <div className="flex flex-col items-center sm:items-start">
+                                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                                    Shared Course Material
+                                </h1>
+
+                                {/* Poster info */}
+                                <div className="flex items-center gap-2 mt-1.5">
+                                    <User className="w-3.5 h-3.5 text-purple-500" />
+                                    <span className="text-sm font-semibold text-purple-600 dark:text-purple-400">
+                                        {material.posterName || 'Anonymous'}
+                                    </span>
+                                    {material.posterNetVotes !== undefined && material.posterNetVotes !== 0 && (
+                                        <span className={`text-sm font-medium ${material.posterNetVotes > 0 ? 'text-blue-500' : 'text-red-400'}`}>
+                                            · {material.posterNetVotes > 0 ? '+' : ''}{material.posterNetVotes} Aura
+                                        </span>
+                                    )}
+                                </div>
+
+                                {/* Meta row */}
+                                <div className="flex flex-wrap items-center gap-2 mt-2">
+                                    <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-400 border-blue-200 dark:border-blue-500/30 shadow-none text-xs font-semibold">
+                                        {material.courseCode}
+                                    </Badge>
+                                    <Badge variant="outline" className="text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 shadow-none text-xs gap-1">
+                                        <FileIcon className="w-3 h-3" />
+                                        {fileLabel}
+                                    </Badge>
+                                    <span className="inline-block bg-blue-100 dark:bg-blue-800/80 text-blue-700 dark:text-blue-100 text-[10px] font-semibold px-2 py-0.5 rounded">
+                                        {material.semester}
+                                    </span>
+                                </div>
+
+                                {/* Date & votes */}
+                                <div className="flex items-center gap-3 mt-1.5">
+                                    <p className="text-xs text-gray-400 dark:text-gray-500 flex items-center gap-1">
+                                        <Calendar className="w-3 h-3" />
+                                        {formatDate(material.createdAt)}
+                                    </p>
+                                    {material.voteCount > 0 && (
+                                        <span className="text-xs text-blue-600 dark:text-blue-400 flex items-center gap-0.5">
+                                            <ArrowBigUp className="w-3 h-3" />
+                                            {material.voteCount} upvote{material.voteCount !== 1 ? 's' : ''}
+                                        </span>
+                                    )}
+                                </div>
+
+                                {/* Description */}
+                                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1.5 max-w-xl">
+                                    {material.postDescription}
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="flex items-center gap-2 mt-2 sm:mt-0">
+                            <button
+                                onClick={handleShare}
+                                className="px-4 py-2 rounded-lg flex items-center gap-2 transition-colors text-sm font-medium border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+                            >
+                                <Share2 className="w-4 h-4" />
+                                Share
+                            </button>
+                            <button
+                                onClick={handleDownload}
+                                className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg flex items-center gap-2 transition-colors text-white text-sm font-medium"
+                            >
+                                <Download className="w-4 h-4" />
+                                Download
+                            </button>
+                        </div>
                     </div>
                 </div>
+            </div>
 
-                <MaterialCard material={material} isPublic={true} />
-
-                {/* CTA */}
-                <div className="mt-6 text-center">
-                    <a
-                        href="/course-materials"
-                        className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium text-sm transition-colors shadow-sm"
-                    >
-                        <BookOpen className="w-4 h-4" />
-                        Browse All Materials
-                    </a>
+            {/* Inline Document Viewer */}
+            <div className="max-w-7xl mx-auto">
+                <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden">
+                    <iframe
+                        src={getViewerUrl()}
+                        className="w-full border-0"
+                        style={{ height: 'calc(100vh - 280px)', minHeight: '500px' }}
+                        title={`${material.courseCode} - ${material.postDescription}`}
+                        allowFullScreen
+                    />
                 </div>
+            </div>
+
+            {/* CTA */}
+            <div className="max-w-7xl mx-auto mt-4 text-center">
+                <a
+                    href="/course-materials"
+                    className="inline-flex items-center gap-2 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                >
+                    <BookOpen className="w-4 h-4" />
+                    Browse all course materials →
+                </a>
             </div>
         </div>
     );
