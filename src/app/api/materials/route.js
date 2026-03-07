@@ -1,7 +1,7 @@
 // GET /api/materials — List materials with vote counts
 // POST /api/materials — Upload a new material
 import { auth } from '@/auth';
-import { db, eq, and, sql, getCurrentEpoch, inArray, desc } from '@/lib/db';
+import { db, eq, and, or, ilike, lt, sql, getCurrentEpoch, inArray, desc } from '@/lib/db';
 import { courseMaterials, targets, votes, userinfo } from '@/lib/db/schema';
 import { NextResponse } from 'next/server';
 import { uploadFile, getPublicUrl, isAllowedExtension } from '@/lib/r2';
@@ -14,6 +14,9 @@ export async function GET(req) {
 
         const { searchParams } = new URL(req.url);
         const courseCode = searchParams.get('courseCode');
+        const q = searchParams.get('q');
+        const cursor = searchParams.get('cursor');
+        const limit = Number(searchParams.get('limit')) || 10;
 
         // Build base query for materials with vote aggregation
         const materials = await db
@@ -45,11 +48,18 @@ export async function GET(req) {
             .from(courseMaterials)
             .leftJoin(userinfo, eq(userinfo.email, courseMaterials.uEmail))
             .where(
-                courseCode
-                    ? eq(courseMaterials.courseCode, courseCode)
-                    : undefined
+                and(
+                    courseCode ? eq(courseMaterials.courseCode, courseCode) : undefined,
+                    cursor ? lt(courseMaterials.createdAt, Number(cursor)) : undefined,
+                    q ? or(
+                        ilike(courseMaterials.courseCode, `%${q}%`),
+                        ilike(courseMaterials.postDescription, `%${q}%`),
+                        ilike(courseMaterials.semester, `%${q}%`)
+                    ) : undefined
+                )
             )
-            .orderBy(desc(courseMaterials.createdAt));
+            .orderBy(desc(courseMaterials.createdAt))
+            .limit(limit);
 
         // If logged in, fetch user's votes for these materials
         let userVotes = {};
@@ -92,7 +102,12 @@ export async function GET(req) {
             posterNetVotes: Number(m.posterNetVotes),
         }));
 
-        return NextResponse.json(response, { status: 200 });
+        const nextCursor = materials.length === limit ? materials[materials.length - 1].createdAt : null;
+
+        return NextResponse.json({
+            items: response,
+            nextCursor,
+        }, { status: 200 });
     } catch (error) {
         console.error('Materials GET error:', error);
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
