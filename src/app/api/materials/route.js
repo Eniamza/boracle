@@ -27,14 +27,23 @@ export async function GET(req) {
                 postState: courseMaterials.postState,
                 createdAt: courseMaterials.createdAt,
                 uEmail: courseMaterials.uEmail,
+                userName: userinfo.userName,
                 // Vote aggregation via subquery
                 voteCount: sql`COALESCE((
           SELECT SUM(v.value) FROM votes v
           INNER JOIN targets t ON t.uuid = v.targetuuid
           WHERE t.refid = ${courseMaterials.materialId} AND t.kind = 'material'
         ), 0)`.as('voteCount'),
+                // Poster's net accumulated upvotes across all their materials
+                posterNetVotes: sql`COALESCE((
+          SELECT SUM(v2.value) FROM votes v2
+          INNER JOIN targets t2 ON t2.uuid = v2.targetuuid
+          INNER JOIN coursematerials cm2 ON cm2.materialid = t2.refid
+          WHERE t2.kind = 'material' AND cm2.uemail = ${courseMaterials.uEmail}
+        ), 0)`.as('posterNetVotes'),
             })
             .from(courseMaterials)
+            .leftJoin(userinfo, eq(userinfo.email, courseMaterials.uEmail))
             .where(
                 courseCode
                     ? eq(courseMaterials.courseCode, courseCode)
@@ -79,6 +88,8 @@ export async function GET(req) {
             voteCount: Number(m.voteCount),
             userVote: userVotes[m.materialId] ?? null,
             isOwner: currentUserEmail ? currentUserEmail === m.uEmail : false,
+            posterName: m.userName?.split(' ')[0] || 'Anonymous',
+            posterNetVotes: Number(m.posterNetVotes),
         }));
 
         return NextResponse.json(response, { status: 200 });

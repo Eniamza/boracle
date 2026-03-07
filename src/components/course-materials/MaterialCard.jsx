@@ -8,7 +8,7 @@ import {
     Dialog,
     DialogContent,
 } from "@/components/ui/dialog";
-import { ChevronUp, ChevronDown, Download, Share2, FileText, Presentation, ArrowBigUp, ArrowBigDown, Loader2, Eye, X } from 'lucide-react';
+import { ChevronUp, ChevronDown, Download, Share2, FileText, Presentation, ArrowBigUp, ArrowBigDown, Loader2, Eye, X, User } from 'lucide-react';
 import { toast } from 'sonner';
 import { copyToClipboard } from '@/lib/utils';
 
@@ -122,6 +122,19 @@ const MaterialCard = ({ material, isPublic = false, onVote }) => {
 
                     {/* Content */}
                     <div className="flex-1 p-3 sm:p-4 min-w-0">
+                        {/* Poster info */}
+                        <div className="flex items-center gap-1.5 mb-2">
+                            <User className="w-3.5 h-3.5 text-purple-500" />
+                            <span className="text-xs font-semibold text-purple-600 dark:text-purple-400">
+                                {material.posterName || 'Anonymous'}
+                            </span>
+                            {material.posterNetVotes !== undefined && material.posterNetVotes !== 0 && (
+                                <span className={`text-xs font-medium ${material.posterNetVotes > 0 ? 'text-blue-500' : 'text-red-400'}`}>
+                                    · {material.posterNetVotes > 0 ? '+' : ''}{material.posterNetVotes} Aura
+                                </span>
+                            )}
+                        </div>
+
                         {/* Header row */}
                         <div className="flex items-center gap-2 flex-wrap mb-2">
                             <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-400 border-blue-200 dark:border-blue-500/30 shadow-none text-xs font-semibold">
