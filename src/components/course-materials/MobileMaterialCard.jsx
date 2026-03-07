@@ -201,7 +201,7 @@ const MobileMaterialCard = ({ material, isPublic = false, onVote, onDelete }) =>
                         <Button
                             size="sm"
                             variant="outline"
-                            className="flex-1 h-8 text-xs bg-green-500 hover:bg-green-600 dark:bg-green-500 dark:hover:bg-green-600 border-green-500 text-white hover:text-white"
+                            className="flex-1 h-8 text-xs bg-white hover:bg-gray-100 dark:bg-white dark:hover:bg-gray-100 text-gray-900 dark:text-gray-900 border border-gray-200 dark:border-gray-200 font-medium shadow-sm transition-colors"
                             onClick={handleDownload}
                         >
                             <Download className="w-3.5 h-3.5 mr-1" /> Save
