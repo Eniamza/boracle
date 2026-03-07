@@ -9,7 +9,7 @@ import {
     DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Plus, Loader2, Upload, FileText, X } from "lucide-react";
+import { Plus, Loader2, Upload, FileText, X, ChevronDown } from "lucide-react";
 import { toast } from 'sonner';
 import globalInfo from '@/constants/globalInfo';
 
@@ -195,8 +195,8 @@ const PostMaterialModal = ({ onMaterialPosted }) => {
                                         type="button"
                                         onClick={() => setSeason(s)}
                                         className={`flex-1 px-2 py-2.5 rounded-lg text-xs font-semibold transition-colors border ${season === s
-                                                ? 'bg-blue-500 text-white border-blue-500'
-                                                : 'bg-white dark:bg-gray-800/50 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:border-blue-400'
+                                            ? 'bg-blue-500 text-white border-blue-500'
+                                            : 'bg-white dark:bg-gray-800/50 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:border-blue-400'
                                             }`}
                                     >
                                         {s.charAt(0) + s.slice(1).toLowerCase()}
@@ -204,15 +204,18 @@ const PostMaterialModal = ({ onMaterialPosted }) => {
                                 ))}
                             </div>
                             {/* Year dropdown */}
-                            <select
-                                value={year}
-                                onChange={(e) => setYear(e.target.value)}
-                                className="px-3 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                            >
-                                {YEARS.map(y => (
-                                    <option key={y} value={y}>{y}</option>
-                                ))}
-                            </select>
+                            <div className="relative">
+                                <select
+                                    value={year}
+                                    onChange={(e) => setYear(e.target.value)}
+                                    className="appearance-none pl-3 pr-8 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none cursor-pointer"
+                                >
+                                    {YEARS.map(y => (
+                                        <option key={y} value={y}>{y}</option>
+                                    ))}
+                                </select>
+                                <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
+                            </div>
                         </div>
                     </div>
 
