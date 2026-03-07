@@ -131,6 +131,33 @@ const AdminMaterialsPageContent = () => {
         }
     };
 
+    const handleSaveEdit = async (mId, newDesc) => {
+        setProcessing(true);
+        try {
+            const response = await fetch(`/api/materials/moderation/${mId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'save', postDescription: newDesc })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                toast.success('Description saved successfully');
+                setMaterials(materials.map(m => m.materialId === mId ? { ...m, postDescription: newDesc } : m));
+                setFilteredMaterials(filteredMaterials.map(m => m.materialId === mId ? { ...m, postDescription: newDesc } : m));
+                setEditingId(null);
+            } else {
+                toast.error(data.error || 'Failed to save description');
+            }
+        } catch (error) {
+            console.error('Error saving description:', error);
+            toast.error('Error saving description');
+        } finally {
+            setProcessing(false);
+        }
+    };
+
     const formatDate = (timestamp) => {
         if (!timestamp) return 'N/A';
         const date = new Date(parseInt(timestamp) * 1000);
@@ -267,9 +294,18 @@ const AdminMaterialsPageContent = () => {
                                                             />
                                                             <Button
                                                                 size="sm"
+                                                                onClick={() => handleSaveEdit(m.materialId, editDescription)}
+                                                                className="shrink-0 bg-blue-600 hover:bg-blue-700 text-white"
+                                                                disabled={processing}
+                                                            >
+                                                                {processing && editingId === m.materialId ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Save className="w-4 h-4 mr-1" />} Save
+                                                            </Button>
+                                                            <Button
+                                                                size="sm"
                                                                 variant="outline"
                                                                 onClick={() => setEditingId(null)}
                                                                 className="shrink-0"
+                                                                disabled={processing}
                                                             >
                                                                 <X className="w-4 h-4 text-gray-500" />
                                                             </Button>

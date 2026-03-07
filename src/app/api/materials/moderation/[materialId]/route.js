@@ -23,8 +23,8 @@ export async function PATCH(req, { params }) {
         const body = await req.json();
         const { action, postDescription } = body;
 
-        if (!['approve', 'reject'].includes(action)) {
-            return NextResponse.json({ error: 'Invalid action. Must be approve or reject.' }, { status: 400 });
+        if (!['approve', 'reject', 'save'].includes(action)) {
+            return NextResponse.json({ error: 'Invalid action. Must be approve, reject, or save.' }, { status: 400 });
         }
 
         // Fetch current material to get email, courseCode, and file details
@@ -37,9 +37,6 @@ export async function PATCH(req, { params }) {
             return NextResponse.json({ error: 'Material not found' }, { status: 404 });
         }
 
-        if (material.postState !== 'pending') {
-            return NextResponse.json({ error: 'Material is not in a pending state' }, { status: 400 });
-        }
 
         const epoch = Math.floor(Date.now() / 1000);
 
@@ -80,6 +77,14 @@ export async function PATCH(req, { params }) {
                     console.error('Failed to send approval email:', e);
                 }
             }
+        } else if (action === 'save') {
+            const finalDescription = postDescription?.trim() || material.postDescription;
+
+            await db.update(courseMaterials)
+                .set({
+                    postDescription: finalDescription
+                })
+                .where(eq(courseMaterials.materialId, materialId));
         } else if (action === 'reject') {
             // 1. Delete file from R2 if it's an uploaded file (not a youtube/drive link)
             const isExternalLink = ['youtube', 'drive'].includes(material.fileExtension);
