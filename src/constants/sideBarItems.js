@@ -1,4 +1,4 @@
-import { Home,Sigma,Star,ChevronsLeftRightEllipsis,Hammer, Cable, BookOpen, Users, ArrowRightLeft } from "lucide-react"
+import { Home, Sigma, Star, ChevronsLeftRightEllipsis, Hammer, Cable, BookOpen, Users, ArrowRightLeft, FileText } from "lucide-react"
 
 const sidebarGroups = [
     {
@@ -28,6 +28,13 @@ const sidebarGroups = [
                 href: '/dashboard/courseswap',
                 description: 'A centralized platform to swap courses with other students. No more endless emails and waiting for replies!',
                 icon: ChevronsLeftRightEllipsis,
+                enabled: true
+            },
+            {
+                title: 'Materials',
+                href: '/dashboard/course-materials',
+                description: 'Share and discover course materials — slides, notes, and resources from fellow BRACU students.',
+                icon: FileText,
                 enabled: true
             },
             {

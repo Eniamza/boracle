@@ -1,7 +1,7 @@
 // src/lib/r2.js - Cloudflare R2 Storage Utility
 import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 
-const ALLOWED_EXTENSIONS = ['pdf', 'pptx'];
+const ALLOWED_EXTENSIONS = ['pdf', 'pptx', 'doc', 'docx'];
 
 const s3Client = new S3Client({
     region: 'auto',
@@ -14,13 +14,15 @@ const s3Client = new S3Client({
 
 const BUCKET_NAME = process.env.R2_BUCKET_NAME;
 const PUBLIC_URL = process.env.R2_PUBLIC_URL;
+const PATH_PREFIX = process.env.R2_PATH_PREFIX || '';
 
 /**
  * Build the R2 object key for a material file.
- * Pattern: courseCode/fileUuid.fileExtension
+ * Pattern: {prefix}/courseCode/fileUuid.fileExtension
  */
 export function buildObjectKey(courseCode, fileUuid, fileExtension) {
-    return `${courseCode}/${fileUuid}.${fileExtension}`;
+    const base = `${courseCode}/${fileUuid}.${fileExtension}`;
+    return PATH_PREFIX ? `${PATH_PREFIX}/${base}` : base;
 }
 
 /**
@@ -28,7 +30,9 @@ export function buildObjectKey(courseCode, fileUuid, fileExtension) {
  */
 export function getPublicUrl(courseCode, fileUuid, fileExtension) {
     const key = buildObjectKey(courseCode, fileUuid, fileExtension);
-    return `${PUBLIC_URL}/${key}`;
+    // Ensure protocol is present so browsers don't treat it as a relative URL
+    const base = PUBLIC_URL.startsWith('http') ? PUBLIC_URL : `https://${PUBLIC_URL}`;
+    return `${base}/${key}`;
 }
 
 /**

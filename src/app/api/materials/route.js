@@ -1,7 +1,7 @@
 // GET /api/materials — List materials with vote counts
 // POST /api/materials — Upload a new material
 import { auth } from '@/auth';
-import { db, eq, and, sql, getCurrentEpoch } from '@/lib/db';
+import { db, eq, and, sql, getCurrentEpoch, inArray, desc } from '@/lib/db';
 import { courseMaterials, targets, votes, userinfo } from '@/lib/db/schema';
 import { NextResponse } from 'next/server';
 import { uploadFile, getPublicUrl, isAllowedExtension } from '@/lib/r2';
@@ -40,7 +40,7 @@ export async function GET(req) {
                     ? eq(courseMaterials.courseCode, courseCode)
                     : undefined
             )
-            .orderBy(sql`"createdat" DESC`);
+            .orderBy(desc(courseMaterials.createdAt));
 
         // If logged in, fetch user's votes for these materials
         let userVotes = {};
@@ -57,7 +57,7 @@ export async function GET(req) {
                     and(
                         eq(votes.uEmail, currentUserEmail),
                         eq(targets.kind, 'material'),
-                        sql`${targets.refId} = ANY(${materialIds})`
+                        inArray(targets.refId, materialIds)
                     )
                 );
 
