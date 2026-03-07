@@ -51,7 +51,9 @@ export async function GET(req) {
             .leftJoin(userinfo, eq(userinfo.email, courseMaterials.uEmail))
             .where(
                 and(
-                    eq(courseMaterials.postState, 'published'),
+                    isMyMaterials && currentUserEmail
+                        ? inArray(courseMaterials.postState, ['published', 'pending'])
+                        : eq(courseMaterials.postState, 'published'),
                     courseCode ? eq(courseMaterials.courseCode, courseCode) : undefined,
                     isMyMaterials && currentUserEmail ? eq(courseMaterials.uEmail, currentUserEmail) : undefined,
                     cursor ? lt(courseMaterials.createdAt, Number(cursor)) : undefined,

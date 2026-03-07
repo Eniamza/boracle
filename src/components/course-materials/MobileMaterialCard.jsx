@@ -158,6 +158,11 @@ const MobileMaterialCard = ({ material, isPublic = false, onVote, onDelete }) =>
 
                 {/* Badges Row */}
                 <div className="flex flex-wrap items-center gap-1.5">
+                    {material.postState === 'pending' && (
+                        <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200 dark:border-amber-500/30 shadow-none text-[10px] font-semibold px-2 py-0.5 whitespace-nowrap">
+                            Pending Approval
+                        </Badge>
+                    )}
                     <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-400 border-blue-200 dark:border-blue-500/30 shadow-none text-xs font-semibold px-2 py-0.5">
                         {material.courseCode}
                     </Badge>
