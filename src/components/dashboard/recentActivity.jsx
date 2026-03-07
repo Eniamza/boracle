@@ -32,22 +32,22 @@ export default function RecentActivity() {
       try {
         setLoading(true);
         const response = await fetch('/api/dashboard/recentActivity');
-        
+
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-        
+
         const data = await response.json();
         setActivities(data.recentActivities);
 
         // Fetch faculty information for reviews
         if (data.recentActivities?.reviews) {
-          const facultyPromises = data.recentActivities.reviews.map(review => 
+          const facultyPromises = data.recentActivities.reviews.map(review =>
             fetchFacultyInfo(review.facultyid)
           );
-          
+
           const facultyResults = await Promise.all(facultyPromises);
-          
+
           // Create a map of facultyId to faculty data
           const facultyMap = {};
           data.recentActivities.reviews.forEach((review, index) => {
@@ -55,7 +55,7 @@ export default function RecentActivity() {
               facultyMap[review.facultyid] = facultyResults[index];
             }
           });
-          
+
           setFacultyData(facultyMap);
         }
       } catch (err) {
@@ -161,8 +161,8 @@ export default function RecentActivity() {
             {hasMaterials ? (
               <div className="space-y-4">
                 {activities.materials.map((material) => (
-                  <div 
-                    key={material.materialid} 
+                  <div
+                    key={material.materialId}
                     className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-blue-950 hover:border-blue-800 transition-colors"
                   >
                     <div className="flex items-start justify-between gap-4">
@@ -170,14 +170,14 @@ export default function RecentActivity() {
                         <div className="flex items-center gap-2 mb-2">
                           <BookOpen className="h-4 w-4 text-gray-500" />
                           <span className="font-semibold text-gray-900 dark:text-gray-100">
-                            {material.coursecode}
+                            {material.courseCode}
                           </span>
-                          <Badge className={getStatusColor(material.poststate)}>
-                            {material.poststate}
+                          <Badge className={getStatusColor(material.postState)}>
+                            {material.postState}
                           </Badge>
                         </div>
                         <p className="text-gray-700 dark:text-gray-300 mb-2">
-                          {material.postdescription}
+                          {material.postDescription}
                         </p>
                         <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
                           <div className="flex items-center gap-1">
@@ -190,9 +190,9 @@ export default function RecentActivity() {
                           </div>
                         </div>
                       </div>
-                      <a 
-                        href={material.materialurl} 
-                        target="_blank" 
+                      <a
+                        href={material.fileUrl}
+                        target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center gap-1 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm font-medium"
                       >
@@ -223,8 +223,8 @@ export default function RecentActivity() {
             {hasReviews ? (
               <div className="space-y-4 ">
                 {activities.reviews.map((review) => (
-                  <div 
-                    key={review.reviewid} 
+                  <div
+                    key={review.reviewid}
                     className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-blue-950 transition-colors"
                   >
                     <div className="flex items-start justify-between gap-4">
@@ -253,11 +253,11 @@ export default function RecentActivity() {
                             {review.coursecode} - Section {review.section}
                           </span>
                         </div>
-                        
+
                         <p className="text-gray-700 dark:text-gray-300 mb-3">
                           {review.reviewdescription}
                         </p>
-                        
+
                         <div className="flex items-center gap-4 mb-2">
                           <div className="text-sm">
                             <span className="text-gray-500 dark:text-gray-400">Teaching: </span>
@@ -278,7 +278,7 @@ export default function RecentActivity() {
                             </span>
                           </div>
                         </div>
-                        
+
                         <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
                           <div className="flex items-center gap-1">
                             <Calendar className="h-3 w-3" />
