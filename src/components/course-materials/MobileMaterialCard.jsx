@@ -238,7 +238,7 @@ const MobileMaterialCard = ({ material, isPublic = false, onVote, onDelete }) =>
 
             {/* Document Viewer Dialog */}
             <Dialog open={viewerOpen} onOpenChange={setViewerOpen}>
-                <DialogContent showCloseButton={false} className="!max-w-[calc(100vw-100px)] w-[calc(100vw-100px)] h-[calc(100vh-100px)] p-0 bg-white dark:bg-gray-950 border-gray-200 dark:border-gray-800 overflow-hidden flex flex-col gap-0">
+                <DialogContent showCloseButton={false} className="!max-w-[calc(100vw-32px)] w-[calc(100vw-32px)] h-[calc(100dvh-32px)] sm:!max-w-[calc(100vw-100px)] sm:w-[calc(100vw-100px)] sm:h-[calc(100vh-100px)] p-0 bg-white dark:bg-gray-950 border-gray-200 dark:border-gray-800 overflow-hidden flex flex-col gap-0 rounded-xl">
                     {/* Viewer header */}
                     <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 shrink-0">
                         <div className="flex items-center gap-2 min-w-0">
