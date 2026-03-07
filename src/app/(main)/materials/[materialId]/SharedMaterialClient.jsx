@@ -1,12 +1,37 @@
 'use client';
 
-import React from 'react';
-import { BookOpen, Download, FileText, Presentation, Share2, Calendar, GraduationCap, User, ArrowBigUp, ExternalLink, Youtube, Cloud } from 'lucide-react';
+import React, { useState } from 'react';
+import { BookOpen, Download, FileText, Presentation, Share2, Calendar, GraduationCap, User, ArrowBigUp, ExternalLink, Youtube, Cloud, Trash2, Loader2 } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 import { toast } from 'sonner';
 import { copyToClipboard } from '@/lib/utils';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 
 export default function SharedMaterialClient({ material }) {
+    const { data: session } = useSession();
+    const router = useRouter();
+    const [isDeleting, setIsDeleting] = useState(false);
+
+    const canDelete = session?.user?.email === material.uEmail || ['admin', 'moderator'].includes(session?.user?.userrole?.toLowerCase());
+
+    const handleDelete = async () => {
+        if (!confirm('Are you sure you want to delete this material?')) return;
+        setIsDeleting(true);
+        try {
+            const res = await fetch(`/api/materials/${material.materialId}`, { method: 'DELETE' });
+            if (res.ok) {
+                toast.success('Material deleted');
+                router.push('/dashboard/course-materials');
+            } else {
+                toast.error('Failed to delete material');
+            }
+        } catch (e) {
+            toast.error('Error deleting material');
+        } finally {
+            setIsDeleting(false);
+        }
+    };
 
     const formatDate = (timestamp) => {
         if (!timestamp) return 'Unknown';
@@ -108,11 +133,21 @@ export default function SharedMaterialClient({ material }) {
                         <div className="flex items-center gap-2 mt-2 sm:mt-0">
                             <button
                                 onClick={handleShare}
-                                className="px-4 py-2 rounded-lg flex items-center gap-2 transition-colors text-sm font-medium border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+                                className="px-4 py-2 rounded-lg flex items-center gap-2 transition-colors text-sm font-medium border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 shrink-0"
                             >
                                 <Share2 className="w-4 h-4" />
                                 Share
                             </button>
+                            {canDelete && (
+                                <button
+                                    onClick={handleDelete}
+                                    disabled={isDeleting}
+                                    className="px-4 py-2 rounded-lg flex items-center gap-2 transition-colors text-sm font-medium border border-gray-200 dark:border-gray-700 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50 shrink-0"
+                                >
+                                    {isDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                                    Delete
+                                </button>
+                            )}
                             {!isLink ? (
                                 <button
                                     onClick={handleDownload}

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { courseMaterials, userinfo } from '@/lib/db/schema';
-import { eq, desc, asc, sql } from 'drizzle-orm';
+import { eq, desc, asc, sql, inArray } from 'drizzle-orm';
 import { auth } from '@/auth';
 
 export async function GET(req) {
@@ -38,7 +38,7 @@ export async function GET(req) {
             })
             .from(courseMaterials)
             .leftJoin(userinfo, eq(userinfo.email, courseMaterials.uEmail))
-            .where(eq(courseMaterials.postState, 'pending'))
+            .where(inArray(courseMaterials.postState, ['pending', 'published']))
             .orderBy(
                 sortOrder === 'asc'
                     ? asc(sql`COALESCE((SELECT SUM(value) FROM votes INNER JOIN targets ON votes.targetuuid = targets.uuid WHERE targets.kind = 'material' AND targets.refid = ${courseMaterials.materialId}), 0)`)

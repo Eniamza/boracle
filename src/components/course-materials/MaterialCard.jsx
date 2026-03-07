@@ -8,14 +8,41 @@ import {
     Dialog,
     DialogContent,
 } from "@/components/ui/dialog";
-import { ChevronUp, ChevronDown, Download, Share2, FileText, Presentation, ArrowBigUp, ArrowBigDown, Loader2, Eye, X, User, ExternalLink, Youtube, Cloud } from 'lucide-react';
+import { ChevronUp, ChevronDown, Download, Share2, FileText, Presentation, ArrowBigUp, ArrowBigDown, Loader2, Eye, X, User, ExternalLink, Youtube, Cloud, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { copyToClipboard } from '@/lib/utils';
+import { useSession } from 'next-auth/react';
 
-const MaterialCard = ({ material, isPublic = false, onVote }) => {
+const MaterialCard = ({ material, isPublic = false, onVote, onDelete }) => {
+    const { data: session } = useSession();
     const [expanded, setExpanded] = useState(false);
     const [voteLoading, setVoteLoading] = useState(null);
+    const [isDeleting, setIsDeleting] = useState(false);
     const [viewerOpen, setViewerOpen] = useState(false);
+
+    const canDelete = session?.user?.email === material.uEmail || ['admin', 'moderator'].includes(session?.user?.userrole?.toLowerCase());
+
+    const handleDelete = async () => {
+        if (!confirm('Are you sure you want to delete this material?')) return;
+        setIsDeleting(true);
+        try {
+            const res = await fetch(`/api/materials/${material.materialId}`, { method: 'DELETE' });
+            if (res.ok) {
+                toast.success('Material deleted');
+                if (onDelete) {
+                    onDelete(material.materialId);
+                } else {
+                    window.location.reload();
+                }
+            } else {
+                toast.error('Failed to delete material');
+            }
+        } catch (e) {
+            toast.error('Error deleting material');
+        } finally {
+            setIsDeleting(false);
+        }
+    };
 
     const formatDate = (timestamp) => {
         if (!timestamp) return 'Unknown';
@@ -200,11 +227,23 @@ const MaterialCard = ({ material, isPublic = false, onVote }) => {
                                 <Button
                                     size="sm"
                                     variant="ghost"
-                                    className="w-full sm:w-[110px] justify-center h-8 px-3 text-xs gap-1.5 text-gray-500 hover:text-blue-600 dark:hover:text-blue-400"
+                                    className="w-full sm:w-[110px] justify-center h-8 px-3 text-xs gap-1.5 text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 font-medium"
                                     onClick={handleShare}
                                 >
                                     <Share2 className="w-3.5 h-3.5" /> Share
                                 </Button>
+                                {canDelete && (
+                                    <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        className="w-full sm:w-[110px] justify-center h-8 px-3 text-xs gap-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950 font-medium transition-colors"
+                                        onClick={handleDelete}
+                                        disabled={isDeleting}
+                                    >
+                                        {isDeleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                                        Delete
+                                    </Button>
+                                )}
                             </div>
                         </div>
                     </div>

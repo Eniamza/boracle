@@ -24,19 +24,22 @@ export async function DELETE(req, { params }) {
             return NextResponse.json({ error: 'Material not found' }, { status: 404 });
         }
 
-        // Check ownership or admin
+        // Check ownership or admin/moderator
         const isOwner = material.uEmail === session.user.email;
-        const isAdmin = session.user.userrole === 'admin';
+        const isAdminOrMod = ['admin', 'moderator'].includes(session.user.userrole?.toLowerCase());
 
-        if (!isOwner && !isAdmin) {
+        if (!isOwner && !isAdminOrMod) {
             return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         }
 
-        // Delete file from R2
-        try {
-            await deleteFile(material.courseCode, material.fileUuid, material.fileExtension);
-        } catch (r2Error) {
-            console.error('R2 delete error (continuing with DB delete):', r2Error);
+        // Delete file from R2 (unless it's an external link)
+        const isExternalLink = ['youtube', 'drive'].includes(material.fileExtension);
+        if (!isExternalLink) {
+            try {
+                await deleteFile(material.courseCode, material.fileUuid, material.fileExtension);
+            } catch (r2Error) {
+                console.error('R2 delete error (continuing with DB delete):', r2Error);
+            }
         }
 
         // Delete the target (cascades to votes)

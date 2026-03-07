@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-    Search, Shield, Loader2, Calendar, CheckCircle, XCircle, FileText, Presentation, Youtube, Cloud, ArrowBigUp, Pencil, Save, X, BookOpen, ExternalLink, SortDesc, SortAsc
+    Search, Shield, Loader2, Calendar, CheckCircle, XCircle, FileText, Presentation, Youtube, Cloud, ArrowBigUp, Pencil, Save, X, BookOpen, ExternalLink, SortDesc, SortAsc, Trash2
 } from "lucide-react";
 import { SessionProvider, useSession } from 'next-auth/react';
 import { toast } from 'sonner';
@@ -179,7 +179,7 @@ const AdminMaterialsPageContent = () => {
                             <BookOpen className="h-10 w-10" />
                             Moderate Materials
                         </h1>
-                        <p className="text-gray-400 mt-2">Pending materials: {materials.length}</p>
+                        <p className="text-gray-400 mt-2">Found materials: {materials.length}</p>
                     </div>
 
                     <div className="flex gap-3 items-center w-full md:w-auto">
@@ -210,7 +210,7 @@ const AdminMaterialsPageContent = () => {
                 {loading ? (
                     <div className="text-center py-16">
                         <Loader2 className="h-12 w-12 animate-spin mx-auto text-white" />
-                        <p className="mt-4 text-gray-600 dark:text-gray-400">Loading pending materials...</p>
+                        <p className="mt-4 text-gray-600 dark:text-gray-400">Loading materials...</p>
                     </div>
                 ) : filteredMaterials.length === 0 ? (
                     <Card className="bg-white/5 dark:bg-gray-900/50 backdrop-blur border-white/10 shadow-xl">
@@ -222,7 +222,7 @@ const AdminMaterialsPageContent = () => {
                                 {searchQuery ? 'No materials match search' : 'All caught up!'}
                             </h3>
                             <p className="text-gray-600 dark:text-gray-400">
-                                {searchQuery ? 'Try adjusting your search criteria.' : 'There are no pending materials to review.'}
+                                {searchQuery ? 'Try adjusting your search criteria.' : 'There are no materials to review.'}
                             </p>
                         </CardContent>
                     </Card>
@@ -239,6 +239,9 @@ const AdminMaterialsPageContent = () => {
                                                 <div className="flex flex-wrap items-center gap-3 mb-3">
                                                     <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40 text-sm py-1">
                                                         {m.courseCode}
+                                                    </Badge>
+                                                    <Badge className={`${m.postState === 'pending' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/40' : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/40'} text-xs py-1`}>
+                                                        {m.postState === 'pending' ? 'Pending' : 'Published'}
                                                     </Badge>
                                                     <Badge variant="outline" className="text-gray-600 dark:text-gray-400 border-gray-300 dark:border-gray-700 font-medium py-1 px-3 flex items-center gap-1.5 shadow-sm">
                                                         {getFileIcon(m.fileExtension)}
@@ -317,25 +320,38 @@ const AdminMaterialsPageContent = () => {
 
                                             {/* Action buttons */}
                                             <div className="flex flex-row lg:flex-col items-center justify-end gap-2 shrink-0 border-t lg:border-t-0 lg:border-l border-gray-200 dark:border-gray-700 pt-4 lg:pt-0 lg:pl-6 min-w-[140px]">
-                                                <Button
-                                                    onClick={() => {
-                                                        setActionItem(m);
-                                                        setApproveDialogOpen(true);
-                                                    }}
-                                                    className="w-full bg-green-600 hover:bg-green-700 text-white gap-2 font-semibold shadow-sm"
-                                                >
-                                                    <CheckCircle className="h-4 w-4" /> Approve
-                                                </Button>
-                                                <Button
-                                                    onClick={() => {
-                                                        setActionItem(m);
-                                                        setRejectDialogOpen(true);
-                                                    }}
-                                                    variant="outline"
-                                                    className="w-full border-red-200 dark:border-red-900/50 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 font-semibold"
-                                                >
-                                                    <XCircle className="h-4 w-4" /> Reject
-                                                </Button>
+                                                {m.postState === 'pending' ? (
+                                                    <>
+                                                        <Button
+                                                            onClick={() => {
+                                                                setActionItem(m);
+                                                                setApproveDialogOpen(true);
+                                                            }}
+                                                            className="w-full bg-green-600 hover:bg-green-700 text-white gap-2 font-semibold shadow-sm"
+                                                        >
+                                                            <CheckCircle className="h-4 w-4" /> Approve
+                                                        </Button>
+                                                        <Button
+                                                            onClick={() => {
+                                                                setActionItem(m);
+                                                                setRejectDialogOpen(true);
+                                                            }}
+                                                            className="w-full bg-red-600 hover:bg-red-700 text-white gap-2 font-semibold shadow-sm"
+                                                        >
+                                                            <XCircle className="h-4 w-4" /> Reject
+                                                        </Button>
+                                                    </>
+                                                ) : (
+                                                    <Button
+                                                        onClick={() => {
+                                                            setActionItem(m);
+                                                            setRejectDialogOpen(true);
+                                                        }}
+                                                        className="w-full bg-red-600 hover:bg-red-700 text-white gap-2 font-semibold shadow-sm"
+                                                    >
+                                                        <Trash2 className="h-4 w-4" /> Delete
+                                                    </Button>
+                                                )}
                                             </div>
                                         </div>
                                     </CardContent>

@@ -124,7 +124,7 @@ const PostMaterialModal = ({ onMaterialPosted }) => {
             });
 
             if (res.ok) {
-                toast.success('Material posted successfully!');
+                toast.success('Material posted for review!');
                 setOpen(false);
                 resetForm();
                 onMaterialPosted?.();
