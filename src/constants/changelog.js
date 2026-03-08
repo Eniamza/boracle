@@ -4,7 +4,9 @@ export const changelog = [
         date: "2026-03-08",
         changes: {
             new: [
-                "Course Directory. A convenient place all the mateirals to ever exist enriched by the community!"
+                "Course Directory. A convenient place all the mateirals to ever exist enriched by the community!",
+                "C.R.E.E.P now can notify you if a swap you're interested in is posted",
+                "You now will get additional mail notifications for swap actions"
             ],
             improved: [
                 "HomePage's Recent Activity now shows community posts and is clickable"
