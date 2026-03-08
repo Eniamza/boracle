@@ -144,8 +144,8 @@ export async function POST(req) {
         }
 
         // Validate description length
-        if (postDescription.length > 50) {
-            return NextResponse.json({ error: 'Description must be 50 characters or less' }, { status: 400 });
+        if (postDescription.length > 100) {
+            return NextResponse.json({ error: 'Description must be 100 characters or less' }, { status: 400 });
         }
 
         let publicUrl;
