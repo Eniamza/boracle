@@ -108,6 +108,13 @@ const MaterialCard = ({ material, isPublic = false, onVote, onDelete }) => {
     const FileIcon = isYoutube ? Youtube : isDrive ? Cloud : (material.fileExtension === 'pdf' ? FileText : Presentation);
     const fileLabel = isYoutube ? 'YOUTUBE' : isDrive ? 'G DRIVE' : material.fileExtension?.toUpperCase();
 
+    const getFileBadgeClasses = () => {
+        if (material.fileExtension === 'pdf') return 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 border-orange-200 dark:border-orange-500/30';
+        if (isDrive) return 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/30';
+        if (isYoutube) return 'bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400 border-red-200 dark:border-red-500/30';
+        return 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border-blue-200 dark:border-blue-500/30';
+    };
+
     return (
         <>
             <Card className="bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow overflow-hidden rounded-xl p-4 md:p-5 flex flex-col gap-4">
@@ -170,7 +177,7 @@ const MaterialCard = ({ material, isPublic = false, onVote, onDelete }) => {
                     <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-400 border-blue-200 dark:border-blue-500/30 shadow-none text-xs font-medium px-2.5 py-0.5">
                         {material.courseCode}
                     </Badge>
-                    <Badge variant="outline" className="text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 shadow-none text-xs gap-1.5 px-2 py-0.5 uppercase">
+                    <Badge className={`${getFileBadgeClasses()} shadow-none text-xs gap-1.5 px-2 py-0.5 uppercase`}>
                         <FileIcon className="w-3.5 h-3.5" />
                         {fileLabel}
                     </Badge>
@@ -228,8 +235,7 @@ const MaterialCard = ({ material, isPublic = false, onVote, onDelete }) => {
                     {canDelete && (
                         <Button
                             size="sm"
-                            variant="ghost"
-                            className="flex-none h-9 px-3 text-gray-400 hover:text-red-600 dark:hover:text-red-400 bg-gray-50 dark:bg-gray-800/50 hover:bg-red-50 dark:hover:bg-red-950"
+                            className="flex-none h-9 px-3 bg-red-600 hover:bg-red-500 dark:bg-red-600 dark:hover:bg-red-500 !text-white shadow-sm"
                             onClick={handleDelete}
                             disabled={isDeleting}
                             title="Delete Material"
