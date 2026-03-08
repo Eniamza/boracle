@@ -36,7 +36,7 @@ const PostMaterialModal = ({ onMaterialPosted }) => {
     const MAX_DESC = 100;
     const SEASONS = ['SPRING', 'SUMMER', 'FALL'];
     const currentYear = new Date().getFullYear();
-    const YEARS = Array.from({ length: 5 }, (_, i) => (currentYear - 1 + i).toString());
+    const YEARS = Array.from({ length: currentYear - 2010 + 1 }, (_, i) => (currentYear - i).toString());
 
     useEffect(() => {
         if (open && courseCodes.length === 0) {
