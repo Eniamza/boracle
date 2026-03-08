@@ -170,6 +170,22 @@ export async function POST(req) {
             if (!['youtube', 'drive'].includes(linkType)) {
                 return NextResponse.json({ error: 'Invalid link type' }, { status: 400 });
             }
+
+            let isValidUrl = false;
+
+            const ytRegex = /^(https?:\/\/)?(www\.)?(youtube\.com\/(watch\?(.*&)?v=|playlist\?(.*&)?list=)|youtu\.be\/)[a-zA-Z0-9_-]+/;
+            const driveRegex = /^(https?:\/\/)?(www\.)?drive\.google\.com\/(file\/d\/|drive\/folders\/)[a-zA-Z0-9_-]+/;
+
+            if (linkType === 'youtube') {
+                isValidUrl = ytRegex.test(link);
+            } else if (linkType === 'drive') {
+                isValidUrl = driveRegex.test(link);
+            }
+
+            if (!isValidUrl) {
+                return NextResponse.json({ error: `Invalid ${linkType} link. Must contain a specific video/file ID.` }, { status: 400 });
+            }
+
             publicUrl = link;
         }
 

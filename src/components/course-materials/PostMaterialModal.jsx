@@ -95,9 +95,27 @@ const PostMaterialModal = ({ onMaterialPosted }) => {
             return;
         }
 
-        if (uploadType === 'link' && (!linkUrl || !linkType)) {
-            toast.error('Please enter a valid YouTube or Google Drive link');
-            return;
+        if (uploadType === 'link') {
+            if (!linkUrl || !linkType) {
+                toast.error('Please enter a valid YouTube or Google Drive link');
+                return;
+            }
+
+            let isValidUrl = false;
+
+            const ytRegex = /^(https?:\/\/)?(www\.)?(youtube\.com\/(watch\?(.*&)?v=|playlist\?(.*&)?list=)|youtu\.be\/)[a-zA-Z0-9_-]+/;
+            const driveRegex = /^(https?:\/\/)?(www\.)?drive\.google\.com\/(file\/d\/|drive\/folders\/)[a-zA-Z0-9_-]+/;
+
+            if (linkType === 'youtube') {
+                isValidUrl = ytRegex.test(linkUrl);
+            } else if (linkType === 'drive') {
+                isValidUrl = driveRegex.test(linkUrl);
+            }
+
+            if (!isValidUrl) {
+                toast.error(`Please enter a valid ${linkType === 'youtube' ? 'YouTube video/playlist' : 'Google Drive file/folder'} link`);
+                return;
+            }
         }
 
         if (description.length > MAX_DESC) {
