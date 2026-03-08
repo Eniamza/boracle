@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-    Search, Shield, Loader2, Calendar, CheckCircle, XCircle, FileText, Presentation, Youtube, Cloud, ArrowBigUp, Pencil, Save, X, BookOpen, ExternalLink, SortDesc, SortAsc, Trash2
+    Search, Shield, Loader2, Calendar, CheckCircle, XCircle, FileText, Presentation, Youtube, Cloud, ArrowBigUp, Pencil, Save, X, BookOpen, ExternalLink, SortDesc, SortAsc, Trash2, Eye, Download
 } from "lucide-react";
 import { SessionProvider, useSession } from 'next-auth/react';
 import { toast } from 'sonner';
@@ -20,6 +20,10 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+    Dialog,
+    DialogContent,
+} from "@/components/ui/dialog";
 
 const AdminMaterialsPageContent = () => {
     const { data: session, status } = useSession();
@@ -38,6 +42,13 @@ const AdminMaterialsPageContent = () => {
     // Inline edit state
     const [editingId, setEditingId] = useState(null);
     const [editDescription, setEditDescription] = useState('');
+
+    const [viewerOpen, setViewerOpen] = useState(false);
+    const [viewerItem, setViewerItem] = useState(null);
+
+    const getViewerUrl = (publicUrl) => {
+        return `https://docs.google.com/gview?url=${encodeURIComponent(publicUrl)}&embedded=true`;
+    };
 
     useEffect(() => {
         if (status === 'authenticated' && (session?.user?.userrole === 'admin' || session?.user?.userrole === 'moderator')) {
@@ -343,13 +354,25 @@ const AdminMaterialsPageContent = () => {
                                                         <ArrowBigUp className="w-4 h-4" />
                                                         {m.voteCount} Votes
                                                     </div>
-                                                    {isExternalLink && m.fileUrl && (
+                                                    {isExternalLink && m.fileUrl ? (
                                                         <>
                                                             <div className="h-4 w-[1px] bg-gray-300 dark:bg-gray-700 hidden sm:block"></div>
                                                             <a href={m.fileUrl} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-blue-500 hover:text-blue-600 dark:hover:text-blue-400 underline underline-offset-2">
                                                                 <ExternalLink className="w-3.5 h-3.5" /> Preview Link
                                                             </a>
                                                         </>
+                                                    ) : (
+                                                        m.publicUrl && (
+                                                            <>
+                                                                <div className="h-4 w-[1px] bg-gray-300 dark:bg-gray-700 hidden sm:block"></div>
+                                                                <button
+                                                                    onClick={() => { setViewerItem(m); setViewerOpen(true); }}
+                                                                    className="flex items-center gap-1 text-blue-500 hover:text-blue-600 dark:hover:text-blue-400 underline underline-offset-2"
+                                                                >
+                                                                    <Eye className="w-3.5 h-3.5" /> Preview Document
+                                                                </button>
+                                                            </>
+                                                        )
                                                     )}
                                                 </div>
                                             </div>
@@ -472,6 +495,62 @@ const AdminMaterialsPageContent = () => {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+
+            {/* Document Viewer Dialog */}
+            <Dialog open={viewerOpen} onOpenChange={setViewerOpen}>
+                <DialogContent showCloseButton={false} className="!max-w-[calc(100vw-32px)] w-[calc(100vw-32px)] h-[calc(100dvh-32px)] sm:!max-w-[calc(100vw-100px)] sm:w-[calc(100vw-100px)] sm:h-[calc(100vh-100px)] p-0 bg-white dark:bg-gray-950 border-gray-200 dark:border-gray-800 overflow-hidden flex flex-col gap-0 rounded-xl">
+                    {/* Viewer header */}
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 shrink-0">
+                        <div className="flex items-center gap-2 min-w-0">
+                            {viewerItem && (
+                                <>
+                                    <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-400 border-blue-200 dark:border-blue-500/30 shadow-none text-xs font-semibold shrink-0">
+                                        {viewerItem.courseCode}
+                                    </Badge>
+                                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
+                                        {viewerItem.postDescription}
+                                    </span>
+                                </>
+                            )}
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0 ml-2">
+                            {viewerItem && (
+                                <Button
+                                    size="sm"
+                                    className="h-7 px-3 text-xs gap-1.5 bg-green-500 hover:bg-green-600 dark:bg-green-500 dark:hover:bg-green-600 border-green-500 !text-white shadow-sm"
+                                    onClick={() => {
+                                        const a = document.createElement('a');
+                                        a.href = viewerItem.publicUrl;
+                                        a.download = `${viewerItem.courseCode}-${viewerItem.materialId.slice(0, 8)}.${viewerItem.fileExtension}`;
+                                        a.target = '_blank';
+                                        a.click();
+                                    }}
+                                >
+                                    <Download className="w-3.5 h-3.5" /> Download
+                                </Button>
+                            )}
+                            <Button
+                                size="sm"
+                                className="h-7 px-3 text-xs gap-1.5 bg-red-500 hover:bg-red-600 dark:bg-red-500 dark:hover:bg-red-600 !text-white shadow-sm"
+                                onClick={() => setViewerOpen(false)}
+                            >
+                                <X className="w-3.5 h-3.5" />
+                            </Button>
+                        </div>
+                    </div>
+                    {/* Iframe viewer */}
+                    <div className="flex-1 relative">
+                        {viewerItem && (
+                            <iframe
+                                src={getViewerUrl(viewerItem.publicUrl)}
+                                className="w-full h-full border-0"
+                                title={`${viewerItem.courseCode} - ${viewerItem.postDescription}`}
+                                allowFullScreen
+                            />
+                        )}
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };

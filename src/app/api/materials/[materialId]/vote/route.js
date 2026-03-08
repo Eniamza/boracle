@@ -2,7 +2,7 @@
 // DELETE /api/materials/[materialId]/vote — Remove own vote
 import { auth } from '@/auth';
 import { db, eq, and, getCurrentEpoch } from '@/lib/db';
-import { targets, votes } from '@/lib/db/schema';
+import { targets, votes, courseMaterials } from '@/lib/db/schema';
 import { NextResponse } from 'next/server';
 
 export async function POST(req, { params }) {
@@ -20,10 +20,14 @@ export async function POST(req, { params }) {
             return NextResponse.json({ error: 'Vote value must be 1 or -1' }, { status: 400 });
         }
 
-        // Find the target for this material
-        const [target] = await db
-            .select()
+        // Find the target and the material's owner for this material
+        const [targetData] = await db
+            .select({
+                uuid: targets.uuid,
+                uEmail: courseMaterials.uEmail
+            })
             .from(targets)
+            .innerJoin(courseMaterials, eq(courseMaterials.materialId, targets.refId))
             .where(
                 and(
                     eq(targets.kind, 'material'),
@@ -31,8 +35,12 @@ export async function POST(req, { params }) {
                 )
             );
 
-        if (!target) {
+        if (!targetData) {
             return NextResponse.json({ error: 'Material not found' }, { status: 404 });
+        }
+
+        if (targetData.uEmail === session.user.email) {
+            return NextResponse.json({ error: 'You cannot vote on your own material' }, { status: 403 });
         }
 
         // Upsert vote (insert or update on conflict)
@@ -42,7 +50,7 @@ export async function POST(req, { params }) {
             .where(
                 and(
                     eq(votes.uEmail, session.user.email),
-                    eq(votes.targetUuid, target.uuid)
+                    eq(votes.targetUuid, targetData.uuid)
                 )
             );
 
@@ -54,7 +62,7 @@ export async function POST(req, { params }) {
                 .where(
                     and(
                         eq(votes.uEmail, session.user.email),
-                        eq(votes.targetUuid, target.uuid)
+                        eq(votes.targetUuid, targetData.uuid)
                     )
                 );
         } else {
@@ -63,7 +71,7 @@ export async function POST(req, { params }) {
                 .insert(votes)
                 .values({
                     uEmail: session.user.email,
-                    targetUuid: target.uuid,
+                    targetUuid: targetData.uuid,
                     value,
                     createdAt: getCurrentEpoch(),
                 });
@@ -85,10 +93,14 @@ export async function DELETE(req, { params }) {
 
         const { materialId } = await params;
 
-        // Find the target for this material
-        const [target] = await db
-            .select()
+        // Find the target and the material's owner for this material
+        const [targetData] = await db
+            .select({
+                uuid: targets.uuid,
+                uEmail: courseMaterials.uEmail
+            })
             .from(targets)
+            .innerJoin(courseMaterials, eq(courseMaterials.materialId, targets.refId))
             .where(
                 and(
                     eq(targets.kind, 'material'),
@@ -96,8 +108,12 @@ export async function DELETE(req, { params }) {
                 )
             );
 
-        if (!target) {
+        if (!targetData) {
             return NextResponse.json({ error: 'Material not found' }, { status: 404 });
+        }
+
+        if (targetData.uEmail === session.user.email) {
+            return NextResponse.json({ error: 'You cannot vote on your own material' }, { status: 403 });
         }
 
         // Delete the vote
@@ -106,7 +122,7 @@ export async function DELETE(req, { params }) {
             .where(
                 and(
                     eq(votes.uEmail, session.user.email),
-                    eq(votes.targetUuid, target.uuid)
+                    eq(votes.targetUuid, targetData.uuid)
                 )
             );
 

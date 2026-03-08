@@ -4,6 +4,7 @@ import { courseMaterials, userinfo } from '@/lib/db/schema';
 import { getPublicUrl } from '@/lib/r2';
 import { notFound } from 'next/navigation';
 import SharedMaterialClient from './SharedMaterialClient';
+import { auth } from '@/auth';
 
 export async function generateMetadata({ params }) {
     const { materialId } = await params;
@@ -74,6 +75,24 @@ export default async function SharedMaterialPage({ params }) {
         notFound();
     }
 
+    const session = await auth();
+    let userVote = null;
+    let isOwner = false;
+
+    if (session?.user?.email) {
+        isOwner = session.user.email === result.uEmail;
+
+        const [vote] = await db
+            .select({ value: sql`votes.value` })
+            .from(sql`votes`)
+            .innerJoin(sql`targets`, sql`targets.uuid = votes.targetuuid`)
+            .where(
+                sql`targets.kind = 'material' AND targets.refid = ${materialId} AND votes.uemail = ${session.user.email}`
+            );
+
+        if (vote) userVote = vote.value;
+    }
+
     const materialData = {
         materialId: result.materialId,
         courseCode: result.courseCode,
@@ -81,12 +100,13 @@ export default async function SharedMaterialPage({ params }) {
         postDescription: result.postDescription,
         fileExtension: result.fileExtension,
         createdAt: result.createdAt,
+        uEmail: result.uEmail, // Pass down to the client for the edit/delete check
         publicUrl: result.fileUrl || getPublicUrl(result.courseCode, result.fileUuid, result.fileExtension),
         voteCount: Number(result.voteCount),
         posterName: result.userName?.split(' ')[0] || 'Anonymous',
         posterNetVotes: Number(result.posterNetVotes),
-        userVote: null,
-        isOwner: false,
+        userVote,
+        isOwner,
     };
 
     return <SharedMaterialClient material={materialData} />;

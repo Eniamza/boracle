@@ -159,12 +159,13 @@ const MaterialCard = ({ material, isPublic = false, onVote, onDelete }) => {
                     {/* Compact Vote Controls */}
                     <div className="flex items-center gap-1 bg-gray-50 dark:bg-gray-900/60 rounded-lg p-1 border border-gray-100 dark:border-gray-800 shrink-0">
                         <button
-                            onClick={() => handleVote(1)}
-                            disabled={isPublic || voteLoading === 'up'}
+                            onClick={() => !material.isOwner && handleVote(1)}
+                            disabled={isPublic || voteLoading === 'up' || material.isOwner}
                             className={`p-1.5 rounded transition-colors ${material.userVote === 1
                                 ? 'text-blue-500 bg-blue-100 dark:bg-blue-500/20'
                                 : 'text-gray-400 hover:text-blue-500 hover:bg-gray-200 dark:hover:bg-gray-700'
-                                } ${isPublic ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                                } ${(isPublic || material.isOwner) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                            title={material.isOwner ? "You cannot vote on your own material" : "Upvote"}
                         >
                             {voteLoading === 'up' ? <Loader2 className="w-5 h-5 animate-spin" /> : <ArrowBigUp className={`w-5 h-5 ${material.userVote === 1 ? 'fill-current' : ''}`} />}
                         </button>
@@ -174,12 +175,13 @@ const MaterialCard = ({ material, isPublic = false, onVote, onDelete }) => {
                             {material.voteCount}
                         </span>
                         <button
-                            onClick={() => handleVote(-1)}
-                            disabled={isPublic || voteLoading === 'down'}
+                            onClick={() => !material.isOwner && handleVote(-1)}
+                            disabled={isPublic || voteLoading === 'down' || material.isOwner}
                             className={`p-1.5 rounded transition-colors ${material.userVote === -1
                                 ? 'text-red-500 bg-red-100 dark:bg-red-500/20'
                                 : 'text-gray-400 hover:text-red-500 hover:bg-gray-200 dark:hover:bg-gray-700'
-                                } ${isPublic ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                                } ${(isPublic || material.isOwner) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                            title={material.isOwner ? "You cannot vote on your own material" : "Downvote"}
                         >
                             {voteLoading === 'down' ? <Loader2 className="w-5 h-5 animate-spin" /> : <ArrowBigDown className={`w-5 h-5 ${material.userVote === -1 ? 'fill-current' : ''}`} />}
                         </button>

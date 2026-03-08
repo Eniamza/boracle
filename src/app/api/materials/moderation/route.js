@@ -3,6 +3,7 @@ import { db } from '@/lib/db';
 import { courseMaterials, userinfo } from '@/lib/db/schema';
 import { eq, desc, asc, sql, inArray } from 'drizzle-orm';
 import { auth } from '@/auth';
+import { getPublicUrl } from '@/lib/r2';
 
 export async function GET(req) {
     try {
@@ -49,7 +50,8 @@ export async function GET(req) {
         return NextResponse.json({
             items: materials.map(m => ({
                 ...m,
-                voteCount: Number(m.voteCount)
+                voteCount: Number(m.voteCount),
+                publicUrl: m.fileUrl || getPublicUrl(m.courseCode, m.fileUuid, m.fileExtension)
             }))
         });
     } catch (error) {
