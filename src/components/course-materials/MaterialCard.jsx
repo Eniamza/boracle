@@ -116,6 +116,14 @@ const MaterialCard = ({ material, isPublic = false, onVote, onDelete }) => {
     const isDrive = material.fileExtension === 'drive';
     const isLink = isYoutube || isDrive;
 
+    const getExternalUrl = () => {
+        if (!isLink || !material.publicUrl) return material.publicUrl;
+        if (material.publicUrl.includes('.r2.dev')) {
+            return material.publicUrl;
+        }
+        return material.publicUrl;
+    };
+
     const FileIcon = isYoutube ? Youtube : isDrive ? Cloud : (material.fileExtension === 'pdf' ? FileText : Presentation);
     const fileLabel = isYoutube ? 'YOUTUBE' : isDrive ? 'G DRIVE' : material.fileExtension?.toUpperCase();
 
@@ -218,7 +226,7 @@ const MaterialCard = ({ material, isPublic = false, onVote, onDelete }) => {
                 {/* Action Buttons */}
                 <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 pt-2 mt-auto">
                     <Button
-                        onClick={() => isLink ? window.open(material.publicUrl, '_blank') : setViewerOpen(true)}
+                        onClick={() => isLink ? window.open(getExternalUrl(), '_blank') : setViewerOpen(true)}
                         size="sm"
                         className="flex-1 min-w-[100px] h-9 text-xs md:text-sm font-medium bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 !text-white"
                     >

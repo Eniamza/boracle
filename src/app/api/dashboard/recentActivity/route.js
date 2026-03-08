@@ -1,6 +1,6 @@
 // app/api/dashboard/recentActivity/route.js (App Router)
 import { auth } from "@/auth";
-import { db, eq, desc } from "@/lib/db";
+import { db, eq, desc, or } from "@/lib/db";
 import { reviews, courseMaterials } from "@/lib/db/schema";
 import { NextResponse } from "next/server";
 
@@ -18,32 +18,31 @@ export async function GET(request) {
 
     const userEmail = session.user.email;
 
-    // Fetch recent activities and post status from the tables reviews and courseMaterials
-    const [recentReviews, recentMaterials] = await Promise.all([
-      db.select()
-        .from(reviews)
-        .where(eq(reviews.uEmail, userEmail))
-        .orderBy(desc(reviews.createdAt))
-        .limit(5),
-      db.select({
-        materialId: courseMaterials.materialId,
-        uEmail: courseMaterials.uEmail,
-        fileUrl: courseMaterials.fileUrl,
-        createdAt: courseMaterials.createdAt,
-        courseCode: courseMaterials.courseCode,
-        semester: courseMaterials.semester,
-        postState: courseMaterials.postState,
-        postDescription: courseMaterials.postDescription
-      })
-        .from(courseMaterials)
-        .where(eq(courseMaterials.uEmail, userEmail))
-        .orderBy(desc(courseMaterials.createdAt))
-        .limit(5)
-    ]);
+    // Fetch recent materials from the community (published) PLUS user's own (published/pending/rejected)
+    // We'll limit to 5 total
+    const recentMaterials = await db.select({
+      materialId: courseMaterials.materialId,
+      uEmail: courseMaterials.uEmail,
+      fileUrl: courseMaterials.fileUrl,
+      fileExtension: courseMaterials.fileExtension,
+      createdAt: courseMaterials.createdAt,
+      courseCode: courseMaterials.courseCode,
+      semester: courseMaterials.semester,
+      postState: courseMaterials.postState,
+      postDescription: courseMaterials.postDescription
+    })
+      .from(courseMaterials)
+      .where(
+        or(
+          eq(courseMaterials.postState, 'published'),
+          eq(courseMaterials.uEmail, userEmail)
+        )
+      )
+      .orderBy(desc(courseMaterials.createdAt))
+      .limit(5);
 
     return Response.json({
       recentActivities: {
-        reviews: recentReviews,
         materials: recentMaterials
       }
     });

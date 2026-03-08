@@ -74,6 +74,14 @@ export default function SharedMaterialClient({ material }) {
     const isDrive = material.fileExtension === 'drive';
     const isLink = isYoutube || isDrive;
 
+    const getExternalUrl = () => {
+        if (!isLink || !material.publicUrl) return material.publicUrl;
+        if (material.publicUrl.includes('.r2.dev')) {
+            return material.publicUrl;
+        }
+        return material.publicUrl;
+    };
+
     const FileIcon = isYoutube ? Youtube : isDrive ? Cloud : (material.fileExtension === 'pdf' ? FileText : Presentation);
     const fileLabel = isYoutube ? 'YOUTUBE' : isDrive ? 'G DRIVE' : material.fileExtension?.toUpperCase();
 
@@ -169,7 +177,7 @@ export default function SharedMaterialClient({ material }) {
                                 </button>
                             ) : (
                                 <button
-                                    onClick={() => window.open(material.publicUrl, '_blank')}
+                                    onClick={() => window.open(getExternalUrl(), '_blank')}
                                     className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg flex items-center gap-2 transition-colors text-white text-sm font-medium"
                                 >
                                     <ExternalLink className="w-4 h-4" />
@@ -206,7 +214,7 @@ export default function SharedMaterialClient({ material }) {
                         This material is hosted externally. Click the button below to open it in a new tab securely.
                     </p>
                     <button
-                        onClick={() => window.open(material.publicUrl, '_blank')}
+                        onClick={() => window.open(getExternalUrl(), '_blank')}
                         className="px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg flex items-center gap-2 transition-colors text-white font-medium"
                     >
                         <ExternalLink className="w-5 h-5" />

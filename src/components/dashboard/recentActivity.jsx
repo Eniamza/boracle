@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { FileText, MessageSquare, Calendar, ExternalLink, User, BookOpen, Clock } from "lucide-react";
+import Link from 'next/link';
 
 export default function RecentActivity() {
   const [activities, setActivities] = useState(null);
@@ -154,151 +155,75 @@ export default function RecentActivity() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-green-600 dark:text-green-400">
               <FileText className="h-5 w-5" />
-              Course Materials
+              Recent Materials
             </CardTitle>
           </CardHeader>
           <CardContent>
             {hasMaterials ? (
               <div className="space-y-4">
-                {activities.materials.map((material) => (
-                  <div
-                    key={material.materialId}
-                    className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-blue-950 hover:border-blue-800 transition-colors"
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <BookOpen className="h-4 w-4 text-gray-500" />
-                          <span className="font-semibold text-gray-900 dark:text-gray-100">
-                            {material.courseCode}
-                          </span>
-                          <Badge className={getStatusColor(material.postState)}>
-                            {material.postState}
-                          </Badge>
+                {activities.materials.map((material) => {
+                  let badgeStyling = 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border-blue-200 dark:border-blue-500/30';
+                  let displayType = material.fileExtension?.toUpperCase() || 'LINK';
+                  if (material.fileExtension === 'pdf') {
+                    badgeStyling = 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 border-orange-200 dark:border-orange-500/30';
+                  } else if (material.fileExtension === 'youtube') {
+                    displayType = 'YouTube';
+                    badgeStyling = 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 border-red-200 dark:border-red-500/30';
+                  } else if (material.fileExtension === 'drive') {
+                    displayType = 'Google Drive';
+                    badgeStyling = 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/30';
+                  }
+
+                  return (
+                    <Link
+                      href={`/materials/${material.materialId}`}
+                      key={material.materialId}
+                      target="_blank"
+                      className="block p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-blue-950 hover:border-blue-800 transition-colors"
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2 flex-wrap">
+                            <BookOpen className="h-4 w-4 text-gray-500 shrink-0" />
+                            <span className="font-semibold text-gray-900 dark:text-gray-100">
+                              {material.courseCode}
+                            </span>
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-medium border ${badgeStyling}`}>
+                              {displayType}
+                            </span>
+                            {material.postState !== 'approved' && (
+                              <Badge className={getStatusColor(material.postState)}>
+                                {material.postState}
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-gray-700 dark:text-gray-300 mb-2 truncate max-w-lg">
+                            {material.postDescription}
+                          </p>
+                          <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
+                            <div className="flex items-center gap-1">
+                              <Calendar className="h-3 w-3" />
+                              {formatDate(material.createdAt)}
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Clock className="h-3 w-3" />
+                              {material.semester}
+                            </div>
+                          </div>
                         </div>
-                        <p className="text-gray-700 dark:text-gray-300 mb-2">
-                          {material.postDescription}
-                        </p>
-                        <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
-                          <div className="flex items-center gap-1">
-                            <Calendar className="h-3 w-3" />
-                            {formatDate(material.createdAt)}
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            {material.semester}
-                          </div>
+                        <div className="flex items-center text-blue-600 dark:text-blue-400">
+                          <ExternalLink className="w-4 h-4" />
                         </div>
                       </div>
-                      <a
-                        href={material.fileUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-1 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm font-medium"
-                      >
-                      </a>
-                    </div>
-                  </div>
-                ))}
+                    </Link>
+                  )
+                })}
               </div>
             ) : (
               <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                 <FileText className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                <p className="font-medium">No activities found here...</p>
-                <p className="text-sm">Start posting some course materials!</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Reviews Section */}
-        <Card className=" bg-blue-50 dark:bg-blue-950/20 border-blue-300 dark:border-blue-800">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-blue-600 dark:text-blue-400">
-              <MessageSquare className="h-5 w-5" />
-              Faculty Reviews
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {hasReviews ? (
-              <div className="space-y-4 ">
-                {activities.reviews.map((review) => (
-                  <div
-                    key={review.reviewid}
-                    className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-blue-950 transition-colors"
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1">
-                        {/* Faculty Information - Main Heading */}
-                        {facultyData[review.facultyid] && (
-                          <div className="flex items-center gap-2 mb-2">
-                            <BookOpen className="h-4 w-4 text-gray-500" />
-                            <span className="font-semibold text-gray-900 dark:text-gray-100">
-                              {facultyData[review.facultyid].initials?.join('/') || 'N/A'} - {facultyData[review.facultyid].facultyname}
-                            </span>
-                            <Badge className={getStatusColor(review.poststate)}>
-                              {review.poststate}
-                            </Badge>
-                            {review.isanon && (
-                              <Badge variant="outline" className="text-xs">
-                                Anonymous
-                              </Badge>
-                            )}
-                          </div>
-                        )}
-
-                        {/* Course and Section - Subheading */}
-                        <div className="mb-2">
-                          <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                            {review.coursecode} - Section {review.section}
-                          </span>
-                        </div>
-
-                        <p className="text-gray-700 dark:text-gray-300 mb-3">
-                          {review.reviewdescription}
-                        </p>
-
-                        <div className="flex items-center gap-4 mb-2">
-                          <div className="text-sm">
-                            <span className="text-gray-500 dark:text-gray-400">Teaching: </span>
-                            <span className="font-medium text-gray-900 dark:text-gray-100">
-                              {review.teachingrating}/10
-                            </span>
-                          </div>
-                          <div className="text-sm">
-                            <span className="text-gray-500 dark:text-gray-400">Behavior: </span>
-                            <span className="font-medium text-gray-900 dark:text-gray-100">
-                              {review.behaviourrating}/10
-                            </span>
-                          </div>
-                          <div className="text-sm">
-                            <span className="text-gray-500 dark:text-gray-400">Marking: </span>
-                            <span className="font-medium text-gray-900 dark:text-gray-100">
-                              {review.markingrating}/10
-                            </span>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
-                          <div className="flex items-center gap-1">
-                            <Calendar className="h-3 w-3" />
-                            {formatDate(review.createdAt)}
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            {review.semester}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                <MessageSquare className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                <p className="font-medium">No activities found here...</p>
-                <p className="text-sm">Start posting some faculty reviews!</p>
+                <p className="font-medium">No recent materials...</p>
+                <p className="text-sm">Be the first to post one!</p>
               </div>
             )}
           </CardContent>
