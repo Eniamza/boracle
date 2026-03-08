@@ -189,6 +189,10 @@ export async function POST(req) {
             publicUrl = link;
         }
 
+        // Determine initial postState based on user role
+        const userRole = session.user?.userrole?.toLowerCase();
+        const initialPostState = ['admin', 'moderator'].includes(userRole) ? 'published' : 'pending';
+
         // Insert into database
         const [material] = await db
             .insert(courseMaterials)
@@ -200,6 +204,7 @@ export async function POST(req) {
                 courseCode,
                 semester,
                 postDescription,
+                postState: initialPostState,
                 createdAt: getCurrentEpoch(),
             })
             .returning();
