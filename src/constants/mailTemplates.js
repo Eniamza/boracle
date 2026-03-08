@@ -97,3 +97,63 @@ export const swapRequestStatusTemplate = (receiverName, status, sectionName) => 
     </div>
   `;
 };
+
+export const materialApprovedTemplate = (courseCode, description) => {
+  return `
+    <div style="font-family: 'Segoe UI', 'Inter', -apple-system, sans-serif; max-width: 560px; margin: 40px auto; background-color: #020817; border-radius: 16px; overflow: hidden;">
+      <div style="background: linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%); padding: 40px 40px 32px; text-align: center;">
+        <div style="display: inline-block; background-color: rgba(52, 211, 153, 0.15); border: 1px solid rgba(52, 211, 153, 0.3); border-radius: 12px; padding: 10px 16px; margin-bottom: 20px;">
+          <span style="font-size: 22px;">✅</span>
+        </div>
+        <h1 style="color: #f1f5f9; font-size: 22px; font-weight: 700; margin: 0 0 6px;">Material Approved</h1>
+        <p style="color: #64748b; font-size: 14px; margin: 0;">Your post is now live!</p>
+      </div>
+
+      <div style="padding: 32px 40px; text-align: center;">
+        <p style="color: #94a3b8; font-size: 15px; line-height: 1.7; margin: 0 0 24px;">
+          Great news! Your study material for <strong style="color: #e2e8f0;">${courseCode}</strong> has been approved by our moderators.
+        </p>
+        <div style="display: inline-block; background-color: #0f172a; border: 1px solid #1e293b; border-radius: 10px; padding: 14px 24px; margin-bottom: 32px; text-align: left; max-width: 100%;">
+          <span style="color: #60a5fa; font-size: 14px; font-style: italic;">"${description}"</span>
+        </div>
+        <div style="margin: 8px 0 0;">
+          <a href="https://boracle.app/course-materials" style="display: inline-block; background-color: #2563eb; color: #ffffff; padding: 14px 36px; text-decoration: none; border-radius: 10px; font-weight: 600; font-size: 15px;">View Materials</a>
+        </div>
+      </div>
+
+      <div style="padding: 20px 40px 28px; text-align: center; border-top: 1px solid #1e293b;">
+        <p style="color: #475569; font-size: 13px; margin: 0;">Thank you for contributing to the community!</p>
+      </div>
+    </div>
+  `;
+};
+
+export const materialRejectedTemplate = (courseCode, description) => {
+  return `
+    <div style="font-family: 'Segoe UI', 'Inter', -apple-system, sans-serif; max-width: 560px; margin: 40px auto; background-color: #020817; border-radius: 16px; overflow: hidden;">
+      <div style="background: linear-gradient(135deg, #3f1d1d 0%, #1a0f0f 100%); padding: 40px 40px 32px; text-align: center;">
+        <div style="display: inline-block; background-color: rgba(248, 113, 113, 0.15); border: 1px solid rgba(248, 113, 113, 0.3); border-radius: 12px; padding: 10px 16px; margin-bottom: 20px;">
+          <span style="font-size: 22px;">❌</span>
+        </div>
+        <h1 style="color: #f1f5f9; font-size: 22px; font-weight: 700; margin: 0 0 6px;">Material Update</h1>
+        <p style="color: #cbd5e1; font-size: 14px; margin: 0;">Notice about your recent post</p>
+      </div>
+
+      <div style="padding: 32px 40px; text-align: center;">
+        <p style="color: #94a3b8; font-size: 15px; line-height: 1.7; margin: 0 0 24px;">
+          Unfortunately, your study material submission for <strong style="color: #e2e8f0;">${courseCode}</strong> could not be approved by our moderators, because it violated our guidelines or contained inappropriate content.
+        </p>
+        <div style="display: inline-block; background-color: #0f172a; border: 1px solid #1e293b; border-radius: 10px; padding: 14px 24px; margin-bottom: 32px; text-align: left; max-width: 100%;">
+          <span style="color: #94a3b8; font-size: 14px; text-decoration: line-through; opacity: 0.7;">"${description}"</span>
+        </div>
+        <p style="color: #94a3b8; font-size: 14px; line-height: 1.5; margin: 0;">
+          If you believe this was a mistake, or you'd like to share an updated version, feel free to try sharing again!
+        </p>
+      </div>
+
+      <div style="padding: 20px 40px 28px; text-align: center; border-top: 1px solid #1e293b;">
+        <p style="color: #475569; font-size: 13px; margin: 0;">with love from B.O.R.A.C.L.E</p>
+      </div>
+    </div>
+  `;
+};

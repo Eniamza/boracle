@@ -6,7 +6,9 @@ import { postStateEnum } from './enums.js';
 export const courseMaterials = pgTable('coursematerials', {
   materialId: uuid('materialid').primaryKey().defaultRandom(),
   uEmail: text('uemail').default('deleted@g.bracu.ac.bd').references(() => userinfo.email, { onDelete: 'set default', onUpdate: 'cascade' }),
-  materialUrl: text('materialurl').notNull(),
+  fileUuid: uuid('fileuuid').notNull().defaultRandom(),
+  fileUrl: text('fileurl'), // Used for external links like YouTube or Google Drive
+  fileExtension: text('fileextension').notNull(),
   createdAt: bigint('createdat', { mode: 'number' }),
   courseCode: text('coursecode').notNull(),
   semester: text('semester').notNull(),
