@@ -104,7 +104,7 @@ const PostMaterialModal = ({ onMaterialPosted }) => {
             let isValidUrl = false;
 
             const ytRegex = /^(https?:\/\/)?(www\.)?(youtube\.com\/(watch\?(.*&)?v=|playlist\?(.*&)?list=)|youtu\.be\/)[a-zA-Z0-9_-]+/;
-            const driveRegex = /^(https?:\/\/)?(www\.)?drive\.google\.com\/(file\/d\/|drive\/folders\/)[a-zA-Z0-9_-]+/;
+            const driveRegex = /^(https?:\/\/)?(www\.)?(drive\.google\.com\/(file\/d\/|drive\/folders\/)|docs\.google\.com\/(document|spreadsheets|presentation)\/d\/)[a-zA-Z0-9_-]+/;
 
             if (linkType === 'youtube') {
                 isValidUrl = ytRegex.test(linkUrl);
