@@ -1,5 +1,20 @@
 export const changelog = [
     {
+        version: "1.27.0",
+        date: "2026-03-08",
+        changes: {
+            new: [
+                "Course Directory. A convenient place all the mateirals to ever exist enriched by the community!"
+            ],
+            improved: [
+                "HomePage's Recent Activity now shows community posts and is clickable"
+            ],
+            fixed: [
+                ""
+            ]
+        }
+    },
+    {
         version: "1.26.0",
         date: "2026-03-02",
         changes: {

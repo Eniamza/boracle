@@ -1,12 +1,12 @@
 export const sprints = [
     {
         sprint: "Sprint 2",
-        date: "2026-02-26 to currently ongoing",
+        date: "2026-02-26 to 2026-03-08",
         status: {
             pending: [
-                { text: "Course Directory UI and related Endpoints", type: "Enhancement" },
             ],
             finished: [
+                { text: "Course Directory UI and related Endpoints", type: "Enhancement" },
                 { text: "Swap Request Notification System (Email alerts for approved/rejected swaps)", type: "Enhancement" },
                 { text: "Background Scroll Lock when routine modal was open on Desktop", type: "Bug" },
                 { text: "Live Pre-Registration Seat Updates via Mercure Integration", type: "Enhancement" },
