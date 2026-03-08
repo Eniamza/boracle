@@ -19,7 +19,11 @@ const CourseMaterialsPage = () => {
     const [nextCursor, setNextCursor] = useState(null);
     const [hasMore, setHasMore] = useState(true);
     const [showSignInPrompt, setShowSignInPrompt] = useState(false);
-    const [showMyMaterialsOnly, setShowMyMaterialsOnly] = useState(false);
+
+    // Tab state: 'all' or 'my'
+    const [activeTab, setActiveTab] = useState('all');
+    // Sub-tab state for My Materials: 'accepted' or 'pending'
+    const [mySubTab, setMySubTab] = useState('accepted');
 
     const isMobile = useIsMobile();
 
@@ -51,14 +55,17 @@ const CourseMaterialsPage = () => {
             const params = new URLSearchParams();
             if (debouncedQuery) params.set('q', debouncedQuery);
             if (isLoadMore && nextCursor) params.set('cursor', nextCursor);
-            if (showMyMaterialsOnly) params.set('isMyMaterials', 'true');
+
+            if (activeTab === 'my') {
+                params.set('isMyMaterials', 'true');
+                params.set('stateFilter', mySubTab === 'accepted' ? 'published' : 'pending');
+            }
 
             const res = await fetch(`/api/materials?${params.toString()}`);
             if (res.ok) {
                 const data = await res.json();
                 if (isLoadMore) {
                     setMaterials(prev => {
-                        // Avoid duplicates if React strict mode double-fires
                         const existingIds = new Set(prev.map(m => m.materialId));
                         const newItems = data.items.filter(m => !existingIds.has(m.materialId));
                         return [...prev, ...newItems];
@@ -75,15 +82,15 @@ const CourseMaterialsPage = () => {
             setLoading(false);
             setLoadingMore(false);
         }
-    }, [debouncedQuery, nextCursor, hasMore, loadingMore]);
+    }, [debouncedQuery, nextCursor, hasMore, loadingMore, activeTab, mySubTab]);
 
-    // Initial load and search changes
+    // Initial load and search/tab changes
     useEffect(() => {
         if (sessionStatus !== 'loading') {
             fetchMaterials(false);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [sessionStatus, debouncedQuery, showMyMaterialsOnly]);
+    }, [sessionStatus, debouncedQuery, activeTab, mySubTab]);
 
     // Infinite scroll observer
     useEffect(() => {
@@ -130,35 +137,87 @@ const CourseMaterialsPage = () => {
         }));
     };
 
-    const handleMyMaterialsToggle = () => {
-        setShowMyMaterialsOnly(!showMyMaterialsOnly);
+    const handleTabChange = (tab) => {
+        if (tab === activeTab) return;
+        setActiveTab(tab);
+        setMaterials([]);
         setNextCursor(null);
         setHasMore(true);
     };
 
+    const handleSubTabChange = (subTab) => {
+        if (subTab === mySubTab) return;
+        setMySubTab(subTab);
+        setMaterials([]);
+        setNextCursor(null);
+        setHasMore(true);
+    };
+
+    const renderEmptyState = () => {
+        if (activeTab === 'my' && mySubTab === 'pending') {
+            return (
+                <div className="text-center py-16">
+                    <BookOpen className="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-500 dark:text-gray-400 mb-2">
+                        No pending materials
+                    </h3>
+                    <p className="text-sm text-gray-400 dark:text-gray-500">
+                        All your submissions have been reviewed!
+                    </p>
+                </div>
+            );
+        }
+        if (activeTab === 'my') {
+            return (
+                <div className="text-center py-16">
+                    <BookOpen className="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-500 dark:text-gray-400 mb-2">
+                        No accepted materials yet
+                    </h3>
+                    <p className="text-sm text-gray-400 dark:text-gray-500">
+                        Your approved materials will show up here.
+                    </p>
+                </div>
+            );
+        }
+        return (
+            <div className="text-center py-16">
+                <BookOpen className="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
+                <h3 className="text-lg font-semibold text-gray-500 dark:text-gray-400 mb-2">
+                    {debouncedQuery ? 'No matching materials' : 'No materials yet'}
+                </h3>
+                <p className="text-sm text-gray-400 dark:text-gray-500">
+                    {debouncedQuery ? 'Try a different search term' : 'Be the first to share study resources!'}
+                </p>
+            </div>
+        );
+    };
+
     return (
         <div className="w-full px-6 sm:px-[50px] py-6">
-            {/* Header */}
-            <div className="flex items-center justify-between mb-6 gap-3">
-                <div className="flex items-center">
+            {/* Header with Tabs + Post Button */}
+            <div className="flex items-center justify-between mb-5 gap-3">
+                {/* Tabs */}
+                <div className="flex items-center bg-gray-100 dark:bg-gray-800/60 rounded-xl p-1 gap-0.5">
+                    <button
+                        onClick={() => handleTabChange('all')}
+                        className={`px-3.5 py-1.5 md:px-4 md:py-2 rounded-lg text-xs md:text-sm font-semibold transition-all duration-200 whitespace-nowrap ${activeTab === 'all'
+                                ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+                                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                            }`}
+                    >
+                        All Materials
+                    </button>
                     {session?.user?.email && (
-                        <label className="flex items-center gap-2 cursor-pointer bg-blue-50 dark:bg-gray-800 border border-blue-200 dark:border-gray-700 px-3 py-2 rounded-lg">
-                            <span className="text-xs md:text-sm font-medium text-blue-700 dark:text-gray-300 whitespace-nowrap">My Materials</span>
-                            <button
-                                type="button"
-                                role="switch"
-                                aria-checked={showMyMaterialsOnly}
-                                onClick={handleMyMaterialsToggle}
-                                className={`relative inline-flex h-[22px] w-[40px] shrink-0 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-opacity-75 ${showMyMaterialsOnly ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'
-                                    }`}
-                            >
-                                <span className="sr-only">Toggle my materials only</span>
-                                <span
-                                    className={`${showMyMaterialsOnly ? 'translate-x-[20px]' : 'translate-x-[2px]'
-                                        } pointer-events-none inline-block h-[18px] w-[18px] transform rounded-full bg-white shadow-lg ring-0 transition-transform duration-200 ease-in-out`}
-                                />
-                            </button>
-                        </label>
+                        <button
+                            onClick={() => handleTabChange('my')}
+                            className={`px-3.5 py-1.5 md:px-4 md:py-2 rounded-lg text-xs md:text-sm font-semibold transition-all duration-200 whitespace-nowrap ${activeTab === 'my'
+                                    ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+                                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                                }`}
+                        >
+                            My Materials
+                        </button>
                     )}
                 </div>
 
@@ -176,6 +235,30 @@ const CourseMaterialsPage = () => {
                     </div>
                 )}
             </div>
+
+            {/* Sub-tabs for My Materials */}
+            {activeTab === 'my' && (
+                <div className="flex items-center gap-2 mb-4">
+                    <button
+                        onClick={() => handleSubTabChange('accepted')}
+                        className={`px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium transition-all duration-200 border ${mySubTab === 'accepted'
+                                ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border-green-200 dark:border-green-700'
+                                : 'bg-transparent text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
+                            }`}
+                    >
+                        Accepted
+                    </button>
+                    <button
+                        onClick={() => handleSubTabChange('pending')}
+                        className={`px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium transition-all duration-200 border ${mySubTab === 'pending'
+                                ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-700'
+                                : 'bg-transparent text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
+                            }`}
+                    >
+                        Pending
+                    </button>
+                </div>
+            )}
 
             {/* Search bar */}
             <div className="relative mb-4">
@@ -205,15 +288,7 @@ const CourseMaterialsPage = () => {
                     ))}
                 </div>
             ) : materials.length === 0 ? (
-                <div className="text-center py-16">
-                    <BookOpen className="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
-                    <h3 className="text-lg font-semibold text-gray-500 dark:text-gray-400 mb-2">
-                        {debouncedQuery ? 'No matching materials' : 'No materials yet'}
-                    </h3>
-                    <p className="text-sm text-gray-400 dark:text-gray-500">
-                        {debouncedQuery ? 'Try a different search term' : 'Be the first to share study resources!'}
-                    </p>
-                </div>
+                renderEmptyState()
             ) : (
                 <>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">

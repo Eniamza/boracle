@@ -17,6 +17,7 @@ export async function GET(req) {
         const q = searchParams.get('q');
         const cursor = searchParams.get('cursor');
         const isMyMaterials = searchParams.get('isMyMaterials') === 'true';
+        const stateFilter = searchParams.get('stateFilter'); // 'published' or 'pending'
         const limit = Number(searchParams.get('limit')) || 10;
 
         // Build base query for materials with vote aggregation
@@ -52,7 +53,9 @@ export async function GET(req) {
             .where(
                 and(
                     isMyMaterials && currentUserEmail
-                        ? inArray(courseMaterials.postState, ['published', 'pending'])
+                        ? (stateFilter
+                            ? eq(courseMaterials.postState, stateFilter)
+                            : inArray(courseMaterials.postState, ['published', 'pending']))
                         : eq(courseMaterials.postState, 'published'),
                     courseCode ? eq(courseMaterials.courseCode, courseCode) : undefined,
                     isMyMaterials && currentUserEmail ? eq(courseMaterials.uEmail, currentUserEmail) : undefined,
