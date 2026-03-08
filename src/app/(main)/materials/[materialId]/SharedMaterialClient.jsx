@@ -7,16 +7,26 @@ import { toast } from 'sonner';
 import { copyToClipboard } from '@/lib/utils';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function SharedMaterialClient({ material }) {
     const { data: session } = useSession();
     const router = useRouter();
     const [isDeleting, setIsDeleting] = useState(false);
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
     const canDelete = session?.user?.email === material.uEmail || ['admin', 'moderator'].includes(session?.user?.userrole?.toLowerCase());
 
     const handleDelete = async () => {
-        if (!confirm('Are you sure you want to delete this material?')) return;
         setIsDeleting(true);
         try {
             const res = await fetch(`/api/materials/${material.materialId}`, { method: 'DELETE' });
@@ -30,6 +40,7 @@ export default function SharedMaterialClient({ material }) {
             toast.error('Error deleting material');
         } finally {
             setIsDeleting(false);
+            setDeleteDialogOpen(false);
         }
     };
 
@@ -133,14 +144,14 @@ export default function SharedMaterialClient({ material }) {
                         <div className="flex items-center gap-2 mt-2 sm:mt-0">
                             <button
                                 onClick={handleShare}
-                                className="px-4 py-2 rounded-lg flex items-center gap-2 transition-colors text-sm font-medium border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 shrink-0"
+                                className="px-4 py-2 rounded-lg flex items-center gap-2 transition-colors text-sm font-medium border border-blue-200/50 bg-blue-50/50 text-blue-700 hover:bg-blue-100/50 dark:bg-transparent dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800 shrink-0"
                             >
                                 <Share2 className="w-4 h-4" />
                                 Share
                             </button>
                             {canDelete && (
                                 <button
-                                    onClick={handleDelete}
+                                    onClick={() => setDeleteDialogOpen(true)}
                                     disabled={isDeleting}
                                     className="px-4 py-2 rounded-lg flex items-center gap-2 transition-colors text-sm font-medium border border-gray-200 dark:border-gray-700 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50 shrink-0"
                                 >
@@ -214,6 +225,28 @@ export default function SharedMaterialClient({ material }) {
                     Browse all course materials →
                 </a>
             </div>
+
+            {/* Delete Confirmation Dialog */}
+            <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                <AlertDialogContent className="bg-white dark:bg-[#0f172a] border-gray-200 dark:border-blue-800/50" onCloseFromOutside={() => setDeleteDialogOpen(false)}>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="text-gray-900 dark:text-white">Delete Material</AlertDialogTitle>
+                        <AlertDialogDescription className="text-gray-500 dark:text-gray-400">
+                            Are you sure you want to delete this material? This action cannot be undone.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel disabled={isDeleting} className="bg-blue-50/50 hover:bg-blue-100/50 text-blue-700 border-blue-200/50 dark:bg-white dark:hover:bg-gray-200 dark:text-gray-900 dark:hover:text-gray-900 dark:border-white">Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={handleDelete}
+                            disabled={isDeleting}
+                            className="bg-[#DC143C] hover:bg-[#B01030] dark:bg-[#DC143C] dark:hover:bg-[#B01030] !text-white border-0"
+                        >
+                            {isDeleting ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Deleting...</> : 'Delete'}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }

@@ -8,6 +8,16 @@ import {
     Dialog,
     DialogContent,
 } from "@/components/ui/dialog";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { ChevronUp, ChevronDown, Download, Share2, FileText, Presentation, ArrowBigUp, ArrowBigDown, Loader2, Eye, X, User, ExternalLink, Youtube, Cloud, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { copyToClipboard } from '@/lib/utils';
@@ -19,11 +29,11 @@ const MaterialCard = ({ material, isPublic = false, onVote, onDelete }) => {
     const [voteLoading, setVoteLoading] = useState(null);
     const [isDeleting, setIsDeleting] = useState(false);
     const [viewerOpen, setViewerOpen] = useState(false);
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
     const canDelete = session?.user?.email === material.uEmail || ['admin', 'moderator'].includes(session?.user?.userrole?.toLowerCase());
 
     const handleDelete = async () => {
-        if (!confirm('Are you sure you want to delete this material?')) return;
         setIsDeleting(true);
         try {
             const res = await fetch(`/api/materials/${material.materialId}`, { method: 'DELETE' });
@@ -41,6 +51,7 @@ const MaterialCard = ({ material, isPublic = false, onVote, onDelete }) => {
             toast.error('Error deleting material');
         } finally {
             setIsDeleting(false);
+            setDeleteDialogOpen(false);
         }
     };
 
@@ -217,7 +228,7 @@ const MaterialCard = ({ material, isPublic = false, onVote, onDelete }) => {
                         <Button
                             size="sm"
                             variant="outline"
-                            className="flex-1 min-w-[100px] h-9 text-xs md:text-sm bg-white hover:bg-gray-100 dark:bg-white dark:hover:bg-gray-100 text-gray-900 dark:text-gray-900 border border-gray-200 dark:border-gray-200 font-medium shadow-sm transition-colors"
+                            className="flex-1 min-w-[100px] h-9 text-xs md:text-sm bg-gray-900 hover:bg-gray-700 dark:bg-white dark:hover:bg-gray-200 !text-white dark:!text-gray-900 border-transparent font-medium shadow-sm transition-colors"
                             onClick={handleDownload}
                         >
                             <Download className="w-4 h-4 mr-1.5" /> Save
@@ -236,7 +247,7 @@ const MaterialCard = ({ material, isPublic = false, onVote, onDelete }) => {
                         <Button
                             size="sm"
                             className="flex-none h-9 px-3 bg-red-600 hover:bg-red-500 dark:bg-red-600 dark:hover:bg-red-500 !text-white shadow-sm"
-                            onClick={handleDelete}
+                            onClick={() => setDeleteDialogOpen(true)}
                             disabled={isDeleting}
                             title="Delete Material"
                         >
@@ -287,6 +298,28 @@ const MaterialCard = ({ material, isPublic = false, onVote, onDelete }) => {
                     </div>
                 </DialogContent>
             </Dialog>
+
+            {/* Delete Confirmation Dialog */}
+            <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                <AlertDialogContent className="bg-white dark:bg-[#0f172a] border-gray-200 dark:border-blue-800/50" onCloseFromOutside={() => setDeleteDialogOpen(false)}>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="text-gray-900 dark:text-white">Delete Material</AlertDialogTitle>
+                        <AlertDialogDescription className="text-gray-500 dark:text-gray-400">
+                            Are you sure you want to delete this material? This action cannot be undone.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel disabled={isDeleting} className="bg-blue-50/50 hover:bg-blue-100/50 text-blue-700 border-blue-200/50 dark:bg-white dark:hover:bg-gray-200 dark:text-gray-900 dark:hover:text-gray-900 dark:border-white">Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={handleDelete}
+                            disabled={isDeleting}
+                            className="bg-[#DC143C] hover:bg-[#B01030] dark:bg-[#DC143C] dark:hover:bg-[#B01030] !text-white border-0"
+                        >
+                            {isDeleting ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Deleting...</> : 'Delete'}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </>
     );
 };
