@@ -17,7 +17,7 @@
 
 const ALLOWED_ORIGINS = [
 	'https://boracle.app',
-	'http://localhost:3000',
+	'https://www.boracle.app',
 ];
 
 function corsHeaders(request) {

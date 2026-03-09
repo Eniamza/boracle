@@ -91,7 +91,7 @@ export async function deleteFile(courseCode, fileUuid, fileExtension) {
  */
 export function getWorkerUploadUrl(courseCode, fileUuid, fileExtension) {
     const key = buildObjectKey(courseCode, fileUuid, fileExtension);
-    const workerBase = process.env.R2_WORKER_URL; // e.g. https://r2-upload.<you>.workers.dev
+    const workerBase = process.env.R2_WORKER_URL;
     const uploadToken = process.env.R2_UPLOAD_SECRET;
     const uploadUrl = `${workerBase}/upload/${encodeURIComponent(key)}`;
     const publicUrl = getPublicUrl(courseCode, fileUuid, fileExtension);
