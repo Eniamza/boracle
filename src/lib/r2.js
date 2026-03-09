@@ -1,5 +1,6 @@
 // src/lib/r2.js - Cloudflare R2 Storage Utility
 import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 const ALLOWED_EXTENSIONS = ['pdf', 'pptx', 'doc', 'docx'];
 
@@ -73,4 +74,28 @@ export async function deleteFile(courseCode, fileUuid, fileExtension) {
         Bucket: BUCKET_NAME,
         Key: key,
     }));
+}
+
+/**
+ * Generate a presigned PUT URL so the client can upload directly to R2.
+ * @param {string} courseCode
+ * @param {string} fileUuid
+ * @param {string} fileExtension
+ * @param {string} contentType - MIME type the client will upload
+ * @param {number} [expiresIn=300] - URL validity in seconds (default 5 min)
+ * @returns {Promise<{presignedUrl: string, publicUrl: string, key: string}>}
+ */
+export async function getPresignedUploadUrl(courseCode, fileUuid, fileExtension, contentType, expiresIn = 300) {
+    const key = buildObjectKey(courseCode, fileUuid, fileExtension);
+
+    const command = new PutObjectCommand({
+        Bucket: BUCKET_NAME,
+        Key: key,
+        ContentType: contentType,
+    });
+
+    const presignedUrl = await getSignedUrl(s3Client, command, { expiresIn });
+    const publicUrl = getPublicUrl(courseCode, fileUuid, fileExtension);
+
+    return { presignedUrl, publicUrl, key };
 }

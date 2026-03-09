@@ -126,8 +126,49 @@ const PostMaterialModal = ({ onMaterialPosted }) => {
         setSubmitting(true);
         try {
             const formData = new FormData();
+
             if (uploadType === 'file') {
-                formData.append('file', file);
+                // Step 1: Get a presigned URL from the server (small JSON request)
+                const presignRes = await fetch('/api/materials/presign', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        fileName: file.name,
+                        courseCode,
+                    }),
+                });
+
+                if (!presignRes.ok) {
+                    toast.error('Failed to prepare upload');
+                    return;
+                }
+
+                const { presignedUrl, publicUrl, fileUuid, extension, contentType } = await presignRes.json();
+
+                // Step 2: Upload file directly to R2 from the browser
+                let uploadRes;
+                try {
+                    uploadRes = await fetch(presignedUrl, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': contentType },
+                        body: file,
+                    });
+                } catch (uploadErr) {
+                    console.error('R2 direct upload failed:', uploadErr);
+                    toast.error('File upload failed. Please try again.');
+                    return;
+                }
+
+                if (!uploadRes.ok) {
+                    console.error('R2 upload status:', uploadRes.status);
+                    toast.error('File upload failed. Please try again.');
+                    return;
+                }
+
+                // Step 3: Send only metadata to our API (no file in body)
+                formData.append('fileUuid', fileUuid);
+                formData.append('fileExtension', extension);
+                formData.append('publicUrl', publicUrl);
             } else {
                 formData.append('link', linkUrl);
                 formData.append('linkType', linkType);
@@ -151,6 +192,7 @@ const PostMaterialModal = ({ onMaterialPosted }) => {
                 toast.error(data.error || 'Failed to post material');
             }
         } catch (e) {
+            console.error('Material submission error:', e);
             toast.error('An error occurred');
         } finally {
             setSubmitting(false);

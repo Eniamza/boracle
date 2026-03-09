@@ -138,8 +138,13 @@ export async function POST(req) {
         const semester = formData.get('semester');
         const postDescription = formData.get('postDescription');
 
+        // Support presigned (client-side) uploads: file already in R2
+        const presignedFileUuid = formData.get('fileUuid');
+        const presignedExtension = formData.get('fileExtension');
+        const presignedPublicUrl = formData.get('publicUrl');
+
         // Validate required fields
-        if ((!file && !link) || !courseCode || !semester || !postDescription) {
+        if ((!file && !link && !presignedFileUuid) || !courseCode || !semester || !postDescription) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
 
@@ -152,7 +157,12 @@ export async function POST(req) {
         let fileUuid = randomUUID();
         let extension = linkType;
 
-        if (file) {
+        if (presignedFileUuid) {
+            // File was already uploaded directly to R2 via presigned URL
+            fileUuid = presignedFileUuid;
+            extension = presignedExtension;
+            publicUrl = presignedPublicUrl;
+        } else if (file) {
             // Validate file extension
             const fileName = file.name;
             extension = fileName.split('.').pop()?.toLowerCase();
