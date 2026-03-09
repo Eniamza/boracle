@@ -1,29 +1,20 @@
 // src/lib/r2.js - Cloudflare R2 Storage Utility
 import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 const ALLOWED_EXTENSIONS = ['pdf', 'pptx', 'doc', 'docx'];
 
 // R2_ENDPOINT may include a trailing path segment (e.g. /boracle) from the
-// API-token scope.  The S3 SDK must receive just the origin so it can build
-// path-style URLs like  <origin>/<bucket>/<key>.
+// API-token scope.  Strip it — the SDK needs just the origin.
 const r2Origin = process.env.R2_ENDPOINT.replace(/\/[^/]+$/, '');
 
 const s3Client = new S3Client({
     region: 'auto',
     endpoint: r2Origin,
-    // R2 only supports path-style addressing.  Without this the SDK turns
-    // the bucket name into a subdomain that doesn't resolve in DNS, which
-    // makes every browser request fail at the network level.
     forcePathStyle: true,
     credentials: {
         accessKeyId: process.env.R2_ACCESS_KEY_ID,
         secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
     },
-    // Disable automatic CRC32 checksums in presigned URLs — R2 doesn't
-    // fully support them and they cause browser uploads to fail.
-    requestChecksumCalculation: 'WHEN_REQUIRED',
-    responseChecksumValidation: 'WHEN_REQUIRED',
 });
 
 const BUCKET_NAME = process.env.R2_BUCKET_NAME;
@@ -90,33 +81,20 @@ export async function deleteFile(courseCode, fileUuid, fileExtension) {
 }
 
 /**
- * Generate a presigned PUT URL so the client can upload directly to R2.
+ * Build the Worker upload URL so the client can PUT directly to the
+ * Cloudflare Worker, which streams the file into R2.
+ *
  * @param {string} courseCode
  * @param {string} fileUuid
  * @param {string} fileExtension
- * @param {string} contentType - MIME type the client will upload
- * @param {number} [expiresIn=300] - URL validity in seconds (default 5 min)
- * @returns {Promise<{presignedUrl: string, publicUrl: string, key: string}>}
+ * @returns {{ uploadUrl: string, publicUrl: string, key: string, uploadToken: string }}
  */
-export async function getPresignedUploadUrl(courseCode, fileUuid, fileExtension, contentType, expiresIn = 300) {
+export function getWorkerUploadUrl(courseCode, fileUuid, fileExtension) {
     const key = buildObjectKey(courseCode, fileUuid, fileExtension);
-
-    const command = new PutObjectCommand({
-        Bucket: BUCKET_NAME,
-        Key: key,
-        ContentType: contentType,
-    });
-
-    // Presigned URL uses the S3 API endpoint — CORS is configured via
-    // PutBucketCors (see scripts/setR2Cors.js).
-    // Sign content-type so R2 validates the exact type the browser sends.
-    // Unset signableHeaders to avoid SDK defaults that R2 may not support.
-    const presignedUrl = await getSignedUrl(s3Client, command, {
-        expiresIn,
-        signableHeaders: new Set(['host', 'content-type']),
-        unhoistableHeaders: new Set(['content-type']),
-    });
+    const workerBase = process.env.R2_WORKER_URL; // e.g. https://r2-upload.<you>.workers.dev
+    const uploadToken = process.env.R2_UPLOAD_SECRET;
+    const uploadUrl = `${workerBase}/upload/${encodeURIComponent(key)}`;
     const publicUrl = getPublicUrl(courseCode, fileUuid, fileExtension);
 
-    return { presignedUrl, publicUrl, key };
+    return { uploadUrl, publicUrl, key, uploadToken };
 }

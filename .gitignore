@@ -45,3 +45,11 @@ next-env.d.ts
 supabase/.temp/
 .vscode/settings.json
 .env*.local
+
+# r2 worker
+r2-worker/node_modules/
+r2-worker/.wrangler/
+r2-worker/package-lock.json
+
+# one-off scripts
+scripts/setR2Cors.js

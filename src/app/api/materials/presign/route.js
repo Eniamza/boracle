@@ -1,7 +1,7 @@
-// POST /api/materials/presign — Generate a presigned R2 upload URL
+// POST /api/materials/presign — Generate an upload URL for the R2 Worker proxy
 import { auth } from '@/auth';
 import { NextResponse } from 'next/server';
-import { isAllowedExtension, getPresignedUploadUrl } from '@/lib/r2';
+import { isAllowedExtension, getWorkerUploadUrl } from '@/lib/r2';
 import { randomUUID } from 'crypto';
 
 const CONTENT_TYPE_MAP = {
@@ -35,16 +35,16 @@ export async function POST(req) {
         const fileUuid = randomUUID();
         const contentType = CONTENT_TYPE_MAP[extension] || 'application/octet-stream';
 
-        const { presignedUrl, publicUrl } = await getPresignedUploadUrl(
+        const { uploadUrl, publicUrl, uploadToken } = getWorkerUploadUrl(
             courseCode,
             fileUuid,
             extension,
-            contentType
         );
 
         return NextResponse.json({
-            presignedUrl,
+            uploadUrl,
             publicUrl,
+            uploadToken,
             fileUuid,
             extension,
             contentType,

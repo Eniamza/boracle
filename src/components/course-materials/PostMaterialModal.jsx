@@ -74,9 +74,9 @@ const PostMaterialModal = ({ onMaterialPosted }) => {
             return;
         }
 
-        // 50MB limit
-        if (selected.size > 50 * 1024 * 1024) {
-            toast.error('File size must be under 50MB');
+        // 25MB limit
+        if (selected.size > 25 * 1024 * 1024) {
+            toast.error('File size must be under 25MB');
             e.target.value = '';
             return;
         }
@@ -128,7 +128,7 @@ const PostMaterialModal = ({ onMaterialPosted }) => {
             const formData = new FormData();
 
             if (uploadType === 'file') {
-                // Step 1: Get a presigned URL from the server (small JSON request)
+                // Step 1: Get an upload URL from the server (small JSON request)
                 const presignRes = await fetch('/api/materials/presign', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -143,25 +143,29 @@ const PostMaterialModal = ({ onMaterialPosted }) => {
                     return;
                 }
 
-                const { presignedUrl, publicUrl, fileUuid, extension, contentType } = await presignRes.json();
+                const { uploadUrl, publicUrl, uploadToken, fileUuid, extension, contentType } = await presignRes.json();
 
-                // Step 2: Upload file directly to R2 from the browser
+                // Step 2: Upload file to R2 via the Cloudflare Worker proxy
                 let uploadRes;
                 try {
-                    uploadRes = await fetch(presignedUrl, {
+                    uploadRes = await fetch(uploadUrl, {
                         method: 'PUT',
-                        headers: { 'Content-Type': contentType },
+                        headers: {
+                            'Content-Type': contentType,
+                            'X-Upload-Token': uploadToken,
+                        },
                         body: file,
                     });
                 } catch (uploadErr) {
-                    console.error('[Upload] PUT to R2 failed:', uploadErr.message);
+                    console.error('[Upload] PUT failed:', uploadErr.message);
                     toast.error('File upload failed – please try again.');
                     return;
                 }
 
                 if (!uploadRes.ok) {
-                    console.error('[Upload] R2 returned', uploadRes.status);
-                    toast.error(`File upload failed (${uploadRes.status})`);
+                    const errBody = await uploadRes.json().catch(() => ({}));
+                    console.error('[Upload] Worker returned', uploadRes.status, errBody);
+                    toast.error(errBody.error || `File upload failed (${uploadRes.status})`);
                     return;
                 }
 
@@ -356,7 +360,7 @@ const PostMaterialModal = ({ onMaterialPosted }) => {
                                     <label className="flex flex-col items-center gap-2 px-4 py-6 rounded-lg border-2 border-dashed border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-600 cursor-pointer transition-colors bg-gray-50 dark:bg-gray-800/30">
                                         <Upload className="w-6 h-6 text-gray-400" />
                                         <span className="text-sm text-gray-500 dark:text-gray-400">Click to upload PDF, PPTX, DOC, or DOCX</span>
-                                        <span className="text-xs text-gray-400">Max 50MB</span>
+                                        <span className="text-xs text-gray-400">Max 25MB</span>
                                         <input
                                             type="file"
                                             accept=".pdf,.pptx,.doc,.docx"

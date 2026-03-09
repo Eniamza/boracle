@@ -1,0 +1,12 @@
+name = "r2-upload"
+main = "src/index.js"
+compatibility_date = "2024-12-01"
+
+# Change this to your custom Worker subdomain after first deploy, e.g.:
+# routes = [{ pattern = "r2-upload.boracle.app", custom_domain = true }]
+
+[[r2_buckets]]
+binding = "BUCKET"
+bucket_name = "boracle"
+
+# The UPLOAD_SECRET is set via:  npx wrangler secret put UPLOAD_SECRET
