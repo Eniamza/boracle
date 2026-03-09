@@ -158,12 +158,36 @@ const PostMaterialModal = ({ onMaterialPosted }) => {
 
                 // Step 2: Upload file directly to R2 from the browser
                 console.log('[Upload] Step 2: Uploading file to R2...', { fileSize: file.size, contentType });
+
+                // Debug: manual preflight check
+                try {
+                    const preflightRes = await fetch(presignedUrl, {
+                        method: 'OPTIONS',
+                        headers: {
+                            'Origin': window.location.origin,
+                            'Access-Control-Request-Method': 'PUT',
+                            'Access-Control-Request-Headers': 'Content-Type',
+                        },
+                    });
+                    console.log('[Upload] Manual preflight result:', {
+                        status: preflightRes.status,
+                        allowOrigin: preflightRes.headers.get('access-control-allow-origin'),
+                        allowMethods: preflightRes.headers.get('access-control-allow-methods'),
+                        allowHeaders: preflightRes.headers.get('access-control-allow-headers'),
+                    });
+                } catch (pfErr) {
+                    console.error('[Upload] Manual preflight FAILED:', pfErr.message);
+                }
+
                 let uploadRes;
                 try {
                     uploadRes = await fetch(presignedUrl, {
                         method: 'PUT',
-                        headers: { 'Content-Type': contentType },
+                        headers: {
+                            'Content-Type': contentType,
+                        },
                         body: file,
+                        mode: 'cors',
                     });
                 } catch (uploadErr) {
                     console.error('[Upload] Step 2 FAILED: Network/CORS error on PUT to R2', {

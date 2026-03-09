@@ -100,7 +100,13 @@ export async function getPresignedUploadUrl(courseCode, fileUuid, fileExtension,
 
     // Presigned URL uses the S3 API endpoint — CORS is configured via
     // PutBucketCors (see scripts/setR2Cors.js).
-    const presignedUrl = await getSignedUrl(s3Client, command, { expiresIn });
+    // Sign content-type so R2 validates the exact type the browser sends.
+    // Unset signableHeaders to avoid SDK defaults that R2 may not support.
+    const presignedUrl = await getSignedUrl(s3Client, command, {
+        expiresIn,
+        signableHeaders: new Set(['host', 'content-type']),
+        unhoistableHeaders: new Set(['content-type']),
+    });
     const publicUrl = getPublicUrl(courseCode, fileUuid, fileExtension);
 
     return { presignedUrl, publicUrl, key };
