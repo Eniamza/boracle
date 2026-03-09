@@ -67,6 +67,9 @@ export default {
 			});
 		}
 
+		// All objects live under the boracle/ prefix in the bucket
+		const r2Key = `boracle/${objectKey}`;
+
 		// ── Auth ───────────────────────────────────────────────────
 		const token = request.headers.get('X-Upload-Token');
 		if (!token || token !== env.UPLOAD_SECRET) {
@@ -90,11 +93,11 @@ export default {
 		try {
 			const contentType = request.headers.get('Content-Type') || 'application/octet-stream';
 
-			await env.BUCKET.put(objectKey, request.body, {
+			await env.BUCKET.put(r2Key, request.body, {
 				httpMetadata: { contentType },
 			});
 
-			return new Response(JSON.stringify({ success: true, key: objectKey }), {
+			return new Response(JSON.stringify({ success: true, key: r2Key }), {
 				status: 200,
 				headers: { ...corsHeaders(request), 'Content-Type': 'application/json' },
 			});
