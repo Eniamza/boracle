@@ -4,9 +4,18 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 const ALLOWED_EXTENSIONS = ['pdf', 'pptx', 'doc', 'docx'];
 
+// R2_ENDPOINT may include a trailing path segment (e.g. /boracle) from the
+// API-token scope.  The S3 SDK must receive just the origin so it can build
+// path-style URLs like  <origin>/<bucket>/<key>.
+const r2Origin = process.env.R2_ENDPOINT.replace(/\/[^/]+$/, '');
+
 const s3Client = new S3Client({
     region: 'auto',
-    endpoint: process.env.R2_ENDPOINT,
+    endpoint: r2Origin,
+    // R2 only supports path-style addressing.  Without this the SDK turns
+    // the bucket name into a subdomain that doesn't resolve in DNS, which
+    // makes every browser request fail at the network level.
+    forcePathStyle: true,
     credentials: {
         accessKeyId: process.env.R2_ACCESS_KEY_ID,
         secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,

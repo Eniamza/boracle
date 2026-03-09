@@ -129,7 +129,6 @@ const PostMaterialModal = ({ onMaterialPosted }) => {
 
             if (uploadType === 'file') {
                 // Step 1: Get a presigned URL from the server (small JSON request)
-                console.log('[Upload] Step 1: Requesting presigned URL...', { fileName: file.name, courseCode, fileSize: file.size });
                 const presignRes = await fetch('/api/materials/presign', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -140,85 +139,33 @@ const PostMaterialModal = ({ onMaterialPosted }) => {
                 });
 
                 if (!presignRes.ok) {
-                    const errBody = await presignRes.text().catch(() => '');
-                    console.error('[Upload] Step 1 FAILED: presign request failed', { status: presignRes.status, body: errBody });
                     toast.error('Failed to prepare upload');
                     return;
                 }
 
                 const { presignedUrl, publicUrl, fileUuid, extension, contentType } = await presignRes.json();
-                console.log('[Upload] Step 1 OK: Got presigned URL', {
-                    host: new URL(presignedUrl).hostname,
-                    path: new URL(presignedUrl).pathname,
-                    queryParams: [...new URL(presignedUrl).searchParams.keys()].join(', '),
-                    contentType,
-                    fileUuid,
-                    extension,
-                });
 
                 // Step 2: Upload file directly to R2 from the browser
-                console.log('[Upload] Step 2: Uploading file to R2...', { fileSize: file.size, contentType });
-
-                // Debug: manual preflight check
-                try {
-                    const preflightRes = await fetch(presignedUrl, {
-                        method: 'OPTIONS',
-                        headers: {
-                            'Origin': window.location.origin,
-                            'Access-Control-Request-Method': 'PUT',
-                            'Access-Control-Request-Headers': 'Content-Type',
-                        },
-                    });
-                    console.log('[Upload] Manual preflight result:', {
-                        status: preflightRes.status,
-                        allowOrigin: preflightRes.headers.get('access-control-allow-origin'),
-                        allowMethods: preflightRes.headers.get('access-control-allow-methods'),
-                        allowHeaders: preflightRes.headers.get('access-control-allow-headers'),
-                    });
-                } catch (pfErr) {
-                    console.error('[Upload] Manual preflight FAILED:', pfErr.message);
-                }
-
                 let uploadRes;
                 try {
                     uploadRes = await fetch(presignedUrl, {
                         method: 'PUT',
-                        headers: {
-                            'Content-Type': contentType,
-                        },
+                        headers: { 'Content-Type': contentType },
                         body: file,
-                        mode: 'cors',
                     });
                 } catch (uploadErr) {
-                    console.error('[Upload] Step 2 FAILED: Network/CORS error on PUT to R2', {
-                        error: uploadErr.message,
-                        name: uploadErr.name,
-                        presignedUrlHost: new URL(presignedUrl).hostname,
-                        presignedUrlPath: new URL(presignedUrl).pathname,
-                    });
-                    toast.error('File upload failed (network error). Check console for details.');
+                    console.error('[Upload] PUT to R2 failed:', uploadErr.message);
+                    toast.error('File upload failed – please try again.');
                     return;
                 }
 
                 if (!uploadRes.ok) {
-                    const r2ErrBody = await uploadRes.text().catch(() => '');
-                    console.error('[Upload] Step 2 FAILED: R2 returned non-200', {
-                        status: uploadRes.status,
-                        statusText: uploadRes.statusText,
-                        body: r2ErrBody.substring(0, 500),
-                        corsHeader: uploadRes.headers.get('access-control-allow-origin'),
-                    });
-                    toast.error(`File upload failed (${uploadRes.status}). Check console for details.`);
+                    console.error('[Upload] R2 returned', uploadRes.status);
+                    toast.error(`File upload failed (${uploadRes.status})`);
                     return;
                 }
 
-                console.log('[Upload] Step 2 OK: File uploaded to R2', {
-                    status: uploadRes.status,
-                    corsHeader: uploadRes.headers.get('access-control-allow-origin'),
-                });
-
                 // Step 3: Send only metadata to our API (no file in body)
-                console.log('[Upload] Step 3: Sending metadata to /api/materials...');
                 formData.append('fileUuid', fileUuid);
                 formData.append('fileExtension', extension);
                 formData.append('publicUrl', publicUrl);
