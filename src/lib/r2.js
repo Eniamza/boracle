@@ -11,6 +11,10 @@ const s3Client = new S3Client({
         accessKeyId: process.env.R2_ACCESS_KEY_ID,
         secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
     },
+    // Disable automatic CRC32 checksums in presigned URLs — R2 doesn't
+    // fully support them and they cause browser uploads to fail.
+    requestChecksumCalculation: 'WHEN_REQUIRED',
+    responseChecksumValidation: 'WHEN_REQUIRED',
 });
 
 const BUCKET_NAME = process.env.R2_BUCKET_NAME;
@@ -94,6 +98,8 @@ export async function getPresignedUploadUrl(courseCode, fileUuid, fileExtension,
         ContentType: contentType,
     });
 
+    // Presigned URL uses the S3 API endpoint — CORS is configured via
+    // PutBucketCors (see scripts/setR2Cors.js).
     const presignedUrl = await getSignedUrl(s3Client, command, { expiresIn });
     const publicUrl = getPublicUrl(courseCode, fileUuid, fileExtension);
 
