@@ -31,7 +31,7 @@ const MaterialCard = ({ material, isPublic = false, onVote, onDelete }) => {
     const [viewerOpen, setViewerOpen] = useState(false);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
-    const canDelete = session?.user?.email === material.uEmail || ['admin', 'moderator'].includes(session?.user?.userrole?.toLowerCase());
+    const canDelete = material.isOwner || ['admin', 'moderator'].includes(session?.user?.userrole?.toLowerCase());
 
     const handleDelete = async () => {
         setIsDeleting(true);
