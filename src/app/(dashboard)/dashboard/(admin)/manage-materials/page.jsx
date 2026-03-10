@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-    Search, Shield, Loader2, Calendar, CheckCircle, XCircle, FileText, Presentation, Youtube, Cloud, ArrowBigUp, Pencil, Save, X, BookOpen, ExternalLink, SortDesc, SortAsc, Trash2, Eye, Download
+    Search, Shield, Loader2, Calendar, CheckCircle, XCircle, FileText, Presentation, Youtube, Cloud, ArrowBigUp, Pencil, Save, X, BookOpen, ExternalLink, SortDesc, SortAsc, Trash2, Eye, Download, Github
 } from "lucide-react";
 import { SessionProvider, useSession } from 'next-auth/react';
 import { toast } from 'sonner';
@@ -28,7 +28,7 @@ import {
 // Memoized material card — manages its own inline edit state
 // so typing doesn't re-render the entire list
 const MaterialCardItem = React.memo(({ m, processing, onApprove, onReject, onSaveEdit, onPreview, formatDate, getFileIcon }) => {
-    const isExternalLink = ['youtube', 'drive'].includes(m.fileExtension);
+    const isExternalLink = ['youtube', 'drive', 'github'].includes(m.fileExtension);
     const [editing, setEditing] = useState(false);
     const [editDesc, setEditDesc] = useState('');
     const [saving, setSaving] = useState(false);
@@ -54,7 +54,7 @@ const MaterialCardItem = React.memo(({ m, processing, onApprove, onReject, onSav
                             </Badge>
                             <Badge variant="outline" className="text-gray-600 dark:text-gray-400 border-gray-300 dark:border-gray-700 font-medium py-1 px-3 flex items-center gap-1.5 shadow-sm">
                                 {getFileIcon(m.fileExtension)}
-                                <span className="uppercase tracking-wider text-[10px]">{m.fileExtension === 'youtube' ? 'YOUTUBE' : m.fileExtension === 'drive' ? 'G DRIVE' : m.fileExtension}</span>
+                                <span className="uppercase tracking-wider text-[10px]">{m.fileExtension === 'youtube' ? 'YOUTUBE' : m.fileExtension === 'drive' ? 'G DRIVE' : m.fileExtension === 'github' ? 'GITHUB' : m.fileExtension}</span>
                             </Badge>
                             <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">{m.semester}</span>
                             <span className="text-xs text-gray-400 dark:text-gray-500 flex items-center gap-1">
@@ -335,6 +335,7 @@ const AdminMaterialsPageContent = () => {
     const getFileIcon = (ext) => {
         if (ext === 'youtube') return <Youtube className="w-4 h-4 text-red-500" />;
         if (ext === 'drive') return <Cloud className="w-4 h-4 text-blue-500" />;
+        if (ext === 'github') return <Github className="w-4 h-4 text-gray-800 dark:text-gray-200" />;
         if (ext === 'pdf') return <FileText className="w-4 h-4 text-orange-500" />;
         return <Presentation className="w-4 h-4 text-orange-500" />;
     };

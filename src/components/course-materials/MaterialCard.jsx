@@ -18,7 +18,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { ChevronUp, ChevronDown, Download, Share2, FileText, Presentation, ArrowBigUp, ArrowBigDown, Loader2, Eye, X, User, ExternalLink, Youtube, Cloud, Trash2 } from 'lucide-react';
+import { ChevronUp, ChevronDown, Download, Share2, FileText, Presentation, ArrowBigUp, ArrowBigDown, Loader2, Eye, X, User, ExternalLink, Youtube, Cloud, Trash2, Github } from 'lucide-react';
 import { toast } from 'sonner';
 import { copyToClipboard } from '@/lib/utils';
 import { useSession } from 'next-auth/react';
@@ -114,7 +114,8 @@ const MaterialCard = ({ material, isPublic = false, onVote, onDelete }) => {
 
     const isYoutube = material.fileExtension === 'youtube';
     const isDrive = material.fileExtension === 'drive';
-    const isLink = isYoutube || isDrive;
+    const isGithub = material.fileExtension === 'github';
+    const isLink = isYoutube || isDrive || isGithub;
 
     const getExternalUrl = () => {
         if (!isLink || !material.publicUrl) return material.publicUrl;
@@ -124,13 +125,14 @@ const MaterialCard = ({ material, isPublic = false, onVote, onDelete }) => {
         return material.publicUrl;
     };
 
-    const FileIcon = isYoutube ? Youtube : isDrive ? Cloud : (material.fileExtension === 'pdf' ? FileText : Presentation);
-    const fileLabel = isYoutube ? 'YOUTUBE' : isDrive ? 'G DRIVE' : material.fileExtension?.toUpperCase();
+    const FileIcon = isYoutube ? Youtube : isDrive ? Cloud : isGithub ? Github : (material.fileExtension === 'pdf' ? FileText : Presentation);
+    const fileLabel = isYoutube ? 'YOUTUBE' : isDrive ? 'G DRIVE' : isGithub ? 'GITHUB' : material.fileExtension?.toUpperCase();
 
     const getFileBadgeClasses = () => {
         if (material.fileExtension === 'pdf') return 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 border-orange-200 dark:border-orange-500/30';
         if (isDrive) return 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/30';
         if (isYoutube) return 'bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400 border-red-200 dark:border-red-500/30';
+        if (isGithub) return 'bg-gray-100 text-gray-700 dark:bg-gray-700/30 dark:text-gray-300 border-gray-300 dark:border-gray-500/30';
         return 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border-blue-200 dark:border-blue-500/30';
     };
 

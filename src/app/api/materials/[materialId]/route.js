@@ -33,7 +33,7 @@ export async function DELETE(req, { params }) {
         }
 
         // Delete file from R2 (unless it's an external link)
-        const isExternalLink = ['youtube', 'drive'].includes(material.fileExtension);
+        const isExternalLink = ['youtube', 'drive', 'github'].includes(material.fileExtension);
         if (!isExternalLink) {
             try {
                 await deleteFile(material.courseCode, material.fileUuid, material.fileExtension);

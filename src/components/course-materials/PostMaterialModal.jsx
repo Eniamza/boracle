@@ -31,7 +31,7 @@ const PostMaterialModal = ({ onMaterialPosted }) => {
 
     const [uploadType, setUploadType] = useState('file'); // 'file' or 'link'
     const [linkUrl, setLinkUrl] = useState('');
-    const [linkType, setLinkType] = useState(null); // 'youtube' or 'drive'
+    const [linkType, setLinkType] = useState(null); // 'youtube', 'drive', or 'github'
 
     const MAX_DESC = 100;
     const SEASONS = ['SPRING', 'SUMMER', 'FALL'];
@@ -97,7 +97,7 @@ const PostMaterialModal = ({ onMaterialPosted }) => {
 
         if (uploadType === 'link') {
             if (!linkUrl || !linkType) {
-                toast.error('Please enter a valid YouTube or Google Drive link');
+                toast.error('Please enter a valid YouTube, Google Drive, or GitHub link');
                 return;
             }
 
@@ -105,15 +105,19 @@ const PostMaterialModal = ({ onMaterialPosted }) => {
 
             const ytRegex = /^(https?:\/\/)?(www\.)?(youtube\.com\/(watch\?(.*&)?v=|playlist\?(.*&)?list=)|youtu\.be\/)[a-zA-Z0-9_-]+/;
             const driveRegex = /^(https?:\/\/)?(www\.)?(drive\.google\.com\/(file\/d\/|drive\/folders\/)|docs\.google\.com\/(document|spreadsheets|presentation)\/d\/)[a-zA-Z0-9_-]+/;
+            const githubRegex = /^(https?:\/\/)?(www\.)?github\.com\/[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+/;
 
             if (linkType === 'youtube') {
                 isValidUrl = ytRegex.test(linkUrl);
             } else if (linkType === 'drive') {
                 isValidUrl = driveRegex.test(linkUrl);
+            } else if (linkType === 'github') {
+                isValidUrl = githubRegex.test(linkUrl);
             }
 
             if (!isValidUrl) {
-                toast.error(`Please enter a valid ${linkType === 'youtube' ? 'YouTube video/playlist' : 'Google Drive file/folder'} link`);
+                const typeLabels = { youtube: 'YouTube video/playlist', drive: 'Google Drive file/folder', github: 'GitHub repository' };
+                toast.error(`Please enter a valid ${typeLabels[linkType] || 'supported'} link`);
                 return;
             }
         }
@@ -374,7 +378,7 @@ const PostMaterialModal = ({ onMaterialPosted }) => {
                             <div className="flex flex-col gap-2">
                                 <input
                                     type="url"
-                                    placeholder="Paste YouTube or Google Drive link..."
+                                    placeholder="Paste YouTube, Google Drive, or GitHub link..."
                                     value={linkUrl}
                                     onChange={(e) => {
                                         const url = e.target.value;
@@ -383,6 +387,8 @@ const PostMaterialModal = ({ onMaterialPosted }) => {
                                             setLinkType('youtube');
                                         } else if (url.includes('drive.google.com') || url.includes('docs.google.com')) {
                                             setLinkType('drive');
+                                        } else if (url.includes('github.com')) {
+                                            setLinkType('github');
                                         } else {
                                             setLinkType(null);
                                         }
@@ -398,8 +404,11 @@ const PostMaterialModal = ({ onMaterialPosted }) => {
                                         <span className="text-gray-500 dark:text-gray-400">Note: Make a copy of the drive folder in your own account if it was shared by your faculty. Otherwise they often get removed. Make sure the shared link is set to "Anyone with the link can view".</span>
                                     </div>
                                 )}
+                                {linkType === 'github' && (
+                                    <div className="text-xs text-gray-700 dark:text-gray-300 flex items-center gap-1 font-medium">GitHub Repository Detected</div>
+                                )}
                                 {linkUrl && !linkType && (
-                                    <div className="text-xs text-amber-500 font-medium">Only YouTube and Google Drive links are supported.</div>
+                                    <div className="text-xs text-amber-500 font-medium">Only YouTube, Google Drive, and GitHub links are supported.</div>
                                 )}
                             </div>
                         )}

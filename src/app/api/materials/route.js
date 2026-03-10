@@ -177,7 +177,7 @@ export async function POST(req) {
             // Upload to R2
             publicUrl = await uploadFile(courseCode, fileUuid, extension, buffer, contentType);
         } else {
-            if (!['youtube', 'drive'].includes(linkType)) {
+            if (!['youtube', 'drive', 'github'].includes(linkType)) {
                 return NextResponse.json({ error: 'Invalid link type' }, { status: 400 });
             }
 
@@ -185,11 +185,14 @@ export async function POST(req) {
 
             const ytRegex = /^(https?:\/\/)?(www\.)?(youtube\.com\/(watch\?(.*&)?v=|playlist\?(.*&)?list=)|youtu\.be\/)[a-zA-Z0-9_-]+/;
             const driveRegex = /^(https?:\/\/)?(www\.)?(drive\.google\.com\/(file\/d\/|drive\/folders\/)|docs\.google\.com\/(document|spreadsheets|presentation)\/d\/)[a-zA-Z0-9_-]+/;
+            const githubRegex = /^(https?:\/\/)?(www\.)?github\.com\/[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+/;
 
             if (linkType === 'youtube') {
                 isValidUrl = ytRegex.test(link);
             } else if (linkType === 'drive') {
                 isValidUrl = driveRegex.test(link);
+            } else if (linkType === 'github') {
+                isValidUrl = githubRegex.test(link);
             }
 
             if (!isValidUrl) {

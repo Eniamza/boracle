@@ -86,8 +86,8 @@ export async function PATCH(req, { params }) {
                 })
                 .where(eq(courseMaterials.materialId, materialId));
         } else if (action === 'reject') {
-            // 1. Delete file from R2 if it's an uploaded file (not a youtube/drive link)
-            const isExternalLink = ['youtube', 'drive'].includes(material.fileExtension);
+            // 1. Delete file from R2 if it's an uploaded file (not a youtube/drive/github link)
+            const isExternalLink = ['youtube', 'drive', 'github'].includes(material.fileExtension);
             if (!isExternalLink) {
                 try {
                     await deleteFile(material.courseCode, material.fileUuid, material.fileExtension);
