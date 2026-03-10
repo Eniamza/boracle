@@ -182,7 +182,7 @@ export default function RecentActivity() {
                       className="block p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-blue-950 hover:border-blue-800 transition-colors"
                     >
                       <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1">
+                        <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-2 flex-wrap">
                             <BookOpen className="h-4 w-4 text-gray-500 shrink-0" />
                             <span className="font-semibold text-gray-900 dark:text-gray-100">
@@ -197,21 +197,21 @@ export default function RecentActivity() {
                               </Badge>
                             )}
                           </div>
-                          <p className="text-gray-700 dark:text-gray-300 mb-2 truncate max-w-lg">
+                          <p className="text-gray-700 dark:text-gray-300 mb-2 line-clamp-2 text-sm md:text-base">
                             {material.postDescription}
                           </p>
-                          <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
-                            <div className="flex items-center gap-1">
+                          <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400 flex-wrap mt-2">
+                            <div className="flex items-center gap-1 shrink-0">
                               <Calendar className="h-3 w-3" />
                               {formatDate(material.createdAt)}
                             </div>
-                            <div className="flex items-center gap-1">
+                            <div className="flex items-center gap-1 shrink-0">
                               <Clock className="h-3 w-3" />
                               {material.semester}
                             </div>
                           </div>
                         </div>
-                        <div className="flex items-center text-blue-600 dark:text-blue-400">
+                        <div className="flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0 mt-1">
                           <ExternalLink className="w-4 h-4" />
                         </div>
                       </div>
