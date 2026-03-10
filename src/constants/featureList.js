@@ -27,16 +27,18 @@ const featureList = [
     },
     {
         index: 4,
+        title: "Course Directory",
+        description: `A comprehensive directory of Resources. No more "bhai notes hobe?"`,
+        footer: "🟢 Live",
+        href: "/course-materials",
+        dashboardHref: "/dashboard/course-materials"
+    },
+    {
+        index: 5,
         title: "Faculty Review",
         description: "Rate your faculty and provide feedback. Scrolling through useless reviews is a thing of the past!",
         footer: "🟡 Coming Soon"
     },
-    {
-        index: 5,
-        title: "Course Directory",
-        description: `A comprehensive directory of Resources. No more "bhai notes hobe?"`,
-        footer: "🟡 Coming Soon"
-    }
 ]
 
 export default featureList;
