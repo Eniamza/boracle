@@ -3,6 +3,12 @@ import Google from "next-auth/providers/google"
 import { db, eq, getCurrentEpoch } from '@/lib/db';
 import { userinfo } from '@/lib/db/schema';
 
+// Comma-separated list of non-BRACU emails allowed to sign in
+const APPROVED_EMAILS = (process.env.APPROVED_EXTERNAL_EMAILS || '')
+  .split(',')
+  .map(e => e.trim().toLowerCase())
+  .filter(Boolean);
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   trustHost: true,
   providers: [
@@ -19,7 +25,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ],
   callbacks: {
     async signIn({ user, account, profile }) {
-      if (!profile?.email?.endsWith('@g.bracu.ac.bd')) {
+      const email = profile?.email?.toLowerCase();
+      if (!email?.endsWith('@g.bracu.ac.bd') && !APPROVED_EMAILS.includes(email)) {
         console.log("Non-BRACU email attempted:", profile?.email);
         return false;
       }
