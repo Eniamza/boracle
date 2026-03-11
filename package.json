@@ -13,7 +13,8 @@
     "db:pull": "drizzle-kit pull",
     "db:studio": "drizzle-kit studio",
     "db:seed": "node src/scripts/seedDataDrizzle.js",
-    "db:delete-swaps": "node src/scripts/deleteAllSwaps.js"
+    "db:delete-swaps": "node src/scripts/deleteAllSwaps.js",
+    "db:delete-faculty": "node src/scripts/deleteAllFaculty.js"
   },
   "dependencies": {
     "@auth/mongodb-adapter": "^3.8.0",

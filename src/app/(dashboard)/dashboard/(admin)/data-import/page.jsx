@@ -32,9 +32,11 @@ const FacultyImportPage = () => {
   const [file, setFile] = useState(null);
   const [csvData, setCsvData] = useState([]);
   const [importing, setImporting] = useState(false);
+  const [importProgress, setImportProgress] = useState(0);
   const [errors, setErrors] = useState([]);
   const [importSuccess, setImportSuccess] = useState(false);
   const fileInputRef = useRef(null);
+  const progressRef = useRef(null);
 
   const handleFileSelect = async (event) => {
     const selectedFile = event.target.files[0];
@@ -167,6 +169,14 @@ const FacultyImportPage = () => {
 
     setImporting(true);
     setErrors([]);
+    setImportProgress(0);
+
+    // Animate progress: ramp quickly to ~30%, then slow crawl to ~85% while waiting for server
+    let progress = 0;
+    progressRef.current = setInterval(() => {
+      progress += progress < 30 ? 5 : progress < 60 ? 2 : progress < 85 ? 0.5 : 0;
+      setImportProgress(Math.min(progress, 85));
+    }, 200);
 
     try {
       // Read file content
@@ -182,9 +192,11 @@ const FacultyImportPage = () => {
           body: JSON.stringify({ file: fileContent }),
         });
 
+        clearInterval(progressRef.current);
         const data = await response.json();
 
         if (response.ok) {
+          setImportProgress(100);
           toast.success(`Successfully imported ${csvData.length} faculty members`);
           setImportSuccess(true);
           // Reset form
@@ -192,22 +204,26 @@ const FacultyImportPage = () => {
             setFile(null);
             setCsvData([]);
             setImportSuccess(false);
+            setImportProgress(0);
             if (fileInputRef.current) {
               fileInputRef.current.value = '';
             }
           }, 3000);
         } else {
+          setImportProgress(0);
           toast.error(data.error || 'Failed to import faculty data');
           setErrors([data.error || 'Import failed']);
         }
+        setImporting(false);
       };
 
       reader.readAsText(file);
     } catch (error) {
+      clearInterval(progressRef.current);
+      setImportProgress(0);
       console.error('Error importing faculty:', error);
       toast.error('Error importing faculty data');
       setErrors(['Failed to connect to server']);
-    } finally {
       setImporting(false);
     }
   };
@@ -468,6 +484,24 @@ const FacultyImportPage = () => {
                 )}
               </div>
 
+              {/* Progress Bar */}
+              {importing && (
+                <div className="mt-4 space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600 dark:text-gray-400 font-medium">
+                      {importProgress < 30 ? 'Uploading data...' : importProgress < 85 ? 'Processing records...' : importProgress < 100 ? 'Almost done...' : 'Complete!'}
+                    </span>
+                    <span className="text-gray-500 dark:text-gray-400 tabular-nums">{Math.round(importProgress)}%</span>
+                  </div>
+                  <div className="w-full h-2.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-green-500 rounded-full transition-all duration-300 ease-out"
+                      style={{ width: `${importProgress}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+
               <div className="mt-6 flex gap-3 justify-end">
                 <Button
                   onClick={handleRemoveFile}
@@ -484,7 +518,7 @@ const FacultyImportPage = () => {
                   {importing ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Importing...
+                      Importing {csvData.length} Records...
                     </>
                   ) : (
                     <>
