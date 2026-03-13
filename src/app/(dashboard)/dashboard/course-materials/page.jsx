@@ -28,7 +28,7 @@ const CourseMaterialsPage = () => {
     const [mySubTab, setMySubTab] = useState('accepted');
 
     // View mode: 'grid' or 'list'
-    const [viewMode, setViewMode] = useLocalStorage('boracle_material_view_mode', 'grid');
+    const [viewMode, setViewMode] = useLocalStorage('boracle_material_view_mode', 'list');
 
     const isMobile = useIsMobile();
 
