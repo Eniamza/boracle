@@ -30,7 +30,9 @@ const MaterialListTableView = ({
     semesterSortOrder,
     onSemesterSortChange,
     timeSortOrder,
-    onTimeSortChange
+    onTimeSortChange,
+    typeFilters,
+    setTypeFilters
 }) => {
     const { data: session } = useSession();
     
@@ -44,7 +46,6 @@ const MaterialListTableView = ({
     const [isDeleting, setIsDeleting] = useState(false);
 
     // Sorting and Filtering states
-    const [typeFilters, setTypeFilters] = useState([]); // array of fileExtensions
     const [showTypeFilterDropdown, setShowTypeFilterDropdown] = useState(false);
 
     const canDelete = (material) => material.isOwner || ['admin', 'moderator'].includes(session?.user?.userrole?.toLowerCase());
@@ -186,8 +187,8 @@ const MaterialListTableView = ({
         return 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border-blue-200 dark:border-blue-500/30';
     };
 
-    // Derived unique types for filter dropdown
-    const availableTypes = [...new Set(materials.map(m => m.fileExtension))];
+    // Fixed available types for filter dropdown
+    const availableTypes = ['pdf', 'youtube', 'drive', 'github'];
 
     const toggleTypeFilter = (ext) => {
         setTypeFilters(prev => 
@@ -214,18 +215,6 @@ const MaterialListTableView = ({
         }
         return year * 10 + seasonScore; // e.g. 2026 * 10 + 1 = 20261 
     };
-
-    // Apply filtering and sorting
-    let processedMaterials = [...materials];
-    
-    if (typeFilters.length > 0) {
-        processedMaterials = processedMaterials.filter(m => typeFilters.includes(m.fileExtension));
-    }
-
-    // We now handle sorting entirely in page.jsx except filtering by type
-    if (typeFilters.length > 0) {
-        processedMaterials = processedMaterials.filter(m => typeFilters.includes(m.fileExtension));
-    }
 
     return (
         <>
@@ -309,7 +298,7 @@ const MaterialListTableView = ({
                             </tr>
                         </thead>
                     <tbody className="text-sm">
-                        {processedMaterials.map((material, index) => {
+                        {materials.map((material, index) => {
                             const Icon = getFileIcon(material.fileExtension);
                             const isLink = isLinkType(material.fileExtension);
                             

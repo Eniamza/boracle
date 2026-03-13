@@ -44,6 +44,7 @@ const CourseMaterialsPage = () => {
 
     const [semesterSortOrder, setSemesterSortOrder] = useState(null); // 'asc', 'desc', null
     const [timeSortOrder, setTimeSortOrder] = useState('desc'); // 'asc', 'desc' (default is 'desc' based on typical feed APIs)
+    const [typeFilters, setTypeFilters] = useState([]); // array of fileExtensions
 
     // Debounce search input
     useEffect(() => {
@@ -72,6 +73,10 @@ const CourseMaterialsPage = () => {
                 params.set('stateFilter', mySubTab === 'accepted' ? 'published' : 'pending');
             }
 
+            if (typeFilters.length > 0) {
+                params.set('type', typeFilters.join(','));
+            }
+
             const res = await fetch(`/api/materials?${params.toString()}`);
             if (res.ok) {
                 const data = await res.json();
@@ -94,7 +99,7 @@ const CourseMaterialsPage = () => {
             setLoading(false);
             setLoadingMore(false);
         }
-    }, [debouncedQuery, nextCursor, hasMore, activeTab, mySubTab]);
+    }, [debouncedQuery, nextCursor, hasMore, activeTab, mySubTab, typeFilters]);
 
     // Initial load and search/tab changes
     useEffect(() => {
@@ -102,7 +107,7 @@ const CourseMaterialsPage = () => {
             fetchMaterials(false);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [sessionStatus, debouncedQuery, activeTab, mySubTab]);
+    }, [sessionStatus, debouncedQuery, activeTab, mySubTab, typeFilters]);
 
     // Infinite scroll observer
     useEffect(() => {
@@ -381,6 +386,8 @@ const CourseMaterialsPage = () => {
                                 onSemesterSortChange={setSemesterSortOrder}
                                 timeSortOrder={timeSortOrder}
                                 onTimeSortChange={setTimeSortOrder}
+                                typeFilters={typeFilters}
+                                setTypeFilters={setTypeFilters}
                             />
                         );
                     })() : (
