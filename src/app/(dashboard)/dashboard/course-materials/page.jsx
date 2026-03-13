@@ -2,13 +2,15 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useSession } from 'next-auth/react';
-import { Loader2, FileText, BookOpen, Search, X } from 'lucide-react';
+import { Loader2, FileText, BookOpen, Search, X, LayoutGrid, List } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import MaterialCard from '@/components/course-materials/MaterialCard';
 import MobileMaterialCard from '@/components/course-materials/MobileMaterialCard';
+import MaterialListTableView from '@/components/course-materials/MaterialListTableView';
 import PostMaterialModal from '@/components/course-materials/PostMaterialModal';
 import SignInPrompt from '@/components/shared/SignInPrompt';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 import { toast } from 'sonner';
 
 const CourseMaterialsPage = () => {
@@ -25,6 +27,9 @@ const CourseMaterialsPage = () => {
     // Sub-tab state for My Materials: 'accepted' or 'pending'
     const [mySubTab, setMySubTab] = useState('accepted');
 
+    // View mode: 'grid' or 'list'
+    const [viewMode, setViewMode] = useLocalStorage('boracle_material_view_mode', 'grid');
+
     const isMobile = useIsMobile();
 
     const [searchQuery, setSearchQuery] = useState('');
@@ -33,8 +38,12 @@ const CourseMaterialsPage = () => {
     const debounceRef = useRef(null);
     const observerRef = useRef(null);
     const loadMoreRef = useRef(null);
+    const isFetchingRef = useRef(false);
 
     const isPublic = sessionStatus === 'unauthenticated';
+
+    const [semesterSortOrder, setSemesterSortOrder] = useState(null); // 'asc', 'desc', null
+    const [timeSortOrder, setTimeSortOrder] = useState('desc'); // 'asc', 'desc' (default is 'desc' based on typical feed APIs)
 
     // Debounce search input
     useEffect(() => {
@@ -46,9 +55,11 @@ const CourseMaterialsPage = () => {
     }, [searchQuery]);
 
     const fetchMaterials = useCallback(async (isLoadMore = false) => {
-        if (isLoadMore && (!hasMore || loadingMore)) return;
+        if (isLoadMore && (!hasMore || isFetchingRef.current)) return;
+        if (!isLoadMore && isFetchingRef.current) return;
 
         try {
+            isFetchingRef.current = true;
             if (isLoadMore) setLoadingMore(true);
             else setLoading(true);
 
@@ -79,10 +90,11 @@ const CourseMaterialsPage = () => {
         } catch (e) {
             toast.error('Failed to load materials');
         } finally {
+            isFetchingRef.current = false;
             setLoading(false);
             setLoadingMore(false);
         }
-    }, [debouncedQuery, nextCursor, hasMore, loadingMore, activeTab, mySubTab]);
+    }, [debouncedQuery, nextCursor, hasMore, activeTab, mySubTab]);
 
     // Initial load and search/tab changes
     useEffect(() => {
@@ -99,7 +111,7 @@ const CourseMaterialsPage = () => {
 
         observerRef.current = new IntersectionObserver(
             (entries) => {
-                if (entries[0].isIntersecting && hasMore && !loading && !loadingMore) {
+                if (entries[0].isIntersecting && hasMore && !loading && !isFetchingRef.current) {
                     fetchMaterials(true);
                 }
             },
@@ -113,7 +125,7 @@ const CourseMaterialsPage = () => {
                 observerRef.current.unobserve(currentLoadMoreRef);
             }
         };
-    }, [hasMore, loading, loadingMore, fetchMaterials]);
+    }, [fetchMaterials, hasMore, loading]);
 
     const handleVote = (materialId, newValue) => {
         setMaterials(prev => prev.map(m => {
@@ -195,89 +207,117 @@ const CourseMaterialsPage = () => {
 
     return (
         <div className="w-full px-6 sm:px-[50px] py-6">
-            {/* Header with Tabs + Post Button */}
-            <div className="flex items-center justify-between mb-5 gap-3">
-                {/* Tabs */}
-                <div className="flex items-center bg-gray-100 dark:bg-gray-800/60 rounded-xl p-1 gap-0.5">
-                    <button
-                        onClick={() => handleTabChange('all')}
-                        className={`px-3.5 py-1.5 md:px-4 md:py-2 rounded-lg text-xs md:text-sm font-semibold transition-all duration-200 whitespace-nowrap ${activeTab === 'all'
+            {/* Header with Tabs + Post Button + Search */}
+            <div className="sticky top-16 z-40 bg-white/90 dark:bg-[#020817]/90 backdrop-blur-md -mx-6 sm:-mx-[50px] -mt-6 px-6 sm:px-[50px] pt-6 pb-4 border-b border-gray-200 dark:border-gray-800 mb-6">
+                <div className="flex items-center justify-between mb-5 gap-3">
+                    {/* Tabs */}
+                    <div className="flex items-center bg-gray-100 dark:bg-gray-800/60 rounded-xl p-1 gap-0.5">
+                        <button
+                            onClick={() => handleTabChange('all')}
+                            className={`px-3.5 py-1.5 md:px-4 md:py-2 rounded-lg text-xs md:text-sm font-semibold transition-all duration-200 whitespace-nowrap ${activeTab === 'all'
                                 ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
                                 : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
-                            }`}
-                    >
-                        All Materials
-                    </button>
-                    {session?.user?.email && (
-                        <button
-                            onClick={() => handleTabChange('my')}
-                            className={`px-3.5 py-1.5 md:px-4 md:py-2 rounded-lg text-xs md:text-sm font-semibold transition-all duration-200 whitespace-nowrap ${activeTab === 'my'
-                                    ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
-                                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
                                 }`}
                         >
-                            My Materials
+                            All Materials
+                        </button>
+                        {session?.user?.email && (
+                            <button
+                                onClick={() => handleTabChange('my')}
+                                className={`px-3.5 py-1.5 md:px-4 md:py-2 rounded-lg text-xs md:text-sm font-semibold transition-all duration-200 whitespace-nowrap ${activeTab === 'my'
+                                    ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+                                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                                    }`}
+                            >
+                                My Materials
+                            </button>
+                        )}
+                    </div>
+
+                    {/* View Toggle & Post button */}
+                    <div className="flex items-center gap-2">
+                        {/* View Toggle (Desktop Only) */}
+                        <div className="hidden md:flex items-center bg-gray-100 dark:bg-gray-800/60 rounded-xl p-1 gap-0.5 mr-2">
+                            <button
+                                onClick={() => setViewMode('grid')}
+                                className={`p-1.5 rounded-lg transition-all duration-200 ${viewMode === 'grid'
+                                    ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+                                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                                    }`}
+                                title="Grid View"
+                            >
+                                <LayoutGrid className="w-4 h-4" />
+                            </button>
+                            <button
+                                onClick={() => setViewMode('list')}
+                                className={`p-1.5 rounded-lg transition-all duration-200 ${viewMode === 'list'
+                                    ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+                                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                                    }`}
+                                title="List View"
+                            >
+                                <List className="w-4 h-4" />
+                            </button>
+                        </div>
+
+                        {session ? (
+                            <PostMaterialModal onMaterialPosted={() => fetchMaterials(false)} />
+                        ) : (
+                            <div
+                                onClick={() => setShowSignInPrompt(true)}
+                                className="flex items-center justify-center gap-2 bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 rounded-lg font-medium shadow-sm transition-all hover:opacity-90 cursor-pointer px-3 py-2.5 md:px-4 md:py-2"
+                                title="Post Material"
+                            >
+                                <FileText className="w-4 h-4 md:w-5 md:h-5" />
+                                <span className="hidden md:inline">Post Material</span>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Sub-tabs for My Materials */}
+                {activeTab === 'my' && (
+                    <div className="flex items-center gap-2 mb-4">
+                        <button
+                            onClick={() => handleSubTabChange('accepted')}
+                            className={`px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium transition-all duration-200 border ${mySubTab === 'accepted'
+                                ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border-green-200 dark:border-green-700'
+                                : 'bg-transparent text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
+                                }`}
+                        >
+                            Accepted
+                        </button>
+                        <button
+                            onClick={() => handleSubTabChange('pending')}
+                            className={`px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium transition-all duration-200 border ${mySubTab === 'pending'
+                                ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-700'
+                                : 'bg-transparent text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
+                                }`}
+                        >
+                            Pending
+                        </button>
+                    </div>
+                )}
+
+                {/* Search bar */}
+                <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Search by course code, description, or semester..."
+                        className="w-full pl-10 pr-9 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800/80 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-shadow"
+                    />
+                    {searchQuery && (
+                        <button
+                            onClick={() => setSearchQuery('')}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                        >
+                            <X className="w-4 h-4" />
                         </button>
                     )}
                 </div>
-
-                {/* Post button */}
-                {session ? (
-                    <PostMaterialModal onMaterialPosted={() => fetchMaterials(false)} />
-                ) : (
-                    <div
-                        onClick={() => setShowSignInPrompt(true)}
-                        className="flex items-center justify-center gap-2 bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 rounded-lg font-medium shadow-sm transition-all hover:opacity-90 cursor-pointer px-3 py-2.5 md:px-4 md:py-2"
-                        title="Post Material"
-                    >
-                        <FileText className="w-4 h-4 md:w-5 md:h-5" />
-                        <span className="hidden md:inline">Post Material</span>
-                    </div>
-                )}
-            </div>
-
-            {/* Sub-tabs for My Materials */}
-            {activeTab === 'my' && (
-                <div className="flex items-center gap-2 mb-4">
-                    <button
-                        onClick={() => handleSubTabChange('accepted')}
-                        className={`px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium transition-all duration-200 border ${mySubTab === 'accepted'
-                                ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border-green-200 dark:border-green-700'
-                                : 'bg-transparent text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
-                            }`}
-                    >
-                        Accepted
-                    </button>
-                    <button
-                        onClick={() => handleSubTabChange('pending')}
-                        className={`px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium transition-all duration-200 border ${mySubTab === 'pending'
-                                ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-700'
-                                : 'bg-transparent text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
-                            }`}
-                    >
-                        Pending
-                    </button>
-                </div>
-            )}
-
-            {/* Search bar */}
-            <div className="relative mb-4">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search by course code, description, or semester..."
-                    className="w-full pl-10 pr-9 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-shadow"
-                />
-                {searchQuery && (
-                    <button
-                        onClick={() => setSearchQuery('')}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                    >
-                        <X className="w-4 h-4" />
-                    </button>
-                )}
             </div>
 
             {/* Materials list */}
@@ -291,25 +331,79 @@ const CourseMaterialsPage = () => {
                 renderEmptyState()
             ) : (
                 <>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                        {materials.map(material => (
-                            isMobile ? (
-                                <MobileMaterialCard
-                                    key={material.materialId}
-                                    material={material}
-                                    isPublic={isPublic}
-                                    onVote={handleVote}
-                                />
-                            ) : (
-                                <MaterialCard
-                                    key={material.materialId}
-                                    material={material}
-                                    isPublic={isPublic}
-                                    onVote={handleVote}
-                                />
-                            )
-                        ))}
-                    </div>
+                    {viewMode === 'list' && !isMobile ? (() => {
+                        let sortedMaterials = [...materials];
+
+                        if (semesterSortOrder) {
+                            sortedMaterials.sort((a, b) => {
+                                const termOrder = { 'SPRING': 1, 'SUMMER': 2, 'FALL': 3 };
+
+                                // Helper to parse semester string like "FALL2025"
+                                const parseSemester = (sem) => {
+                                    if (!sem) return { year: 0, termNum: 0 };
+                                    const match = sem.match(/^(SPRING|SUMMER|FALL)(\d{4})$/i);
+                                    if (match) {
+                                        return {
+                                            termNum: termOrder[match[1].toUpperCase()],
+                                            year: parseInt(match[2], 10)
+                                        };
+                                    }
+                                    return { year: 0, termNum: 0 }; // Fallback
+                                };
+
+                                const aParsed = parseSemester(a.semester);
+                                const bParsed = parseSemester(b.semester);
+
+                                if (aParsed.year !== bParsed.year) {
+                                    return semesterSortOrder === 'asc'
+                                        ? aParsed.year - bParsed.year
+                                        : bParsed.year - aParsed.year;
+                                }
+
+                                return semesterSortOrder === 'asc'
+                                    ? aParsed.termNum - bParsed.termNum
+                                    : bParsed.termNum - aParsed.termNum;
+                            });
+                        } else if (timeSortOrder) {
+                            sortedMaterials.sort((a, b) => {
+                                const dateA = new Date(a.createdAt).getTime();
+                                const dateB = new Date(b.createdAt).getTime();
+                                return timeSortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+                            });
+                        }
+
+                        return (
+                            <MaterialListTableView
+                                materials={sortedMaterials}
+                                isPublic={isPublic}
+                                onVote={handleVote}
+                                semesterSortOrder={semesterSortOrder}
+                                onSemesterSortChange={setSemesterSortOrder}
+                                timeSortOrder={timeSortOrder}
+                                onTimeSortChange={setTimeSortOrder}
+                            />
+                        );
+                    })() : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                            {materials.map(material => (
+                                isMobile ? (
+                                    <MobileMaterialCard
+                                        key={material.materialId}
+                                        material={material}
+                                        isPublic={isPublic}
+                                        onVote={handleVote}
+                                    />
+                                ) : (
+                                    <MaterialCard
+                                        key={material.materialId}
+                                        material={material}
+                                        isPublic={isPublic}
+                                        onVote={handleVote}
+                                    />
+                                )
+                            ))}
+                        </div>
+                    )}
 
                     {/* Intersection Observer Target */}
                     <div ref={loadMoreRef} className="py-4 mt-4 flex justify-center w-full">
