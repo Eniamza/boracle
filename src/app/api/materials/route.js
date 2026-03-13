@@ -18,6 +18,7 @@ export async function GET(req) {
         const cursor = searchParams.get('cursor');
         const isMyMaterials = searchParams.get('isMyMaterials') === 'true';
         const stateFilter = searchParams.get('stateFilter'); // 'published' or 'pending'
+        const typeFilter = searchParams.get('type'); // Comma-separated list of extensions
         const limit = Number(searchParams.get('limit')) || 10;
 
         // Build base query for materials with vote aggregation
@@ -58,6 +59,7 @@ export async function GET(req) {
                             : inArray(courseMaterials.postState, ['published', 'pending']))
                         : eq(courseMaterials.postState, 'published'),
                     courseCode ? eq(courseMaterials.courseCode, courseCode) : undefined,
+                    typeFilter ? inArray(courseMaterials.fileExtension, typeFilter.split(',')) : undefined,
                     isMyMaterials && currentUserEmail ? eq(courseMaterials.uEmail, currentUserEmail) : undefined,
                     cursor ? lt(courseMaterials.createdAt, Number(cursor)) : undefined,
                     q ? or(
