@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
     Dialog,
     DialogContent,
@@ -17,7 +18,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { ArrowBigUp, ArrowBigDown, Loader2, Eye, X, User, ExternalLink, Youtube, Cloud, Trash2, Github, FileText, Presentation, Download, Share2, Filter, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { ArrowBigUp, ArrowBigDown, Loader2, Eye, X, User, ExternalLink, Youtube, Cloud, Trash2, Github, FileText, Presentation, Download, Share2, Filter, ArrowUpDown, ArrowUp, ArrowDown, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { copyToClipboard } from '@/lib/utils';
 import { useSession } from 'next-auth/react';
@@ -32,7 +33,8 @@ const MaterialListTableView = ({
     timeSortOrder,
     onTimeSortChange,
     typeFilters,
-    setTypeFilters
+    setTypeFilters,
+    loading = false
 }) => {
     const { data: session } = useSession();
 
@@ -243,7 +245,7 @@ const MaterialListTableView = ({
 
     return (
         <>
-            <div className="hidden md:block bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm w-full relative">
+            <div className="hidden md:block bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm w-full relative">
                 <div className="overflow-x-auto">
                     <table className="text-center border-collapse table-fixed w-full min-w-[1000px]">
                         <thead>
@@ -266,22 +268,27 @@ const MaterialListTableView = ({
                                     {showTypeFilterDropdown && (
                                         <>
                                             <div className="fixed inset-0 z-40" onClick={() => setShowTypeFilterDropdown(false)} />
-                                            <div className="absolute top-full left-0 mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl z-50 py-1" onClick={(e) => e.stopPropagation()}>
+                                            <div className="absolute top-full left-0 mt-1 w-44 bg-blue-50 dark:bg-blue-950/90 border border-blue-300 dark:border-blue-800 rounded-lg shadow-xl z-50 py-1" onClick={(e) => e.stopPropagation()}>
                                                 {availableTypes.map(ext => {
                                                     const Icon = getFileIcon(ext);
+                                                    const isSelected = typeFilters.includes(ext);
                                                     return (
-                                                        <label key={ext} className="flex items-center gap-3 px-[2px] py-2 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors">
-                                                            <input
-                                                                type="checkbox"
-                                                                checked={typeFilters.includes(ext)}
-                                                                onChange={() => toggleTypeFilter(ext)}
-                                                                className="form-checkbox h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500"
-                                                            />
+                                                        <div
+                                                            key={ext}
+                                                            onClick={() => toggleTypeFilter(ext)}
+                                                            className={`flex items-center justify-between px-3 py-2 cursor-pointer transition-colors ${isSelected
+                                                                ? 'bg-blue-50 dark:bg-blue-500/10'
+                                                                : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'
+                                                                }`}
+                                                        >
                                                             <Badge className={`${getFileBadgeClasses(ext)} shadow-none text-[10px] gap-1 px-1.5 py-0.5 uppercase tracking-wider`}>
                                                                 <Icon className="w-3 h-3" />
                                                                 {getFileLabel(ext)}
                                                             </Badge>
-                                                        </label>
+                                                            {isSelected && (
+                                                                <Check className="w-4 h-4 text-blue-700 dark:text-blue-400" />
+                                                            )}
+                                                        </div>
                                                     );
                                                 })}
                                             </div>
@@ -323,152 +330,173 @@ const MaterialListTableView = ({
                             </tr>
                         </thead>
                         <tbody className="text-sm">
-                            {materials.map((material, index) => {
-                                const Icon = getFileIcon(material.fileExtension);
-                                const isLink = isLinkType(material.fileExtension);
+                            {loading ? (
+                                [1, 2, 3, 4, 5].map(i => (
+                                    <tr key={`skeleton-${i}`} className="border-b border-gray-200 dark:border-gray-700 last:border-0">
+                                        <td className="py-4 px-[2px] align-middle border-r border-gray-200 dark:border-gray-700"><Skeleton className="h-6 w-20 mx-auto rounded-md" /></td>
+                                        <td className="py-4 px-[2px] align-middle border-r border-gray-200 dark:border-gray-700"><Skeleton className="h-5 w-16 mx-auto rounded-md" /></td>
+                                        <td className="py-4 px-[2px] align-middle border-r border-gray-200 dark:border-gray-700"><Skeleton className="h-4 w-14 mx-auto rounded-md" /></td>
+                                        <td className="py-4 px-[2px] align-middle border-r border-gray-200 dark:border-gray-700"><Skeleton className="h-8 w-24 mx-auto rounded-md" /></td>
+                                        <td className="py-4 px-[2px] align-middle border-r border-gray-200 dark:border-gray-700"><Skeleton className="h-4 w-20 mx-auto rounded-md" /></td>
+                                        <td className="py-4 px-4 align-middle border-r border-gray-200 dark:border-gray-700"><Skeleton className="h-4 w-full rounded-md" /></td>
+                                        <td className="py-4 px-[2px] align-middle border-r border-gray-200 dark:border-gray-700"><Skeleton className="h-8 w-24 mx-auto rounded-md" /></td>
+                                        <td className="py-4 px-[2px] align-middle"><Skeleton className="h-8 w-8 mx-auto rounded-md" /></td>
+                                    </tr>
+                                ))
+                            ) : materials.length === 0 ? (
+                                <tr>
+                                    <td colSpan={8} className="py-16 text-center text-gray-400 dark:text-gray-500">
+                                        No materials found
+                                    </td>
+                                </tr>
+                            ) : (
+                                materials.map((material, index) => {
+                                    const Icon = getFileIcon(material.fileExtension);
+                                    const isLink = isLinkType(material.fileExtension);
 
-                                return (
-                                    <tr key={material.materialId} className="border-b border-gray-200 dark:border-gray-700 last:border-0 hover:bg-gray-50/50 dark:hover:bg-gray-800/80 transition-colors group">
-                                        {/* Column 1: Course Code */}
-                                        <td className="py-4 px-[2px] align-middle border-r border-gray-200 dark:border-gray-700">
-                                            <div className="flex flex-col gap-1.5 items-center">
-                                                <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-400 border-blue-200 dark:border-blue-500/30 shadow-none text-xs font-semibold px-2.5 py-0.5 whitespace-nowrap">
-                                                    {material.courseCode}
-                                                </Badge>
-                                                {material.postState === 'pending' && (
-                                                    <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200 dark:border-amber-500/30 shadow-none text-[10px] font-medium px-1.5 py-0.5">
-                                                        Pending
+                                    return (
+                                        <tr key={material.materialId} className="border-b border-gray-200 dark:border-gray-700 last:border-0 hover:bg-gray-50/50 dark:hover:bg-gray-800/80 transition-colors group">
+                                            {/* Column 1: Course Code */}
+                                            <td className="py-4 px-[2px] align-middle border-r border-gray-200 dark:border-gray-700">
+                                                <div className="flex flex-col gap-1.5 items-center">
+                                                    <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-400 border-blue-200 dark:border-blue-500/30 shadow-none text-xs font-semibold px-2.5 py-0.5 whitespace-nowrap">
+                                                        {material.courseCode}
                                                     </Badge>
-                                                )}
-                                            </div>
-                                        </td>
-
-                                        {/* Column 2: FileType */}
-                                        <td className="py-4 px-[2px] align-middle border-r border-gray-200 dark:border-gray-700">
-                                            <Badge className={`${getFileBadgeClasses(material.fileExtension)} shadow-none text-[10px] gap-1 px-1.5 py-0.5 uppercase tracking-wider`}>
-                                                <Icon className="w-3 h-3" />
-                                                {getFileLabel(material.fileExtension)}
-                                            </Badge>
-                                        </td>
-
-                                        {/* Column 3: Upload Time */}
-                                        <td className="py-4 px-[2px] align-middle border-r border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 whitespace-nowrap">
-                                            {formatDate(material.createdAt)}
-                                        </td>
-
-                                        {/* Column 4: Uploader */}
-                                        <td className="py-4 px-[2px] align-middle border-r border-gray-200 dark:border-gray-700">
-                                            <div className="flex items-center justify-center gap-2 max-w-full">
-                                                <div className="min-w-0 px-2">
-                                                    <p className="text-sm font-semibold text-gray-900 dark:text-white truncate pb-0.5">
-                                                        {material.posterName || 'Anonymous'}
-                                                    </p>
-                                                    {material.posterNetVotes !== undefined && material.posterNetVotes !== 0 && (
-                                                        <p className={`text-xs font-medium truncate ${material.posterNetVotes > 0 ? 'text-blue-500' : 'text-red-400'}`}>
-                                                            {material.posterNetVotes > 0 ? '+' : ''}{material.posterNetVotes} Aura
-                                                        </p>
+                                                    {material.postState === 'pending' && (
+                                                        <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200 dark:border-amber-500/30 shadow-none text-[10px] font-medium px-1.5 py-0.5">
+                                                            Pending
+                                                        </Badge>
                                                     )}
                                                 </div>
-                                            </div>
-                                        </td>
+                                            </td>
 
-                                        {/* Column 5: Semester & Year */}
-                                        <td className="py-4 px-[2px] align-middle border-r border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-medium whitespace-nowrap">
-                                            {formatSemester(material.semester)}
-                                        </td>
+                                            {/* Column 2: FileType */}
+                                            <td className="py-4 px-[2px] align-middle border-r border-gray-200 dark:border-gray-700">
+                                                <Badge className={`${getFileBadgeClasses(material.fileExtension)} shadow-none text-[10px] gap-1 px-1.5 py-0.5 uppercase tracking-wider`}>
+                                                    <Icon className="w-3 h-3" />
+                                                    {getFileLabel(material.fileExtension)}
+                                                </Badge>
+                                            </td>
 
-                                        {/* Column 6: Description */}
-                                        <td className="py-4 px-4 align-middle border-r border-gray-200 dark:border-gray-700 overflow-hidden text-left">
-                                            <div className="w-full">
-                                                <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed break-words whitespace-pre-wrap">
-                                                    {material.postDescription}
-                                                </p>
-                                            </div>
-                                        </td>
+                                            {/* Column 3: Upload Time */}
+                                            <td className="py-4 px-[2px] align-middle border-r border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                                                {formatDate(material.createdAt)}
+                                            </td>
 
-                                        {/* Action */}
-                                        <td className="py-4 px-[2px] align-middle border-r border-gray-200 dark:border-gray-700 text-center">
-                                            <div className="flex items-center justify-center gap-1.5 opacity-80 group-hover:opacity-100 transition-opacity">
-                                                {canDelete(material) && (
-                                                    <Button
-                                                        size="icon"
-                                                        variant="ghost"
-                                                        className="w-8 h-8 rounded-full text-gray-500 hover:text-red-600 dark:hover:text-red-400 bg-gray-50 dark:bg-gray-800/50 hover:bg-red-50 dark:hover:bg-red-900/20"
-                                                        onClick={() => setSelectedForDelete(material)}
-                                                        title="Delete Material"
-                                                    >
-                                                        <Trash2 className="w-4 h-4" />
-                                                    </Button>
-                                                )}
-                                                <Button
-                                                    size="icon"
-                                                    variant="ghost"
-                                                    className="w-8 h-8 rounded-full text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/40"
-                                                    onClick={() => handleShare(material)}
-                                                    title="Share Link"
-                                                >
-                                                    <Share2 className="w-4 h-4" />
-                                                </Button>
+                                            {/* Column 4: Uploader */}
+                                            <td className="py-4 px-[2px] align-middle border-r border-gray-200 dark:border-gray-700">
+                                                <div className="flex items-center justify-center gap-2 max-w-full">
+                                                    <div className="min-w-0 px-2">
+                                                        <p className="text-sm font-semibold text-gray-900 dark:text-white truncate pb-0.5">
+                                                            {material.posterName || 'Anonymous'}
+                                                        </p>
+                                                        {material.posterNetVotes !== undefined && material.posterNetVotes !== 0 && (
+                                                            <p className={`text-xs font-medium truncate ${material.posterNetVotes > 0 ? 'text-blue-500' : 'text-red-400'}`}>
+                                                                {material.posterNetVotes > 0 ? '+' : ''}{material.posterNetVotes} Aura
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </td>
 
-                                                <div className="flex items-center gap-1.5 border-l border-gray-200 dark:border-gray-700 pl-1.5 ml-0.5">
-                                                    {!isLink && (
+                                            {/* Column 5: Semester & Year */}
+                                            <td className="py-4 px-[2px] align-middle border-r border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-medium whitespace-nowrap">
+                                                {formatSemester(material.semester)}
+                                            </td>
+
+                                            {/* Column 6: Description */}
+                                            <td className="py-4 px-4 align-middle border-r border-gray-200 dark:border-gray-700 overflow-hidden text-left">
+                                                <div className="w-full">
+                                                    <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed break-words whitespace-pre-wrap">
+                                                        {material.postDescription}
+                                                    </p>
+                                                </div>
+                                            </td>
+
+                                            {/* Action */}
+                                            <td className="py-4 px-[2px] align-middle border-r border-gray-200 dark:border-gray-700 text-center">
+                                                <div className="flex items-center justify-center gap-1.5 opacity-80 group-hover:opacity-100 transition-opacity">
+                                                    {canDelete(material) && (
                                                         <Button
                                                             size="icon"
                                                             variant="ghost"
-                                                            className="w-8 h-8 rounded-full text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/40"
-                                                            onClick={() => handleDownload(material)}
-                                                            title="Download Material"
+                                                            className="w-8 h-8 rounded-full text-gray-500 hover:text-red-600 dark:hover:text-red-400 bg-gray-50 dark:bg-gray-800/50 hover:bg-red-50 dark:hover:bg-red-900/20"
+                                                            onClick={() => setSelectedForDelete(material)}
+                                                            title="Delete Material"
                                                         >
-                                                            <Download className="w-4 h-4" />
+                                                            <Trash2 className="w-4 h-4" />
                                                         </Button>
                                                     )}
                                                     <Button
-                                                        onClick={() => isLink ? window.open(getExternalUrl(material), '_blank') : setSelectedForView(material)}
                                                         size="icon"
-                                                        className="w-8 h-8 rounded-full bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 !text-white"
-                                                        title={isLink ? 'Open Link' : 'View Material'}
+                                                        variant="ghost"
+                                                        className="w-8 h-8 rounded-full text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/40"
+                                                        onClick={() => handleShare(material)}
+                                                        title="Share Link"
                                                     >
-                                                        {isLink ? <ExternalLink className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                                        <Share2 className="w-4 h-4" />
                                                     </Button>
-                                                </div>
-                                            </div>
-                                        </td>
 
-                                        {/* Votes Column (Vertical) */}
-                                        <td className="py-2 px-[2px] align-middle">
-                                            <div className="flex flex-col items-center justify-center gap-0.5 w-10 mx-auto">
-                                                <button
-                                                    onClick={() => !material.isOwner && handleVote(material, 1)}
-                                                    disabled={isPublic || voteLoadingId === material.materialId || material.isOwner}
-                                                    className={`p-1 rounded transition-colors ${material.userVote === 1
-                                                        ? 'text-blue-500 bg-blue-100 dark:bg-blue-500/20'
-                                                        : 'text-gray-400 hover:text-blue-500 hover:bg-gray-100 dark:hover:bg-gray-800'
-                                                        } ${(isPublic || material.isOwner) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-                                                    title={material.isOwner ? "You cannot vote on your own material" : "Upvote"}
-                                                >
-                                                    {voteLoadingId === material.materialId && voteLoadingDirection === 'up' ? <Loader2 className="w-5 h-5 animate-spin" /> : <ArrowBigUp className={`w-5 h-5 ${material.userVote === 1 ? 'fill-current' : ''}`} />}
-                                                </button>
-                                                <span className={`text-xs font-bold leading-none ${material.voteCount > 0 ? 'text-blue-600 dark:text-blue-400' :
-                                                    material.voteCount < 0 ? 'text-red-500' : 'text-gray-500'
-                                                    }`}>
-                                                    {material.voteCount}
-                                                </span>
-                                                <button
-                                                    onClick={() => !material.isOwner && handleVote(material, -1)}
-                                                    disabled={isPublic || voteLoadingId === material.materialId || material.isOwner}
-                                                    className={`p-1 rounded transition-colors ${material.userVote === -1
-                                                        ? 'text-red-500 bg-red-100 dark:bg-red-500/20'
-                                                        : 'text-gray-400 hover:text-red-500 hover:bg-gray-100 dark:hover:bg-gray-800'
-                                                        } ${(isPublic || material.isOwner) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-                                                    title={material.isOwner ? "You cannot vote on your own material" : "Downvote"}
-                                                >
-                                                    {voteLoadingId === material.materialId && voteLoadingDirection === 'down' ? <Loader2 className="w-5 h-5 animate-spin" /> : <ArrowBigDown className={`w-5 h-5 ${material.userVote === -1 ? 'fill-current' : ''}`} />}
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                );
-                            })}
+                                                    <div className="flex items-center gap-1.5 border-l border-gray-200 dark:border-gray-700 pl-1.5 ml-0.5">
+                                                        {!isLink && (
+                                                            <Button
+                                                                size="icon"
+                                                                variant="ghost"
+                                                                className="w-8 h-8 rounded-full text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/40"
+                                                                onClick={() => handleDownload(material)}
+                                                                title="Download Material"
+                                                            >
+                                                                <Download className="w-4 h-4" />
+                                                            </Button>
+                                                        )}
+                                                        <Button
+                                                            onClick={() => isLink ? window.open(getExternalUrl(material), '_blank') : setSelectedForView(material)}
+                                                            size="icon"
+                                                            className="w-8 h-8 rounded-full bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 !text-white"
+                                                            title={isLink ? 'Open Link' : 'View Material'}
+                                                        >
+                                                            {isLink ? <ExternalLink className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                            </td>
+
+                                            {/* Votes Column (Vertical) */}
+                                            <td className="py-2 px-[2px] align-middle">
+                                                <div className="flex flex-col items-center justify-center gap-0.5 w-10 mx-auto">
+                                                    <button
+                                                        onClick={() => !material.isOwner && handleVote(material, 1)}
+                                                        disabled={isPublic || voteLoadingId === material.materialId || material.isOwner}
+                                                        className={`p-1 rounded transition-colors ${material.userVote === 1
+                                                            ? 'text-blue-500 bg-blue-100 dark:bg-blue-500/20'
+                                                            : 'text-gray-400 hover:text-blue-500 hover:bg-gray-100 dark:hover:bg-gray-800'
+                                                            } ${(isPublic || material.isOwner) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                                                        title={material.isOwner ? "You cannot vote on your own material" : "Upvote"}
+                                                    >
+                                                        {voteLoadingId === material.materialId && voteLoadingDirection === 'up' ? <Loader2 className="w-5 h-5 animate-spin" /> : <ArrowBigUp className={`w-5 h-5 ${material.userVote === 1 ? 'fill-current' : ''}`} />}
+                                                    </button>
+                                                    <span className={`text-xs font-bold leading-none ${material.voteCount > 0 ? 'text-blue-600 dark:text-blue-400' :
+                                                        material.voteCount < 0 ? 'text-red-500' : 'text-gray-500'
+                                                        }`}>
+                                                        {material.voteCount}
+                                                    </span>
+                                                    <button
+                                                        onClick={() => !material.isOwner && handleVote(material, -1)}
+                                                        disabled={isPublic || voteLoadingId === material.materialId || material.isOwner}
+                                                        className={`p-1 rounded transition-colors ${material.userVote === -1
+                                                            ? 'text-red-500 bg-red-100 dark:bg-red-500/20'
+                                                            : 'text-gray-400 hover:text-red-500 hover:bg-gray-100 dark:hover:bg-gray-800'
+                                                            } ${(isPublic || material.isOwner) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                                                        title={material.isOwner ? "You cannot vote on your own material" : "Downvote"}
+                                                    >
+                                                        {voteLoadingId === material.materialId && voteLoadingDirection === 'down' ? <Loader2 className="w-5 h-5 animate-spin" /> : <ArrowBigDown className={`w-5 h-5 ${material.userVote === -1 ? 'fill-current' : ''}`} />}
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })
+                            )}
                         </tbody>
                     </table>
                 </div>

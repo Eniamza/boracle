@@ -326,7 +326,70 @@ const CourseMaterialsPage = () => {
             </div>
 
             {/* Materials list */}
-            {loading ? (
+            {viewMode === 'list' && !isMobile ? (() => {
+                let sortedMaterials = [...materials];
+
+                if (!loading && semesterSortOrder) {
+                    sortedMaterials.sort((a, b) => {
+                        const termOrder = { 'SPRING': 1, 'SUMMER': 2, 'FALL': 3 };
+
+                        const parseSemester = (sem) => {
+                            if (!sem) return { year: 0, termNum: 0 };
+                            const match = sem.match(/^(SPRING|SUMMER|FALL)(\d{4})$/i);
+                            if (match) {
+                                return {
+                                    termNum: termOrder[match[1].toUpperCase()],
+                                    year: parseInt(match[2], 10)
+                                };
+                            }
+                            return { year: 0, termNum: 0 };
+                        };
+
+                        const aParsed = parseSemester(a.semester);
+                        const bParsed = parseSemester(b.semester);
+
+                        if (aParsed.year !== bParsed.year) {
+                            return semesterSortOrder === 'asc'
+                                ? aParsed.year - bParsed.year
+                                : bParsed.year - aParsed.year;
+                        }
+
+                        return semesterSortOrder === 'asc'
+                            ? aParsed.termNum - bParsed.termNum
+                            : bParsed.termNum - aParsed.termNum;
+                    });
+                } else if (!loading && timeSortOrder) {
+                    sortedMaterials.sort((a, b) => {
+                        const dateA = new Date(a.createdAt).getTime();
+                        const dateB = new Date(b.createdAt).getTime();
+                        return timeSortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+                    });
+                }
+
+                return (
+                    <>
+                        <MaterialListTableView
+                            materials={sortedMaterials}
+                            isPublic={isPublic}
+                            onVote={handleVote}
+                            semesterSortOrder={semesterSortOrder}
+                            onSemesterSortChange={setSemesterSortOrder}
+                            timeSortOrder={timeSortOrder}
+                            onTimeSortChange={setTimeSortOrder}
+                            typeFilters={typeFilters}
+                            setTypeFilters={setTypeFilters}
+                            loading={loading}
+                        />
+                        {/* Intersection Observer Target */}
+                        <div ref={loadMoreRef} className="py-4 mt-4 flex justify-center w-full">
+                            {loadingMore && <Loader2 className="w-6 h-6 text-gray-400 animate-spin" />}
+                            {!hasMore && materials.length > 5 && (
+                                <span className="text-sm text-gray-400">You've reached the end</span>
+                            )}
+                        </div>
+                    </>
+                );
+            })() : loading ? (
                 <div className="flex flex-col gap-3">
                     {[1, 2, 3].map(i => (
                         <Skeleton key={i} className="h-32 w-full rounded-xl" />
@@ -336,81 +399,25 @@ const CourseMaterialsPage = () => {
                 renderEmptyState()
             ) : (
                 <>
-                    {viewMode === 'list' && !isMobile ? (() => {
-                        let sortedMaterials = [...materials];
-
-                        if (semesterSortOrder) {
-                            sortedMaterials.sort((a, b) => {
-                                const termOrder = { 'SPRING': 1, 'SUMMER': 2, 'FALL': 3 };
-
-                                // Helper to parse semester string like "FALL2025"
-                                const parseSemester = (sem) => {
-                                    if (!sem) return { year: 0, termNum: 0 };
-                                    const match = sem.match(/^(SPRING|SUMMER|FALL)(\d{4})$/i);
-                                    if (match) {
-                                        return {
-                                            termNum: termOrder[match[1].toUpperCase()],
-                                            year: parseInt(match[2], 10)
-                                        };
-                                    }
-                                    return { year: 0, termNum: 0 }; // Fallback
-                                };
-
-                                const aParsed = parseSemester(a.semester);
-                                const bParsed = parseSemester(b.semester);
-
-                                if (aParsed.year !== bParsed.year) {
-                                    return semesterSortOrder === 'asc'
-                                        ? aParsed.year - bParsed.year
-                                        : bParsed.year - aParsed.year;
-                                }
-
-                                return semesterSortOrder === 'asc'
-                                    ? aParsed.termNum - bParsed.termNum
-                                    : bParsed.termNum - aParsed.termNum;
-                            });
-                        } else if (timeSortOrder) {
-                            sortedMaterials.sort((a, b) => {
-                                const dateA = new Date(a.createdAt).getTime();
-                                const dateB = new Date(b.createdAt).getTime();
-                                return timeSortOrder === 'asc' ? dateA - dateB : dateB - dateA;
-                            });
-                        }
-
-                        return (
-                            <MaterialListTableView
-                                materials={sortedMaterials}
-                                isPublic={isPublic}
-                                onVote={handleVote}
-                                semesterSortOrder={semesterSortOrder}
-                                onSemesterSortChange={setSemesterSortOrder}
-                                timeSortOrder={timeSortOrder}
-                                onTimeSortChange={setTimeSortOrder}
-                                typeFilters={typeFilters}
-                                setTypeFilters={setTypeFilters}
-                            />
-                        );
-                    })() : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                            {materials.map(material => (
-                                isMobile ? (
-                                    <MobileMaterialCard
-                                        key={material.materialId}
-                                        material={material}
-                                        isPublic={isPublic}
-                                        onVote={handleVote}
-                                    />
-                                ) : (
-                                    <MaterialCard
-                                        key={material.materialId}
-                                        material={material}
-                                        isPublic={isPublic}
-                                        onVote={handleVote}
-                                    />
-                                )
-                            ))}
-                        </div>
-                    )}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                        {materials.map(material => (
+                            isMobile ? (
+                                <MobileMaterialCard
+                                    key={material.materialId}
+                                    material={material}
+                                    isPublic={isPublic}
+                                    onVote={handleVote}
+                                />
+                            ) : (
+                                <MaterialCard
+                                    key={material.materialId}
+                                    material={material}
+                                    isPublic={isPublic}
+                                    onVote={handleVote}
+                                />
+                            )
+                        ))}
+                    </div>
 
                     {/* Intersection Observer Target */}
                     <div ref={loadMoreRef} className="py-4 mt-4 flex justify-center w-full">
