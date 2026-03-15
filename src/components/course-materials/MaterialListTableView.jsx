@@ -22,10 +22,10 @@ import { toast } from 'sonner';
 import { copyToClipboard } from '@/lib/utils';
 import { useSession } from 'next-auth/react';
 
-const MaterialListTableView = ({ 
-    materials, 
-    isPublic = false, 
-    onVote, 
+const MaterialListTableView = ({
+    materials,
+    isPublic = false,
+    onVote,
     onDelete,
     semesterSortOrder,
     onSemesterSortChange,
@@ -35,12 +35,12 @@ const MaterialListTableView = ({
     setTypeFilters
 }) => {
     const { data: session } = useSession();
-    
+
     // We need to manage active dialogs at the list level or within individual row components to avoid state shared across all rows.
     // However, it's easier to track a single selected material for viewing/deleting to avoid multiple overlapping dialogs.
     const [selectedForView, setSelectedForView] = useState(null);
     const [selectedForDelete, setSelectedForDelete] = useState(null);
-    
+
     const [voteLoadingId, setVoteLoadingId] = useState(null);
     const [voteLoadingDirection, setVoteLoadingDirection] = useState(null);
     const [isDeleting, setIsDeleting] = useState(false);
@@ -91,7 +91,7 @@ const MaterialListTableView = ({
 
         setVoteLoadingId(material.materialId);
         setVoteLoadingDirection(value === 1 ? 'up' : 'down');
-        
+
         try {
             if (material.userVote === value) {
                 const res = await fetch(`/api/materials/${material.materialId}/vote`, { method: 'DELETE' });
@@ -133,7 +133,7 @@ const MaterialListTableView = ({
     };
 
     const isLinkType = (fileExtension) => ['youtube', 'drive', 'github'].includes(fileExtension);
-    
+
     const getExternalUrl = (material) => {
         const isLink = isLinkType(material.fileExtension);
         if (!isLink || !material.publicUrl) return material.publicUrl;
@@ -145,7 +145,7 @@ const MaterialListTableView = ({
         if (semesterSortOrder === null || semesterSortOrder === 'none') onSemesterSortChange('asc');
         else if (semesterSortOrder === 'asc') onSemesterSortChange('desc');
         else onSemesterSortChange(null);
-        
+
         // Reset time sort when semester sort is activated
         if (onTimeSortChange && (semesterSortOrder === null || semesterSortOrder === 'none')) {
             onTimeSortChange(null);
@@ -157,16 +157,27 @@ const MaterialListTableView = ({
         if (timeSortOrder === null) onTimeSortChange('desc');
         else if (timeSortOrder === 'desc') onTimeSortChange('asc');
         else onTimeSortChange(null);
-        
+
         // Reset semester sort when time sort is activated
         if (onSemesterSortChange && timeSortOrder === null) {
             onSemesterSortChange(null);
         }
     };
 
+    const GoogleDriveIcon = ({ className }) => (
+        <svg viewBox="0 0 87.3 78" xmlns="http://www.w3.org/2000/svg" className={className}>
+            <path d="m6.6 66.85 3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8h-27.5c0 1.55.4 3.1 1.2 4.5z" fill="#0066da" />
+            <path d="m43.65 25-13.75-23.8c-1.35.8-2.5 1.9-3.3 3.3l-25.4 44a9.06 9.06 0 0 0 -1.2 4.5h27.5z" fill="#00ac47" />
+            <path d="m73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5h-27.502l5.852 11.5z" fill="#ea4335" />
+            <path d="m43.65 25 13.75-23.8c-1.35-.8-2.9-1.2-4.5-1.2h-18.5c-1.6 0-3.15.45-4.5 1.2z" fill="#00832d" />
+            <path d="m59.8 53h-32.3l-13.75 23.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.45 4.5-1.2z" fill="#2684fc" />
+            <path d="m73.4 26.5-12.7-22c-.8-1.4-1.95-2.5-3.3-3.3l-13.75 23.8 16.15 28h27.45c0-1.55-.4-3.1-1.2-4.5z" fill="#ffba00" />
+        </svg>
+    );
+
     const getFileIcon = (fileExtension) => {
         if (fileExtension === 'youtube') return Youtube;
-        if (fileExtension === 'drive') return Cloud;
+        if (fileExtension === 'drive') return GoogleDriveIcon;
         if (fileExtension === 'github') return Github;
         if (fileExtension === 'pdf') return FileText;
         return Presentation;
@@ -191,9 +202,9 @@ const MaterialListTableView = ({
     const availableTypes = ['pdf', 'youtube', 'drive', 'github'];
 
     const toggleTypeFilter = (ext) => {
-        setTypeFilters(prev => 
-            prev.includes(ext) 
-                ? prev.filter(t => t !== ext) 
+        setTypeFilters(prev =>
+            prev.includes(ext)
+                ? prev.filter(t => t !== ext)
                 : [...prev, ext]
         );
     };
@@ -204,7 +215,7 @@ const MaterialListTableView = ({
         // Semester format e.g. "SPRING2026"
         const yearMatch = semStr.match(/\d+/);
         const seasonMatch = semStr.match(/[A-Z]+/i);
-        
+
         let year = yearMatch ? parseInt(yearMatch[0]) : 0;
         let seasonScore = 0;
         if (seasonMatch) {
@@ -216,71 +227,70 @@ const MaterialListTableView = ({
         return year * 10 + seasonScore; // e.g. 2026 * 10 + 1 = 20261 
     };
 
+    const formatSemester = (semStr) => {
+        if (!semStr) return '';
+        const season = semStr.replace(/[0-9]/g, '');
+        const year = semStr.replace(/[^0-9]/g, '');
+        if (!season) return year;
+
+        const formattedSeason = season.charAt(0).toUpperCase() + season.slice(1).toLowerCase();
+
+        if (year) {
+            return `${formattedSeason} ${year}`;
+        }
+        return formattedSeason;
+    };
+
     return (
         <>
             <div className="hidden md:block bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm w-full relative">
                 <div className="overflow-x-auto">
-                    <table className="text-left border-collapse table-fixed w-full min-w-[1000px]">
+                    <table className="text-center border-collapse table-fixed w-full min-w-[1000px]">
                         <thead>
                             <tr className="border-b border-gray-200 dark:border-gray-700 text-[13px] font-semibold text-gray-500 dark:text-gray-400">
-                                <th className="py-2.5 lg:py-4 px-4 align-middle border-r border-gray-200 dark:border-gray-700 w-[140px] whitespace-nowrap bg-transparent">Course</th>
-                                
-                                <th className="py-2.5 lg:py-4 px-4 align-middle border-r border-gray-200 dark:border-gray-700 w-[120px] relative bg-transparent">
-                                <div className="flex items-center gap-2 cursor-pointer group" onClick={(e) => { e.stopPropagation(); setShowTypeFilterDropdown(!showTypeFilterDropdown); }}>
-                                    <span>Type</span>
-                                    <div className="flex items-center gap-1">
-                                        {typeFilters.length > 0 && (
-                                            <span className="bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400 text-[10px] px-1.5 py-0.5 rounded-full">
-                                                {typeFilters.length}
-                                            </span>
-                                        )}
-                                        <Filter className={`w-3.5 h-3.5 transition-colors ${showTypeFilterDropdown || typeFilters.length > 0 ? 'text-blue-500' : 'text-gray-400 group-hover:text-gray-600'}`} />
-                                    </div>
-                                </div>
-                                
-                                {showTypeFilterDropdown && (
-                                    <>
-                                        <div className="fixed inset-0 z-40" onClick={() => setShowTypeFilterDropdown(false)} />
-                                        <div className="absolute top-full left-0 mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl z-50 py-1" onClick={(e) => e.stopPropagation()}>
-                                            {availableTypes.map(ext => {
-                                                const Icon = getFileIcon(ext);
-                                                return (
-                                                    <label key={ext} className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors">
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={typeFilters.includes(ext)}
-                                                            onChange={() => toggleTypeFilter(ext)}
-                                                            className="form-checkbox h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500"
-                                                        />
-                                                        <Badge className={`${getFileBadgeClasses(ext)} shadow-none text-[10px] gap-1 px-1.5 py-0.5 uppercase tracking-wider`}>
-                                                            <Icon className="w-3 h-3" />
-                                                            {getFileLabel(ext)}
-                                                        </Badge>
-                                                    </label>
-                                                );
-                                            })}
+                                <th className="py-2.5 lg:py-4 px-[2px] align-middle border-r border-gray-200 dark:border-gray-700 w-[140px] whitespace-nowrap bg-transparent">Course</th>
+
+                                <th className="py-2.5 lg:py-4 px-[2px] align-middle border-r border-gray-200 dark:border-gray-700 w-[120px] relative bg-transparent">
+                                    <div className="flex items-center justify-center gap-2 cursor-pointer group" onClick={(e) => { e.stopPropagation(); setShowTypeFilterDropdown(!showTypeFilterDropdown); }}>
+                                        <span>Type</span>
+                                        <div className="flex items-center gap-1">
+                                            {typeFilters.length > 0 && (
+                                                <span className="bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400 text-[10px] px-1.5 py-0.5 rounded-full">
+                                                    {typeFilters.length}
+                                                </span>
+                                            )}
+                                            <Filter className={`w-3.5 h-3.5 transition-colors ${showTypeFilterDropdown || typeFilters.length > 0 ? 'text-blue-500' : 'text-gray-400 group-hover:text-gray-600'}`} />
                                         </div>
-                                    </>
-                                )}
-                            </th>
-                            
-                                <th className="py-2.5 lg:py-4 px-4 align-middle border-r border-gray-200 dark:border-gray-700 w-[130px] whitespace-nowrap cursor-pointer group bg-transparent" onClick={handleSemesterSortClick}>
-                                    <div className="flex items-center gap-1.5">
-                                        <span>Semester</span>
-                                        {semesterSortOrder === 'asc' ? (
-                                            <ArrowUp className="w-3.5 h-3.5 transition-colors text-blue-500" />
-                                        ) : semesterSortOrder === 'desc' ? (
-                                            <ArrowDown className="w-3.5 h-3.5 transition-colors text-blue-500" />
-                                        ) : (
-                                            <ArrowUpDown className="w-3.5 h-3.5 transition-colors text-gray-400 group-hover:text-gray-600" />
-                                        )}
                                     </div>
+
+                                    {showTypeFilterDropdown && (
+                                        <>
+                                            <div className="fixed inset-0 z-40" onClick={() => setShowTypeFilterDropdown(false)} />
+                                            <div className="absolute top-full left-0 mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl z-50 py-1" onClick={(e) => e.stopPropagation()}>
+                                                {availableTypes.map(ext => {
+                                                    const Icon = getFileIcon(ext);
+                                                    return (
+                                                        <label key={ext} className="flex items-center gap-3 px-[2px] py-2 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={typeFilters.includes(ext)}
+                                                                onChange={() => toggleTypeFilter(ext)}
+                                                                className="form-checkbox h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500"
+                                                            />
+                                                            <Badge className={`${getFileBadgeClasses(ext)} shadow-none text-[10px] gap-1 px-1.5 py-0.5 uppercase tracking-wider`}>
+                                                                <Icon className="w-3 h-3" />
+                                                                {getFileLabel(ext)}
+                                                            </Badge>
+                                                        </label>
+                                                    );
+                                                })}
+                                            </div>
+                                        </>
+                                    )}
                                 </th>
-                                
-                                <th className="py-2.5 lg:py-4 px-4 align-middle border-r border-gray-200 dark:border-gray-700 w-[160px] bg-transparent">Uploader</th>
-                                
-                                <th className="py-2.5 lg:py-4 px-4 align-middle border-r border-gray-200 dark:border-gray-700 w-[130px] whitespace-nowrap cursor-pointer group bg-transparent" onClick={handleTimeSortClick}>
-                                    <div className="flex items-center gap-1.5">
+
+                                <th className="py-2.5 lg:py-4 px-[2px] align-middle border-r border-gray-200 dark:border-gray-700 w-[130px] whitespace-nowrap cursor-pointer group bg-transparent" onClick={handleTimeSortClick}>
+                                    <div className="flex items-center justify-center gap-1.5">
                                         <span>Time</span>
                                         {timeSortOrder === 'asc' ? (
                                             <ArrowUp className="w-3.5 h-3.5 transition-colors text-blue-500" />
@@ -291,162 +301,174 @@ const MaterialListTableView = ({
                                         )}
                                     </div>
                                 </th>
-                                
-                                <th className="py-2.5 lg:py-4 px-4 align-middle border-r border-gray-200 dark:border-gray-700 bg-transparent">Description</th>
-                                <th className="py-2.5 lg:py-4 px-4 align-middle border-r border-gray-200 dark:border-gray-700 w-[160px] text-center whitespace-nowrap bg-transparent">Action</th>
-                                <th className="py-2.5 lg:py-4 px-2 align-middle w-[60px] text-center bg-transparent">Vote</th>
+
+                                <th className="py-2.5 lg:py-4 px-[2px] align-middle border-r border-gray-200 dark:border-gray-700 w-[160px] bg-transparent">Uploader</th>
+
+                                <th className="py-2.5 lg:py-4 px-[2px] align-middle border-r border-gray-200 dark:border-gray-700 w-[130px] whitespace-nowrap cursor-pointer group bg-transparent" onClick={handleSemesterSortClick}>
+                                    <div className="flex items-center justify-center gap-1.5">
+                                        <span>Semester</span>
+                                        {semesterSortOrder === 'asc' ? (
+                                            <ArrowUp className="w-3.5 h-3.5 transition-colors text-blue-500" />
+                                        ) : semesterSortOrder === 'desc' ? (
+                                            <ArrowDown className="w-3.5 h-3.5 transition-colors text-blue-500" />
+                                        ) : (
+                                            <ArrowUpDown className="w-3.5 h-3.5 transition-colors text-gray-400 group-hover:text-gray-600" />
+                                        )}
+                                    </div>
+                                </th>
+
+                                <th className="py-2.5 lg:py-4 px-4 align-middle border-r border-gray-200 dark:border-gray-700 bg-transparent text-left">Description</th>
+                                <th className="py-2.5 lg:py-4 px-[2px] align-middle border-r border-gray-200 dark:border-gray-700 w-[160px] text-center whitespace-nowrap bg-transparent">Action</th>
+                                <th className="py-2.5 lg:py-4 px-[2px] align-middle w-[60px] text-center bg-transparent">Vote</th>
                             </tr>
                         </thead>
-                    <tbody className="text-sm">
-                        {materials.map((material, index) => {
-                            const Icon = getFileIcon(material.fileExtension);
-                            const isLink = isLinkType(material.fileExtension);
-                            
-                            return (
-                                <tr key={material.materialId} className="border-b border-gray-200 dark:border-gray-700 last:border-0 hover:bg-gray-50/50 dark:hover:bg-gray-800/80 transition-colors group">
-                                    {/* Column 1: Course Code */}
-                                    <td className="py-4 px-4 align-middle border-r border-gray-200 dark:border-gray-700">
-                                        <div className="flex flex-col gap-1.5 items-start">
-                                            <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-400 border-blue-200 dark:border-blue-500/30 shadow-none text-xs font-semibold px-2.5 py-0.5 whitespace-nowrap">
-                                                {material.courseCode}
-                                            </Badge>
-                                            {material.postState === 'pending' && (
-                                                <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200 dark:border-amber-500/30 shadow-none text-[10px] font-medium px-1.5 py-0.5">
-                                                    Pending
+                        <tbody className="text-sm">
+                            {materials.map((material, index) => {
+                                const Icon = getFileIcon(material.fileExtension);
+                                const isLink = isLinkType(material.fileExtension);
+
+                                return (
+                                    <tr key={material.materialId} className="border-b border-gray-200 dark:border-gray-700 last:border-0 hover:bg-gray-50/50 dark:hover:bg-gray-800/80 transition-colors group">
+                                        {/* Column 1: Course Code */}
+                                        <td className="py-4 px-[2px] align-middle border-r border-gray-200 dark:border-gray-700">
+                                            <div className="flex flex-col gap-1.5 items-center">
+                                                <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-400 border-blue-200 dark:border-blue-500/30 shadow-none text-xs font-semibold px-2.5 py-0.5 whitespace-nowrap">
+                                                    {material.courseCode}
                                                 </Badge>
-                                            )}
-                                        </div>
-                                    </td>
-                                    
-                                    {/* Column 2: FileType */}
-                                    <td className="py-4 px-4 align-middle border-r border-gray-200 dark:border-gray-700">
-                                        <Badge className={`${getFileBadgeClasses(material.fileExtension)} shadow-none text-[10px] gap-1 px-1.5 py-0.5 uppercase tracking-wider`}>
-                                            <Icon className="w-3 h-3" />
-                                            {getFileLabel(material.fileExtension)}
-                                        </Badge>
-                                    </td>
-                                    
-                                    {/* Column 3: Semester & Year */}
-                                    <td className="py-4 px-4 align-middle border-r border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-medium whitespace-nowrap">
-                                        {material.semester}
-                                    </td>
-                                    
-                                    {/* Column 4: Uploader */}
-                                    <td className="py-4 px-4 align-middle border-r border-gray-200 dark:border-gray-700">
-                                        <div className="flex items-center gap-2 max-w-full">
-                                            <div className="bg-purple-100 dark:bg-purple-500/10 p-1.5 rounded-full shrink-0">
-                                                <User className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-                                            </div>
-                                            <div className="min-w-0 pr-2">
-                                                <p className="text-sm font-semibold text-gray-900 dark:text-white truncate pb-0.5">
-                                                    {material.posterName || 'Anonymous'}
-                                                </p>
-                                                {material.posterNetVotes !== undefined && material.posterNetVotes !== 0 && (
-                                                    <p className={`text-xs font-medium truncate ${material.posterNetVotes > 0 ? 'text-blue-500' : 'text-red-400'}`}>
-                                                        {material.posterNetVotes > 0 ? '+' : ''}{material.posterNetVotes} Aura
-                                                    </p>
+                                                {material.postState === 'pending' && (
+                                                    <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200 dark:border-amber-500/30 shadow-none text-[10px] font-medium px-1.5 py-0.5">
+                                                        Pending
+                                                    </Badge>
                                                 )}
                                             </div>
-                                        </div>
-                                    </td>
+                                        </td>
 
-                                    {/* Column 5: Upload Time */}
-                                    <td className="py-4 px-4 align-middle border-r border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 whitespace-nowrap">
-                                        {formatDate(material.createdAt)}
-                                    </td>
+                                        {/* Column 2: FileType */}
+                                        <td className="py-4 px-[2px] align-middle border-r border-gray-200 dark:border-gray-700">
+                                            <Badge className={`${getFileBadgeClasses(material.fileExtension)} shadow-none text-[10px] gap-1 px-1.5 py-0.5 uppercase tracking-wider`}>
+                                                <Icon className="w-3 h-3" />
+                                                {getFileLabel(material.fileExtension)}
+                                            </Badge>
+                                        </td>
 
-                                    {/* Column 6: Description */}
-                                    <td className="py-4 px-4 align-middle border-r border-gray-200 dark:border-gray-700 overflow-hidden">
-                                        <div className="w-full">
-                                            <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed break-words whitespace-pre-wrap">
-                                                {material.postDescription}
-                                            </p>
-                                        </div>
-                                    </td>
+                                        {/* Column 3: Upload Time */}
+                                        <td className="py-4 px-[2px] align-middle border-r border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                                            {formatDate(material.createdAt)}
+                                        </td>
 
-                                    {/* Action */}
-                                    <td className="py-4 px-4 align-middle border-r border-gray-200 dark:border-gray-700 text-center">
-                                        <div className="flex items-center justify-center gap-1.5 opacity-80 group-hover:opacity-100 transition-opacity">
-                                            {canDelete(material) && (
-                                                <Button
-                                                    size="icon"
-                                                    variant="ghost"
-                                                    className="w-8 h-8 rounded-full text-gray-500 hover:text-red-600 dark:hover:text-red-400 bg-gray-50 dark:bg-gray-800/50 hover:bg-red-50 dark:hover:bg-red-900/20"
-                                                    onClick={() => setSelectedForDelete(material)}
-                                                    title="Delete Material"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </Button>
-                                            )}
-                                            <Button
-                                                size="icon"
-                                                variant="ghost"
-                                                className="w-8 h-8 rounded-full text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/40"
-                                                onClick={() => handleShare(material)}
-                                                title="Share Link"
-                                            >
-                                                <Share2 className="w-4 h-4" />
-                                            </Button>
-                                            
-                                            <div className="flex items-center gap-1.5 border-l border-gray-200 dark:border-gray-700 pl-1.5 ml-0.5">
-                                                {!isLink && (
+                                        {/* Column 4: Uploader */}
+                                        <td className="py-4 px-[2px] align-middle border-r border-gray-200 dark:border-gray-700">
+                                            <div className="flex items-center justify-center gap-2 max-w-full">
+                                                <div className="min-w-0 px-2">
+                                                    <p className="text-sm font-semibold text-gray-900 dark:text-white truncate pb-0.5">
+                                                        {material.posterName || 'Anonymous'}
+                                                    </p>
+                                                    {material.posterNetVotes !== undefined && material.posterNetVotes !== 0 && (
+                                                        <p className={`text-xs font-medium truncate ${material.posterNetVotes > 0 ? 'text-blue-500' : 'text-red-400'}`}>
+                                                            {material.posterNetVotes > 0 ? '+' : ''}{material.posterNetVotes} Aura
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </td>
+
+                                        {/* Column 5: Semester & Year */}
+                                        <td className="py-4 px-[2px] align-middle border-r border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-medium whitespace-nowrap">
+                                            {formatSemester(material.semester)}
+                                        </td>
+
+                                        {/* Column 6: Description */}
+                                        <td className="py-4 px-4 align-middle border-r border-gray-200 dark:border-gray-700 overflow-hidden text-left">
+                                            <div className="w-full">
+                                                <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed break-words whitespace-pre-wrap">
+                                                    {material.postDescription}
+                                                </p>
+                                            </div>
+                                        </td>
+
+                                        {/* Action */}
+                                        <td className="py-4 px-[2px] align-middle border-r border-gray-200 dark:border-gray-700 text-center">
+                                            <div className="flex items-center justify-center gap-1.5 opacity-80 group-hover:opacity-100 transition-opacity">
+                                                {canDelete(material) && (
                                                     <Button
                                                         size="icon"
                                                         variant="ghost"
-                                                        className="w-8 h-8 rounded-full text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/40"
-                                                        onClick={() => handleDownload(material)}
-                                                        title="Download Material"
+                                                        className="w-8 h-8 rounded-full text-gray-500 hover:text-red-600 dark:hover:text-red-400 bg-gray-50 dark:bg-gray-800/50 hover:bg-red-50 dark:hover:bg-red-900/20"
+                                                        onClick={() => setSelectedForDelete(material)}
+                                                        title="Delete Material"
                                                     >
-                                                        <Download className="w-4 h-4" />
+                                                        <Trash2 className="w-4 h-4" />
                                                     </Button>
                                                 )}
                                                 <Button
-                                                    onClick={() => isLink ? window.open(getExternalUrl(material), '_blank') : setSelectedForView(material)}
                                                     size="icon"
-                                                    className="w-8 h-8 rounded-full bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 !text-white"
-                                                    title={isLink ? 'Open Link' : 'View Material'}
+                                                    variant="ghost"
+                                                    className="w-8 h-8 rounded-full text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/40"
+                                                    onClick={() => handleShare(material)}
+                                                    title="Share Link"
                                                 >
-                                                    {isLink ? <ExternalLink className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                                    <Share2 className="w-4 h-4" />
                                                 </Button>
+
+                                                <div className="flex items-center gap-1.5 border-l border-gray-200 dark:border-gray-700 pl-1.5 ml-0.5">
+                                                    {!isLink && (
+                                                        <Button
+                                                            size="icon"
+                                                            variant="ghost"
+                                                            className="w-8 h-8 rounded-full text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/40"
+                                                            onClick={() => handleDownload(material)}
+                                                            title="Download Material"
+                                                        >
+                                                            <Download className="w-4 h-4" />
+                                                        </Button>
+                                                    )}
+                                                    <Button
+                                                        onClick={() => isLink ? window.open(getExternalUrl(material), '_blank') : setSelectedForView(material)}
+                                                        size="icon"
+                                                        className="w-8 h-8 rounded-full bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 !text-white"
+                                                        title={isLink ? 'Open Link' : 'View Material'}
+                                                    >
+                                                        {isLink ? <ExternalLink className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                                    </Button>
+                                                </div>
                                             </div>
-                                        </div>
-                                    </td>
-                                    
-                                    {/* Votes Column (Vertical) */}
-                                    <td className="py-2 px-1 align-middle">
-                                        <div className="flex flex-col items-center justify-center gap-0.5 w-10 mx-auto">
-                                            <button
-                                                onClick={() => !material.isOwner && handleVote(material, 1)}
-                                                disabled={isPublic || voteLoadingId === material.materialId || material.isOwner}
-                                                className={`p-1 rounded transition-colors ${material.userVote === 1
-                                                    ? 'text-blue-500 bg-blue-100 dark:bg-blue-500/20'
-                                                    : 'text-gray-400 hover:text-blue-500 hover:bg-gray-100 dark:hover:bg-gray-800'
-                                                    } ${(isPublic || material.isOwner) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-                                                title={material.isOwner ? "You cannot vote on your own material" : "Upvote"}
-                                            >
-                                                {voteLoadingId === material.materialId && voteLoadingDirection === 'up' ? <Loader2 className="w-5 h-5 animate-spin" /> : <ArrowBigUp className={`w-5 h-5 ${material.userVote === 1 ? 'fill-current' : ''}`} />}
-                                            </button>
-                                            <span className={`text-xs font-bold leading-none ${material.voteCount > 0 ? 'text-blue-600 dark:text-blue-400' :
-                                                material.voteCount < 0 ? 'text-red-500' : 'text-gray-500'
-                                                }`}>
-                                                {material.voteCount}
-                                            </span>
-                                            <button
-                                                onClick={() => !material.isOwner && handleVote(material, -1)}
-                                                disabled={isPublic || voteLoadingId === material.materialId || material.isOwner}
-                                                className={`p-1 rounded transition-colors ${material.userVote === -1
-                                                    ? 'text-red-500 bg-red-100 dark:bg-red-500/20'
-                                                    : 'text-gray-400 hover:text-red-500 hover:bg-gray-100 dark:hover:bg-gray-800'
-                                                    } ${(isPublic || material.isOwner) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-                                                title={material.isOwner ? "You cannot vote on your own material" : "Downvote"}
-                                            >
-                                                {voteLoadingId === material.materialId && voteLoadingDirection === 'down' ? <Loader2 className="w-5 h-5 animate-spin" /> : <ArrowBigDown className={`w-5 h-5 ${material.userVote === -1 ? 'fill-current' : ''}`} />}
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            );
-                        })}
+                                        </td>
+
+                                        {/* Votes Column (Vertical) */}
+                                        <td className="py-2 px-[2px] align-middle">
+                                            <div className="flex flex-col items-center justify-center gap-0.5 w-10 mx-auto">
+                                                <button
+                                                    onClick={() => !material.isOwner && handleVote(material, 1)}
+                                                    disabled={isPublic || voteLoadingId === material.materialId || material.isOwner}
+                                                    className={`p-1 rounded transition-colors ${material.userVote === 1
+                                                        ? 'text-blue-500 bg-blue-100 dark:bg-blue-500/20'
+                                                        : 'text-gray-400 hover:text-blue-500 hover:bg-gray-100 dark:hover:bg-gray-800'
+                                                        } ${(isPublic || material.isOwner) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                                                    title={material.isOwner ? "You cannot vote on your own material" : "Upvote"}
+                                                >
+                                                    {voteLoadingId === material.materialId && voteLoadingDirection === 'up' ? <Loader2 className="w-5 h-5 animate-spin" /> : <ArrowBigUp className={`w-5 h-5 ${material.userVote === 1 ? 'fill-current' : ''}`} />}
+                                                </button>
+                                                <span className={`text-xs font-bold leading-none ${material.voteCount > 0 ? 'text-blue-600 dark:text-blue-400' :
+                                                    material.voteCount < 0 ? 'text-red-500' : 'text-gray-500'
+                                                    }`}>
+                                                    {material.voteCount}
+                                                </span>
+                                                <button
+                                                    onClick={() => !material.isOwner && handleVote(material, -1)}
+                                                    disabled={isPublic || voteLoadingId === material.materialId || material.isOwner}
+                                                    className={`p-1 rounded transition-colors ${material.userVote === -1
+                                                        ? 'text-red-500 bg-red-100 dark:bg-red-500/20'
+                                                        : 'text-gray-400 hover:text-red-500 hover:bg-gray-100 dark:hover:bg-gray-800'
+                                                        } ${(isPublic || material.isOwner) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                                                    title={material.isOwner ? "You cannot vote on your own material" : "Downvote"}
+                                                >
+                                                    {voteLoadingId === material.materialId && voteLoadingDirection === 'down' ? <Loader2 className="w-5 h-5 animate-spin" /> : <ArrowBigDown className={`w-5 h-5 ${material.userVote === -1 ? 'fill-current' : ''}`} />}
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                );
+                            })}
                         </tbody>
                     </table>
                 </div>
