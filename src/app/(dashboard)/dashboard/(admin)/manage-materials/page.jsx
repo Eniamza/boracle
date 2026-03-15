@@ -189,11 +189,11 @@ const AdminMaterialsPageContent = () => {
     const [sortOrder, setSortOrder] = useState('desc');
     const [stateFilter, setStateFilter] = useState('pending');
 
-    // Dialog & actions state
     const [actionItem, setActionItem] = useState(null);
     const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
     const [approveDialogOpen, setApproveDialogOpen] = useState(false);
     const [processing, setProcessing] = useState(false);
+    const [rejectComment, setRejectComment] = useState('');
 
     const [viewerOpen, setViewerOpen] = useState(false);
     const [viewerItem, setViewerItem] = useState(null);
@@ -277,10 +277,15 @@ const AdminMaterialsPageContent = () => {
 
         setProcessing(true);
         try {
+            const payload = { action: actionType, postDescription: actionItem.postDescription };
+            if (actionType === 'reject' && rejectComment.trim()) {
+                payload.comment = rejectComment.trim();
+            }
+
             const response = await fetch(`/api/materials/moderation/${actionItem.materialId}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: actionType, postDescription: actionItem.postDescription })
+                body: JSON.stringify(payload)
             });
 
             const data = await response.json();
@@ -347,6 +352,7 @@ const AdminMaterialsPageContent = () => {
 
     const handleRejectClick = useCallback((m) => {
         setActionItem(m);
+        setRejectComment('');
         setRejectDialogOpen(true);
     }, []);
 
@@ -426,11 +432,10 @@ const AdminMaterialsPageContent = () => {
                         <button
                             key={label}
                             onClick={() => setStateFilter(value)}
-                            className={`px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 border ${
-                                stateFilter === value
+                            className={`px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 border ${stateFilter === value
                                     ? activeClass
                                     : 'bg-transparent text-gray-400 border-gray-600 hover:bg-gray-800 hover:text-gray-300'
-                            }`}
+                                }`}
                         >
                             {label}
                         </button>
@@ -530,6 +535,18 @@ const AdminMaterialsPageContent = () => {
                                     <li>The uploader will receive an email notification.</li>
                                     <li>This action cannot be undone.</li>
                                 </ul>
+                                <div className="space-y-2 pt-2">
+                                    <label htmlFor="rejectComment" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                        Optional Comment (included in email)
+                                    </label>
+                                    <Input
+                                        id="rejectComment"
+                                        placeholder="Reason for rejection..."
+                                        value={rejectComment}
+                                        onChange={(e) => setRejectComment(e.target.value)}
+                                        className="bg-white dark:bg-gray-800"
+                                    />
+                                </div>
                             </div>
                         </AlertDialogDescription>
                     </AlertDialogHeader>

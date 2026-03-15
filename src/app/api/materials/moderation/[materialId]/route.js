@@ -21,7 +21,7 @@ export async function PATCH(req, { params }) {
 
         const { materialId } = await params;
         const body = await req.json();
-        const { action, postDescription } = body;
+        const { action, postDescription, comment } = body;
 
         if (!['approve', 'reject', 'save'].includes(action)) {
             return NextResponse.json({ error: 'Invalid action. Must be approve, reject, or save.' }, { status: 400 });
@@ -111,7 +111,7 @@ export async function PATCH(req, { params }) {
                 moderatorEmail,
                 moderatedAt: epoch,
                 decisionState: 'REJECTED',
-                comment: 'Rejected via moderation dashboard'
+                comment: comment?.trim() ? comment.trim() : 'Rejected via moderation dashboard'
             }).onConflictDoNothing();
 
             // 4. Send rejection email
@@ -121,7 +121,7 @@ export async function PATCH(req, { params }) {
                         from: 'Boracle <swap@notifications.boracle.app>',
                         to: material.uEmail,
                         subject: 'Notice regarding your material upload',
-                        html: materialRejectedTemplate(material.courseCode, material.postDescription)
+                        html: materialRejectedTemplate(material.courseCode, material.postDescription, comment?.trim() || null)
                     });
 
                     if (error) {

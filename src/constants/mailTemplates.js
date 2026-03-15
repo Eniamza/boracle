@@ -128,7 +128,7 @@ export const materialApprovedTemplate = (courseCode, description) => {
   `;
 };
 
-export const materialRejectedTemplate = (courseCode, description) => {
+export const materialRejectedTemplate = (courseCode, description, comment = null) => {
   return `
     <div style="font-family: 'Segoe UI', 'Inter', -apple-system, sans-serif; max-width: 560px; margin: 40px auto; background-color: #020817; border-radius: 16px; overflow: hidden;">
       <div style="background: linear-gradient(135deg, #3f1d1d 0%, #1a0f0f 100%); padding: 40px 40px 32px; text-align: center;">
@@ -146,6 +146,12 @@ export const materialRejectedTemplate = (courseCode, description) => {
         <div style="display: inline-block; background-color: #0f172a; border: 1px solid #1e293b; border-radius: 10px; padding: 14px 24px; margin-bottom: 32px; text-align: left; max-width: 100%;">
           <span style="color: #94a3b8; font-size: 14px; text-decoration: line-through; opacity: 0.7;">"${description}"</span>
         </div>
+        ${comment ? `
+        <div style="background-color: rgba(248, 113, 113, 0.1); border-left: 4px solid #f87171; padding: 16px 20px; border-radius: 0 8px 8px 0; margin-bottom: 32px; text-align: left;">
+          <h4 style="color: #f87171; font-size: 14px; font-weight: 600; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">Moderator Comment</h4>
+          <p style="color: #e2e8f0; font-size: 15px; line-height: 1.6; margin: 0;">${comment}</p>
+        </div>
+        ` : ''}
         <p style="color: #94a3b8; font-size: 14px; line-height: 1.5; margin: 0;">
           If you believe this was a mistake, or you'd like to share an updated version, feel free to try sharing again!
         </p>
