@@ -6,7 +6,7 @@ import {
     CardContent,
     CardHeader,
     CardTitle,
-  } from "@/components/ui/card"
+} from "@/components/ui/card"
 import { Loader2 } from 'lucide-react';
 
 export default function Stats() {
@@ -60,25 +60,25 @@ export default function Stats() {
     return (
         <>
             <div className="flex flex-wrap justify-center gap-6">
-                <StatCard 
-                    title="Swaps Posted" 
-                    value={stats.totalSwaps} 
+                <StatCard
+                    title="Swaps Posted"
+                    value={stats.totalSwaps}
                     isLoading={loading}
                 />
-                
-                <StatCard 
+
+                {/* <StatCard 
                     title="Faculty Reviews" 
                     value={stats.totalReviews} 
                     isLoading={loading}
-                />
-                
-                <StatCard 
-                    title="Resources Submitted" 
-                    value={stats.totalMaterials} 
+                /> */}
+
+                <StatCard
+                    title="Resources Submitted"
+                    value={stats.totalMaterials}
                     isLoading={loading}
                 />
             </div>
-            
+
             {error && (
                 <div className="text-center mt-4 text-red-600 dark:text-red-400">
                     Error loading stats: {error}
