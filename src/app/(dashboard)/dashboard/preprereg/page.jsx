@@ -52,6 +52,7 @@ const PreRegistrationPage = () => {
   const facultyDropdownRef = useRef(null);
   const facultyListRef = useRef(null);
   const filterDropdownRef = useRef(null);
+  const facultyTooltipTimeoutRef = useRef(null);
 
 
 
@@ -962,6 +963,10 @@ const PreRegistrationPage = () => {
                         <span
                           className="cursor-pointer font-medium text-blue-600 dark:text-blue-400 underline decoration-dashed decoration-blue-300 dark:decoration-blue-700 hover:decoration-blue-600 dark:hover:decoration-blue-400 underline-offset-4 transition-colors"
                           onMouseEnter={(e) => {
+                            if (facultyTooltipTimeoutRef.current) {
+                              clearTimeout(facultyTooltipTimeoutRef.current);
+                              facultyTooltipTimeoutRef.current = null;
+                            }
                             if (course.faculties) {
                               const rect = e.currentTarget.getBoundingClientRect();
                               setFacultyImageError(false);
@@ -975,7 +980,11 @@ const PreRegistrationPage = () => {
                               });
                             }
                           }}
-                          onMouseLeave={() => setHoveredFaculty(null)}
+                          onMouseLeave={() => {
+                            facultyTooltipTimeoutRef.current = setTimeout(() => {
+                              setHoveredFaculty(null);
+                            }, 100);
+                          }}
                         >
                           {course.faculties || 'TBA'}
                         </span>
@@ -1325,7 +1334,18 @@ const PreRegistrationPage = () => {
       {
         hoveredFaculty && (
           <div
-            className="fixed z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg p-4 shadow-xl w-80 pointer-events-none"
+            className="fixed z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg p-4 shadow-xl w-80"
+            onMouseEnter={() => {
+              if (facultyTooltipTimeoutRef.current) {
+                clearTimeout(facultyTooltipTimeoutRef.current);
+                facultyTooltipTimeoutRef.current = null;
+              }
+            }}
+            onMouseLeave={() => {
+              facultyTooltipTimeoutRef.current = setTimeout(() => {
+                setHoveredFaculty(null);
+              }, 100);
+            }}
             style={{
               left: `${Math.min(facultyTooltipPosition.x, window.innerWidth - 340)}px`,
               top: `${facultyTooltipPosition.y}px`
