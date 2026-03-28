@@ -1,6 +1,6 @@
 const globalInfo = {
     semester: "SPRING2026",
-    isRamadan: true
+    isRamadan: false
 }
 
 export default globalInfo;
