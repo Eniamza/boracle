@@ -4,6 +4,7 @@ import { Calendar, Download, RefreshCw, AlertCircle, Copy, Check, Save, Info } f
 import { useParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import RoutineView from '@/components/routine/RoutineView';
+import { fetchCourses } from '@/lib/api/courseFetcher';
 import { copyToClipboard } from '@/lib/utils';
 import { exportRoutineToPNG } from '@/components/routine/ExportRoutinePNG';
 import { toast } from 'sonner';
@@ -75,8 +76,7 @@ const SharedRoutinePage = () => {
             // Decode routineStr and fetch course data
             const sectionIds = JSON.parse(atob(data.routine.routineStr));
 
-            const coursesResponse = await fetch('https://usis-cdn.eniamza.com/connect.json');
-            const allCourses = await coursesResponse.json();
+            const allCourses = await fetchCourses(data.routine.semester);
 
             const matchedCourses = allCourses
                 .filter(course => sectionIds.includes(course.sectionId))

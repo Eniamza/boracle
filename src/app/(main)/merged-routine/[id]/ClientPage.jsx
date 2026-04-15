@@ -6,6 +6,7 @@ import MergedRoutineGrid from '@/components/routine/MergedRoutineGrid';
 import { useParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { exportRoutineToPNG } from '@/components/routine/ExportRoutinePNG';
+import { fetchCourses } from '@/lib/api/courseFetcher';
 import { getRoutineTimings, REGULAR_TIMINGS } from '@/constants/routineTimings';
 import { copyToClipboard } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -148,9 +149,8 @@ const SharedMergedRoutinePage = () => {
 
             const allSectionIds = routineData.flatMap(item => item.sectionIds || []);
 
-            // Fetch course data from the CDN
-            const coursesResponse = await fetch('https://usis-cdn.eniamza.com/connect.json');
-            const allCourses = await coursesResponse.json();
+            // Fetch course data dynamically supporting past semesters
+            const allCourses = await fetchCourses(data.routine.semester);
 
             // Filter and attach friend info + faculty enrichment
             const matchedCourses = allCourses

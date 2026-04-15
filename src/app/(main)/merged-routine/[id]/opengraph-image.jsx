@@ -1,5 +1,6 @@
 import { ImageResponse } from 'next/og';
 import { getCachedMergedRoutine } from '@/lib/api/routineFetcher';
+import { fetchCourses } from '@/lib/api/courseFetcher';
 
 // Image metadata
 export const alt = 'Merged Routine View';
@@ -54,7 +55,7 @@ export default async function Image({ params }) {
     let allCourses = [];
     if (allSectionIds.length > 0) {
         try {
-            const rawCourses = await fetch('https://usis-cdn.eniamza.com/connect.json').then(res => res.json());
+            const rawCourses = await fetchCourses(routine.semester);
             allCourses = rawCourses.filter(course => allSectionIds.includes(course.sectionId));
         } catch (e) {
             allCourses = [];

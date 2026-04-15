@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { toast } from 'sonner';
 import { exportRoutineToPNG } from '@/components/routine/ExportRoutinePNG';
 import { getRoutineTimings, REGULAR_TIMINGS } from '@/constants/routineTimings';
+import { fetchCourses } from '@/lib/api/courseFetcher';
 import ShareModal from '@/components/savedRoutine/ShareModal';
 import RoutineView from '@/components/routine/RoutineView';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -780,9 +781,8 @@ const SavedRoutinesPage = () => {
       // Decode the routine string to get section IDs
       const sectionIds = JSON.parse(atob(routine.routineStr));
 
-      // Fetch course data from the API
-      const response = await fetch('https://usis-cdn.eniamza.com/connect.json');
-      const allCourses = await response.json();
+      // Fetch course data dynamically supporting past semesters
+      const allCourses = await fetchCourses(routine.semester);
 
       // Filter courses that match the section IDs in the routine
       const matchedCourses = allCourses.filter(course =>
@@ -816,9 +816,8 @@ const SavedRoutinesPage = () => {
       // Decode the routine string to get section IDs
       const sectionIds = JSON.parse(atob(routine.routineStr));
 
-      // Fetch course data from the API
-      const response = await fetch('https://usis-cdn.eniamza.com/connect.json');
-      const allCourses = await response.json();
+      // Fetch course data dynamically supporting past semesters
+      const allCourses = await fetchCourses(routine.semester);
 
       // Filter courses that match the section IDs
       const matchedCourses = allCourses.filter(course =>
@@ -857,9 +856,8 @@ const SavedRoutinesPage = () => {
 
       const allSectionIds = data.flatMap(item => item.sectionIds || []);
 
-      // Fetch course data from the API
-      const response = await fetch('https://usis-cdn.eniamza.com/connect.json');
-      const allCourses = await response.json();
+      // Fetch course data dynamically supporting past semesters
+      const allCourses = await fetchCourses(routine.semester);
 
       // Filter courses that match the section IDs and attach friend info
       const matchedCourses = allCourses
