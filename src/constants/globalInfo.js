@@ -1,5 +1,5 @@
 const globalInfo = {
-    semester: "SPRING2026",
+    semester: "SUMMER2026",
     isRamadan: false
 }
 
