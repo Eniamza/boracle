@@ -1,6 +1,6 @@
 // API for listing all users - admin only
 import { auth } from "@/auth";
-import { db, eq, asc } from "@/lib/db";
+import { db, eq, asc, desc } from "@/lib/db";
 import { userinfo } from "@/lib/db/schema";
 import { NextResponse } from "next/server";
 
@@ -21,7 +21,7 @@ export async function GET(req) {
   const users = await db
     .select()
     .from(userinfo)
-    .orderBy(asc(userinfo.userName));
+    .orderBy(desc(userinfo.createdAt));
 
   return NextResponse.json(users);
 }
