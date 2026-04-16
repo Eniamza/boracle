@@ -4,11 +4,11 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { 
-  Loader2, 
-  Search, 
-  Trash2, 
-  Users, 
+import {
+  Loader2,
+  Search,
+  Trash2,
+  Users,
   Shield,
   AlertCircle,
   UserX
@@ -53,7 +53,7 @@ const ManageUsersPage = () => {
       setFilteredUsers(users);
     } else {
       const query = searchQuery.toLowerCase();
-      const filtered = users.filter(user => 
+      const filtered = users.filter(user =>
         user.email?.toLowerCase().includes(query) ||
         user.username?.toLowerCase().includes(query) ||
         user.userid?.toLowerCase().includes(query)
@@ -66,7 +66,7 @@ const ManageUsersPage = () => {
     try {
       setLoading(true);
       const response = await fetch('/api/admin/users');
-      
+
       if (!response.ok) {
         if (response.status === 401) {
           toast.error('Unauthorized: Admin access required');
@@ -120,7 +120,7 @@ const ManageUsersPage = () => {
       }
 
       toast.success(`User ${userToDelete.email} deleted successfully`);
-      
+
       // Remove the deleted user from the list
       setUsers(users.filter(u => u.email !== userToDelete.email));
       setFilteredUsers(filteredUsers.filter(u => u.email !== userToDelete.email));
@@ -228,8 +228,8 @@ const ManageUsersPage = () => {
                 {searchQuery ? 'No users found' : 'No users registered'}
               </h3>
               <p className="text-gray-600 dark:text-gray-400">
-                {searchQuery 
-                  ? 'Try adjusting your search query' 
+                {searchQuery
+                  ? 'Try adjusting your search query'
                   : 'Users will appear here once they register'}
               </p>
             </CardContent>
@@ -245,11 +245,11 @@ const ManageUsersPage = () => {
                         User Info
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        User ID
+                        User Role
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                         Role
-                      </th>
+                      </th> */}
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                         Created
                       </th>
@@ -260,14 +260,14 @@ const ManageUsersPage = () => {
                   </thead>
                   <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
                     {filteredUsers.map((user) => (
-                      <tr 
-                        key={user.email} 
+                      <tr
+                        key={user.email}
                         className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                       >
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div>
                             <div className="text-sm font-medium text-gray-900 dark:text-white">
-                              {user.username || 'N/A'}
+                              {user.userName || 'N/A'}
                             </div>
                             <div className="text-sm text-gray-500 dark:text-gray-400">
                               {user.email}
@@ -276,21 +276,20 @@ const ManageUsersPage = () => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className="text-sm text-gray-900 dark:text-white font-mono">
-                            {user.userid || 'N/A'}
+                            {user.userRole || 'N/A'}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            user.userrole === 'admin' 
-                              ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-300'
-                              : 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300'
-                          }`}>
+                        {/* <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${user.userrole === 'admin'
+                            ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-300'
+                            : 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300'
+                            }`}>
                             {user.userrole || 'user'}
                           </span>
-                        </td>
+                        </td> */}
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                          {user.createdat 
-                            ? new Date(user.createdat).toLocaleDateString()
+                          {user.createdAt
+                            ? new Date(user.createdAt * 1000).toLocaleDateString()
                             : 'N/A'
                           }
                         </td>
