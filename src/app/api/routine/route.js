@@ -68,7 +68,7 @@ export async function POST(request) {
       );
     }
 
-    const { routineStr, email, routineName } = await request.json();
+    const { routineStr, email, routineName, semester } = await request.json();
 
     if (email !== session.user.email) {
       return NextResponse.json(
@@ -84,7 +84,7 @@ export async function POST(request) {
       .values({
         routineStr: routineStr,
         email: session.user.email,
-        semester: globalInfo.semester,
+        semester: semester || globalInfo.semester,
         routineName: routineName || null,
         createdAt: getCurrentEpoch(),
       })

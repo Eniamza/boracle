@@ -12,6 +12,8 @@ import { useFaculty } from '@/app/contexts/FacultyContext';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { Skeleton } from '@/components/ui/skeleton';
 import SignInPrompt from '@/components/shared/SignInPrompt';
+import { fetchBackupIndex, normalizeSemester } from '@/lib/api/courseFetcher';
+import globalInfo from '@/constants/globalInfo';
 
 const PreRegistrationPage = () => {
   const { data: session } = useSession();
@@ -46,6 +48,9 @@ const PreRegistrationPage = () => {
   const isMobile = useIsMobile();
   const [mounted, setMounted] = useState(false);
   const [showSignInPrompt, setShowSignInPrompt] = useState(false);
+  const [selectedSemester, setSelectedSemester] = useState('current');
+  const [pastSemesters, setPastSemesters] = useState([]);
+  const [semesterDropdownOpen, setSemesterDropdownOpen] = useState(false);
   const observerRef = useRef();
   const lastCourseRef = useRef();
   const routineRef = useRef(null);
@@ -53,6 +58,7 @@ const PreRegistrationPage = () => {
   const facultyListRef = useRef(null);
   const filterDropdownRef = useRef(null);
   const facultyTooltipTimeoutRef = useRef(null);
+  const semesterDropdownRef = useRef(null);
 
 
 
@@ -98,45 +104,66 @@ const PreRegistrationPage = () => {
     return selectedCourses.reduce((sum, course) => sum + (course.courseCredit || 0), 0);
   }, [selectedCourses]);
 
-  // Fetch courses on mount
+  // Fetch backup index for semester dropdown
+  useEffect(() => {
+    const loadBackupIndex = async () => {
+      const backups = await fetchBackupIndex();
+      // Exclude the current semester
+      const past = backups.filter(b => !b.isCurrent);
+      setPastSemesters(past);
+    };
+    loadBackupIndex();
+  }, []);
+
+  // Sort helper for course data
+  const sortCourseData = (data) => {
+    const arr = Array.isArray(data) ? data : (data.sections || []);
+    arr.sort((a, b) => {
+      const codeA = a.courseCode || '';
+      const codeB = b.courseCode || '';
+      const sectionA = a.sectionName || '';
+      const sectionB = b.sectionName || '';
+      if (codeA < codeB) return -1;
+      if (codeA > codeB) return 1;
+      if (sectionA < sectionB) return -1;
+      if (sectionA > sectionB) return 1;
+      return 0;
+    });
+    return arr;
+  };
+
+  // Fetch courses based on selected semester
   useEffect(() => {
     const fetchCourses = async () => {
+      setSelectedCourses([]);
+      setLoading(true);
       try {
-        const response = await fetch('https://usis-cdn.eniamza.com/connect.json');
-        const data = await response.json();
-        // Sort courses by course code and section name
-        data.sort((a, b) => {
-          const codeA = a.courseCode || '';
-          const codeB = b.courseCode || '';
-          const sectionA = a.sectionName || '';
-          const sectionB = b.sectionName || '';
-
-          if (codeA < codeB) return -1;
-          if (codeA > codeB) return 1;
-          if (sectionA < sectionB) return -1;
-          if (sectionA > sectionB) return 1;
-          return 0;
-        });
-
-        // Set courses immediately so UI loads
-        setCourses(data);
-        setLoading(false);
-
-        console.log(data);
-
-
+        if (selectedSemester === 'current') {
+          const response = await fetch('https://usis-cdn.eniamza.com/connect.json');
+          const data = await response.json();
+          setCourses(sortCourseData(data));
+        } else {
+          // Find the backup entry for the selected semester
+          const backup = pastSemesters.find(b => b.semester === selectedSemester);
+          if (backup) {
+            const response = await fetch(backup.cdnLink);
+            const data = await response.json();
+            setCourses(sortCourseData(data));
+          }
+        }
       } catch (error) {
         console.error('Error fetching courses:', error);
+      } finally {
         setLoading(false);
       }
     };
     fetchCourses();
-  }, []);
+  }, [selectedSemester, pastSemesters]);
 
   // Handle Mercure Real-time Seat Updates
   useEffect(() => {
-    // Only connect if we have courses loaded
-    if (courses.length === 0) return;
+    // Only connect Mercure for the current (live) semester
+    if (courses.length === 0 || selectedSemester !== 'current') return;
 
     const url = new URL('https://mercure.eniamza.com/.well-known/mercure');
     // Using a general topic or specific to pre-reg seats
@@ -224,7 +251,7 @@ const PreRegistrationPage = () => {
       eventSource.close();
       clearInterval(flushInterval);
     };
-  }, [courses.length > 0]); // Dependency on the fact we have loaded courses at least once
+  }, [courses.length > 0, selectedSemester]); // Reconnect when semester changes
 
   // Debounce search term
   useEffect(() => {
@@ -363,6 +390,9 @@ const PreRegistrationPage = () => {
       if (filterDropdownRef.current && !filterDropdownRef.current.contains(event.target)) {
         setFilterDropdownOpen(false);
       }
+      if (semesterDropdownRef.current && !semesterDropdownRef.current.contains(event.target)) {
+        setSemesterDropdownOpen(false);
+      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -499,7 +529,8 @@ const PreRegistrationPage = () => {
         },
         body: JSON.stringify({
           routineStr,
-          email: session.user.email
+          email: session.user.email,
+          semester: selectedSemester === 'current' ? globalInfo.semester : normalizeSemester(selectedSemester)
         }),
       });
 
@@ -608,6 +639,78 @@ const PreRegistrationPage = () => {
 
           {/* Search Bar */}
           <div className="flex gap-2">
+            {/* Semester Switcher Dropdown */}
+            <div className="relative" ref={semesterDropdownRef}>
+              <button
+                onClick={() => setSemesterDropdownOpen(!semesterDropdownOpen)}
+                className={`h-[50px] px-4 rounded-lg flex items-center gap-2 transition-colors text-sm font-medium whitespace-nowrap border ${
+                  selectedSemester === 'current'
+                    ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300'
+                    : 'bg-amber-50 dark:bg-amber-900/20 border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300'
+                }`}
+              >
+                <Calendar className="w-4 h-4" />
+                <span className="hidden sm:inline">
+                  {selectedSemester === 'current'
+                    ? `Current (${globalInfo.semester})`
+                    : selectedSemester.replace(/([A-Z])/g, ' $1').trim()}
+                </span>
+                <ChevronDown className={`w-4 h-4 transition-transform ${semesterDropdownOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {semesterDropdownOpen && (
+                <div className="absolute left-0 mt-2 w-56 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl z-50 overflow-hidden">
+                  {/* Current Semester Option */}
+                  <button
+                    onClick={() => {
+                      setSelectedSemester('current');
+                      setSemesterDropdownOpen(false);
+                    }}
+                    className={`w-full flex items-center gap-3 px-4 py-3 text-sm transition-colors ${
+                      selectedSemester === 'current'
+                        ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 font-medium'
+                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
+                    }`}
+                  >
+                    <div className={`w-2 h-2 rounded-full ${selectedSemester === 'current' ? 'bg-emerald-500 animate-pulse' : 'bg-gray-300 dark:bg-gray-600'}`} />
+                    <div className="flex flex-col items-start">
+                      <span>{globalInfo.semester}</span>
+                      <span className="text-xs text-emerald-600 dark:text-emerald-400">Live &middot; Current Semester</span>
+                    </div>
+                  </button>
+
+                  {/* Divider */}
+                  {pastSemesters.length > 0 && (
+                    <div className="border-t border-gray-200 dark:border-gray-700">
+                      <div className="px-4 py-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider bg-gray-50 dark:bg-gray-800/50">
+                        Past Semesters
+                      </div>
+                      {pastSemesters.map((backup) => (
+                        <button
+                          key={backup.semester}
+                          onClick={() => {
+                            setSelectedSemester(backup.semester);
+                            setSemesterDropdownOpen(false);
+                          }}
+                          className={`w-full flex items-center gap-3 px-4 py-3 text-sm transition-colors ${
+                            selectedSemester === backup.semester
+                              ? 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 font-medium'
+                              : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
+                          }`}
+                        >
+                          <div className={`w-2 h-2 rounded-full ${selectedSemester === backup.semester ? 'bg-amber-500' : 'bg-gray-300 dark:bg-gray-600'}`} />
+                          <div className="flex flex-col items-start">
+                            <span>{backup.semester.replace(/([A-Z])/g, ' $1').trim()}</span>
+                            <span className="text-xs text-gray-500 dark:text-gray-400">{backup.totalSections} sections</span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-400 w-5 h-5" />
               <input
@@ -621,10 +724,10 @@ const PreRegistrationPage = () => {
 
             <button
               onClick={() => setShowFilterModal(true)}
-              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center gap-2 transition-colors"
+              className="px-3 sm:px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center gap-2 transition-colors"
             >
               <Filter className="w-5 h-5" />
-              Filters
+              <span className="hidden sm:inline">Filters</span>
             </button>
 
             {/* Active Filters Dropdown - Shows when filters are applied */}

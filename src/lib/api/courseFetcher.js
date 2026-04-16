@@ -21,6 +21,23 @@ export const normalizeSemester = (semester) => {
  * Fetches course data. If a targetSemester is provided and it differs from the current global semester,
  * it attempts to fetch from the backup CDN. Otherwise, it defaults to the current CDN URL.
  */
+/**
+ * Fetches the backup index from the CDN and returns the backups array.
+ */
+export const fetchBackupIndex = async () => {
+  try {
+    const response = await fetch(BACKUP_INDEX_URL);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch backup index: ${response.status}`);
+    }
+    const data = await response.json();
+    return data.backups || [];
+  } catch (error) {
+    console.error('Error fetching backup index:', error);
+    return [];
+  }
+};
+
 export const fetchCourses = async (targetSemester) => {
   try {
     const normalizedTarget = normalizeSemester(targetSemester);
