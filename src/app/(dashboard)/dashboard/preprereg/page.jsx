@@ -59,6 +59,7 @@ const PreRegistrationPage = () => {
   const filterDropdownRef = useRef(null);
   const facultyTooltipTimeoutRef = useRef(null);
   const semesterDropdownRef = useRef(null);
+  const prevSemesterRef = useRef(selectedSemester);
 
 
 
@@ -135,7 +136,12 @@ const PreRegistrationPage = () => {
   // Fetch courses based on selected semester
   useEffect(() => {
     const fetchCourses = async () => {
-      setSelectedCourses([]);
+      // Only clear selected courses when the user actively switches semesters,
+      // not on initial mount or when pastSemesters finishes loading.
+      if (prevSemesterRef.current !== selectedSemester) {
+        setSelectedCourses([]);
+        prevSemesterRef.current = selectedSemester;
+      }
       setLoading(true);
       try {
         if (selectedSemester === 'current') {
@@ -159,6 +165,7 @@ const PreRegistrationPage = () => {
     };
     fetchCourses();
   }, [selectedSemester, pastSemesters]);
+
 
   // Handle Mercure Real-time Seat Updates
   useEffect(() => {
