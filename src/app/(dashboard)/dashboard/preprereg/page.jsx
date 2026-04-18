@@ -105,6 +105,15 @@ const PreRegistrationPage = () => {
     return selectedCourses.reduce((sum, course) => sum + (course.courseCredit || 0), 0);
   }, [selectedCourses]);
 
+  // Build a live seat lookup from Mercure-updated courses so pills stay current
+  const liveSeatMap = useMemo(() => {
+    const map = {};
+    courses.forEach(c => {
+      map[c.sectionId] = { consumedSeat: c.consumedSeat, capacity: c.capacity };
+    });
+    return map;
+  }, [courses]);
+
   // Fetch backup index for semester dropdown
   useEffect(() => {
     const loadBackupIndex = async () => {
@@ -250,6 +259,22 @@ const PreRegistrationPage = () => {
         }
 
         return prevCourses;
+      });
+
+      // Sync seat updates to selectedCourses (localStorage) so data persists across reloads
+      setSelectedCourses(prev => {
+        let changed = false;
+        const next = prev.map(course => {
+          if (currentUpdates[course.sectionId] !== undefined) {
+            const newConsumedSeat = currentUpdates[course.sectionId];
+            if (course.consumedSeat !== newConsumedSeat) {
+              changed = true;
+              return { ...course, consumedSeat: newConsumedSeat };
+            }
+          }
+          return course;
+        });
+        return changed ? next : prev;
       });
 
     }, 2000);
@@ -863,39 +888,65 @@ const PreRegistrationPage = () => {
                 </button>
                 <div className={`overflow-hidden transition-all duration-200 ease-in-out ${showSelectedDrawer ? 'max-h-60 opacity-100 mt-2' : 'max-h-0 opacity-0'}`}>
                   <div className="flex flex-wrap gap-2">
-                    {selectedCourses.map(course => (
-                      <span
-                        key={course.sectionId}
-                        className="px-3 py-1.5 bg-blue-100 dark:bg-blue-500/20 border border-blue-300 dark:border-blue-500/50 rounded-full text-sm flex items-center gap-2 text-blue-700 dark:text-blue-300"
-                      >
-                        {course.courseCode}-[{course.sectionName}]
-                        <button
-                          onClick={() => addToRoutine(course)}
-                          className="hover:text-blue-500 dark:hover:text-blue-200 transition-colors"
+                    {selectedCourses.map(course => {
+                      const live = liveSeatMap[course.sectionId];
+                      const consumed = live ? live.consumedSeat : course.consumedSeat;
+                      const capacity = live ? live.capacity : course.capacity;
+                      const isFilled = consumed != null && capacity != null && consumed >= capacity;
+                      return (
+                        <span
+                          key={course.sectionId}
+                          className={`px-3 py-1.5 rounded-full text-sm flex items-center gap-2 border transition-colors ${
+                            isFilled
+                              ? 'bg-red-100 dark:bg-red-500/20 border-red-300 dark:border-red-500/50 text-red-700 dark:text-red-300'
+                              : 'bg-blue-100 dark:bg-blue-500/20 border-blue-300 dark:border-blue-500/50 text-blue-700 dark:text-blue-300'
+                          }`}
                         >
-                          <X className="w-3 h-3" />
-                        </button>
-                      </span>
-                    ))}
+                          {course.courseCode}-[{course.sectionName}]
+                          <span className={`text-xs font-medium ${isFilled ? 'text-red-500 dark:text-red-400' : 'text-blue-500 dark:text-blue-400'}`}>
+                            {consumed ?? '?'}/{capacity ?? '?'}
+                          </span>
+                          <button
+                            onClick={() => addToRoutine(course)}
+                            className={`transition-colors ${isFilled ? 'hover:text-red-500 dark:hover:text-red-200' : 'hover:text-blue-500 dark:hover:text-blue-200'}`}
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </span>
+                      );
+                    })}
                   </div>
                 </div>
               </div>
             ) : (
               <div className="flex flex-wrap gap-2 mt-3">
-                {selectedCourses.map(course => (
-                  <span
-                    key={course.sectionId}
-                    className="px-3 py-1.5 bg-blue-100 dark:bg-blue-500/20 border border-blue-300 dark:border-blue-500/50 rounded-full text-sm flex items-center gap-2 text-blue-700 dark:text-blue-300"
-                  >
-                    {course.courseCode}-[{course.sectionName}]-{course.faculties || 'TBA'}
-                    <button
-                      onClick={() => addToRoutine(course)}
-                      className="hover:text-blue-500 dark:hover:text-blue-200 transition-colors"
+                {selectedCourses.map(course => {
+                  const live = liveSeatMap[course.sectionId];
+                  const consumed = live ? live.consumedSeat : course.consumedSeat;
+                  const capacity = live ? live.capacity : course.capacity;
+                  const isFilled = consumed != null && capacity != null && consumed >= capacity;
+                  return (
+                    <span
+                      key={course.sectionId}
+                      className={`px-3 py-1.5 rounded-full text-sm flex items-center gap-2 border transition-colors ${
+                        isFilled
+                          ? 'bg-red-100 dark:bg-red-500/20 border-red-300 dark:border-red-500/50 text-red-700 dark:text-red-300'
+                          : 'bg-blue-100 dark:bg-blue-500/20 border-blue-300 dark:border-blue-500/50 text-blue-700 dark:text-blue-300'
+                      }`}
                     >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </span>
-                ))}
+                      {course.courseCode}-[{course.sectionName}]-{course.faculties || 'TBA'}
+                      <span className={`text-xs font-medium ${isFilled ? 'text-red-500 dark:text-red-400' : 'text-blue-500 dark:text-blue-400'}`}>
+                        {consumed ?? '?'}/{capacity ?? '?'}
+                      </span>
+                      <button
+                        onClick={() => addToRoutine(course)}
+                        className={`transition-colors ${isFilled ? 'hover:text-red-500 dark:hover:text-red-200' : 'hover:text-blue-500 dark:hover:text-blue-200'}`}
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  );
+                })}
               </div>
             )
           )}
