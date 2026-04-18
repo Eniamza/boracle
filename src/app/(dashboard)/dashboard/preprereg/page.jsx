@@ -675,11 +675,10 @@ const PreRegistrationPage = () => {
             <div className="relative" ref={semesterDropdownRef}>
               <button
                 onClick={() => setSemesterDropdownOpen(!semesterDropdownOpen)}
-                className={`h-[50px] px-4 rounded-lg flex items-center gap-2 transition-colors text-sm font-medium whitespace-nowrap border ${
-                  selectedSemester === 'current'
-                    ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300'
-                    : 'bg-amber-50 dark:bg-amber-900/20 border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300'
-                }`}
+                className={`h-[50px] px-4 rounded-lg flex items-center gap-2 transition-colors text-sm font-medium whitespace-nowrap border ${selectedSemester === 'current'
+                  ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300'
+                  : 'bg-amber-50 dark:bg-amber-900/20 border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300'
+                  }`}
               >
                 <Calendar className="w-4 h-4" />
                 <span className="hidden sm:inline">
@@ -698,11 +697,10 @@ const PreRegistrationPage = () => {
                       setSelectedSemester('current');
                       setSemesterDropdownOpen(false);
                     }}
-                    className={`w-full flex items-center gap-3 px-4 py-3 text-sm transition-colors ${
-                      selectedSemester === 'current'
-                        ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 font-medium'
-                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
-                    }`}
+                    className={`w-full flex items-center gap-3 px-4 py-3 text-sm transition-colors ${selectedSemester === 'current'
+                      ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 font-medium'
+                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
+                      }`}
                   >
                     <div className={`w-2 h-2 rounded-full ${selectedSemester === 'current' ? 'bg-emerald-500 animate-pulse' : 'bg-gray-300 dark:bg-gray-600'}`} />
                     <div className="flex flex-col items-start">
@@ -724,11 +722,10 @@ const PreRegistrationPage = () => {
                             setSelectedSemester(backup.semester);
                             setSemesterDropdownOpen(false);
                           }}
-                          className={`w-full flex items-center gap-3 px-4 py-3 text-sm transition-colors ${
-                            selectedSemester === backup.semester
-                              ? 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 font-medium'
-                              : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
-                          }`}
+                          className={`w-full flex items-center gap-3 px-4 py-3 text-sm transition-colors ${selectedSemester === backup.semester
+                            ? 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 font-medium'
+                            : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
+                            }`}
                         >
                           <div className={`w-2 h-2 rounded-full ${selectedSemester === backup.semester ? 'bg-amber-500' : 'bg-gray-300 dark:bg-gray-600'}`} />
                           <div className="flex flex-col items-start">
@@ -896,11 +893,10 @@ const PreRegistrationPage = () => {
                       return (
                         <span
                           key={course.sectionId}
-                          className={`px-3 py-1.5 rounded-full text-sm flex items-center gap-2 border transition-colors ${
-                            isFilled
-                              ? 'bg-red-100 dark:bg-red-500/20 border-red-300 dark:border-red-500/50 text-red-700 dark:text-red-300'
-                              : 'bg-blue-100 dark:bg-blue-500/20 border-blue-300 dark:border-blue-500/50 text-blue-700 dark:text-blue-300'
-                          }`}
+                          className={`px-3 py-1.5 rounded-full text-sm flex items-center gap-2 border transition-colors ${isFilled
+                            ? 'bg-red-100 dark:bg-red-500/20 border-red-300 dark:border-red-500/50 text-red-700 dark:text-red-300'
+                            : 'bg-blue-100 dark:bg-blue-500/20 border-blue-300 dark:border-blue-500/50 text-blue-700 dark:text-blue-300'
+                            }`}
                         >
                           {course.courseCode}-[{course.sectionName}]
                           <span className={`text-xs font-medium ${isFilled ? 'text-red-500 dark:text-red-400' : 'text-blue-500 dark:text-blue-400'}`}>
@@ -928,11 +924,10 @@ const PreRegistrationPage = () => {
                   return (
                     <span
                       key={course.sectionId}
-                      className={`px-3 py-1.5 rounded-full text-sm flex items-center gap-2 border transition-colors ${
-                        isFilled
-                          ? 'bg-red-100 dark:bg-red-500/20 border-red-300 dark:border-red-500/50 text-red-700 dark:text-red-300'
-                          : 'bg-blue-100 dark:bg-blue-500/20 border-blue-300 dark:border-blue-500/50 text-blue-700 dark:text-blue-300'
-                      }`}
+                      className={`px-3 py-1.5 rounded-full text-sm flex items-center gap-2 border transition-colors ${isFilled
+                        ? 'bg-red-100 dark:bg-red-500/20 border-red-300 dark:border-red-500/50 text-red-700 dark:text-red-300'
+                        : 'bg-blue-100 dark:bg-blue-500/20 border-blue-300 dark:border-blue-500/50 text-blue-700 dark:text-blue-300'
+                        }`}
                     >
                       {course.courseCode}-[{course.sectionName}]-{course.faculties || 'TBA'}
                       <span className={`text-xs font-medium ${isFilled ? 'text-red-500 dark:text-red-400' : 'text-blue-500 dark:text-blue-400'}`}>
@@ -1162,9 +1157,19 @@ const PreRegistrationPage = () => {
                       </td>
                       <td className="py-3 px-2 text-xs whitespace-pre-line text-gray-700 dark:text-gray-300">
                         {formatSchedule(course.sectionSchedule?.classSchedules)}
+                        {course.roomName && (
+                          <div className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5 whitespace-pre-line">
+                            Room: {course.roomName.replace(/;/g, '\n')}
+                          </div>
+                        )}
                       </td>
                       <td className="py-3 px-2 text-xs whitespace-pre-line text-gray-700 dark:text-gray-300">
                         {course.labSchedules?.length > 0 ? formatSchedule(course.labSchedules) : 'N/A'}
+                        {course.labRoomName && (
+                          <div className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5 whitespace-pre-line">
+                            Room: {course.labRoomName.replace(/;/g, '\n')}
+                          </div>
+                        )}
                       </td>
                       <td className="py-3 px-2 text-xs text-gray-700 dark:text-gray-300">
                         {course.sectionSchedule?.finalExamDetail || 'TBA'}
