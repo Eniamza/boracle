@@ -3,7 +3,7 @@ import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cseCurriculum, getTotalCredits, prerequisiteOverrides } from "@/constants/cseCurriculum";
-import { CheckCircle2, Lock, Unlock, RefreshCw } from "lucide-react";
+import { CheckCircle2, ChevronDown, ChevronUp, Lock, Unlock, RefreshCw } from "lucide-react";
 
 const departments = [
     { code: "CSE", name: "Computer Science & Engineering" },
@@ -302,9 +302,7 @@ function SectionCourses({ section, completedCourses, highlightedCourseCode, onCo
     }
 
     if (error) {
-        return (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">Error loading course data: {error}</div>
-        );
+        return <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">Error loading course data: {error}</div>;
     }
 
     return (
@@ -366,13 +364,12 @@ function SectionCourses({ section, completedCourses, highlightedCourseCode, onCo
     );
 }
 
-//! MARK: Main Page
 export default function CourseProgressionPage() {
     const [selectedDept, setSelectedDept] = useState(null);
     const [showComingSoon, setShowComingSoon] = useState(false);
     const [completedCourses, setCompletedCourses] = useState([]);
     const [highlightedCourseCode, setHighlightedCourseCode] = useState(null);
-    const [showAvailableNow, setShowAvailableNow] = useState(true);
+    const [showProgressPanel, setShowProgressPanel] = useState(false);
     const [showResetConfirm, setShowResetConfirm] = useState(false);
 
     // Use CDN prerequisite graph to auto-mark prerequisite chains when selecting a course.
@@ -528,8 +525,12 @@ export default function CourseProgressionPage() {
         return total;
     }, 0);
 
+    const totalCredits = getTotalCredits();
+    const progressPercent = totalCredits > 0 ? Math.min(100, Math.round((totalCompletedCredits / totalCredits) * 100)) : 0;
+    const coursesLeft = Math.max(0, allSectionCourses.length - completedCourses.length);
+
     return (
-        <div className="min-h-screen py-12 pb-44 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-gray-50 via-white to-gray-100 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
+        <div className="min-h-screen py-12 pb-28 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-gray-50 via-white to-gray-100 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
             <div className="max-w-7xl mx-auto space-y-10">
                 <div className="text-center space-y-4">
                     <h1 className="text-4xl font-extrabold tracking-tight text-gray-900 dark:text-white sm:text-5xl">
@@ -539,9 +540,26 @@ export default function CourseProgressionPage() {
                         </span>
                     </h1>
                     <p className="text-lg text-gray-600 dark:text-gray-400">
-                        Click on available courses (yellow) to mark them as completed. Click on completed courses (green) to undo
-                        and automatically lock dependencies.
+                        Click any <span className="font-semibold text-yellow-600 dark:text-yellow-400">Available</span> course to
+                        mark it complete. Click a <span className="font-semibold text-green-600 dark:text-green-400">Completed</span>{" "}
+                        course to undo it; dependent courses will become <span className="font-semibold text-gray-500 dark:text-gray-300">Locked</span>{" "}
+                        again automatically.
                     </p>
+
+                    <div className="flex flex-wrap items-center justify-center gap-2 text-xs text-gray-700 dark:text-gray-300">
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-green-500/10 px-2.5 py-1">
+                            <span className="h-2 w-2 rounded-full bg-green-500" />
+                            Completed
+                        </span>
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-yellow-500/10 px-2.5 py-1">
+                            <span className="h-2 w-2 rounded-full bg-yellow-500" />
+                            Available
+                        </span>
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-500/10 px-2.5 py-1">
+                            <span className="h-2 w-2 rounded-full bg-gray-400" />
+                            Locked
+                        </span>
+                    </div>
                 </div>
 
                 {/* Department Selection */}
@@ -616,98 +634,135 @@ export default function CourseProgressionPage() {
                 </section>
             </div>
 
-            {/* Mini Sticky Progress (CSE) */}
             {selectedDept === "CSE" && (
-                <div className="fixed bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-1.5rem)] max-w-5xl z-50">
-                    <div className="bg-white/55 dark:bg-gray-900/45 backdrop-blur-xl border border-white/50 dark:border-gray-700/70 rounded-xl shadow-2xl px-4 py-3">
-                        <div className="flex flex-col items-center text-center gap-3">
-                            <div className="w-full max-w-4xl">
-                                <div className="flex flex-wrap justify-center items-center gap-x-4 gap-y-1 text-sm text-gray-700 dark:text-gray-200">
-                                    <p>
-                                        Completed Courses:{" "}
-                                        <span className="font-bold text-green-600 dark:text-green-400">
-                                            {completedCourses.length}
-                                        </span>
-                                    </p>
-                                    <p>
-                                        Completed Credits:{" "}
-                                        <span className="font-bold text-blue-600 dark:text-blue-400">
-                                            {totalCompletedCredits} / {getTotalCredits()}
-                                        </span>
-                                    </p>
-                                </div>
-                                <div className="mt-2 w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                                    <div
-                                        className="bg-gradient-to-r from-green-500 to-blue-500 h-2 rounded-full transition-all duration-300"
-                                        style={{ width: `${(totalCompletedCredits / getTotalCredits()) * 100}%` }}
-                                    />
-                                </div>
-                                <div className="mt-3 flex flex-wrap justify-center items-center gap-3 text-xs text-gray-700 dark:text-gray-300">
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-3 h-3 bg-green-500 rounded border border-green-600"></div>
-                                        <span>Completed (Click to undo)</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-3 h-3 bg-yellow-500 rounded border border-yellow-600"></div>
-                                        <span>Available</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-3 h-3 bg-gray-300 rounded border border-gray-400 opacity-70"></div>
-                                        <span>Locked</span>
-                                    </div>
-                                </div>
+                <>
+                    {!showProgressPanel ? (
+                        <div className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2">
+                            <div className="flex items-center gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowProgressPanel(true)}
+                                    className="group inline-flex items-center gap-2 rounded-full border border-white/60 bg-white/90 px-4 py-2 text-xs font-semibold text-gray-700 shadow-lg backdrop-blur-xl transition-all hover:-translate-y-0.5 hover:bg-white dark:border-gray-700/70 dark:bg-gray-900/90 dark:text-gray-200"
+                                >
+                                    <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-300">
+                                        <ChevronUp className="h-3.5 w-3.5" />
+                                    </span>
+                                    Credits {totalCompletedCredits} / {totalCredits}
+                                </button>
 
-                                <div className="mt-3 flex flex-col items-center">
-                                    <div className="flex flex-wrap items-center justify-center gap-3 mb-2">
-                                        <p className="text-xs font-semibold text-gray-700 dark:text-gray-200">
-                                            Available now ({availableCourses.length})
-                                        </p>
-                                        <button
-                                            type="button"
-                                            onClick={() => setShowAvailableNow((prev) => !prev)}
-                                            className="text-xs px-2 py-1 rounded border border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-300 hover:bg-blue-100/70 dark:hover:bg-blue-900/40 transition-colors"
-                                        >
-                                            {showAvailableNow ? "Hide" : "Show"}
-                                        </button>
-                                    </div>
-                                    {showAvailableNow && (
-                                        <div className="flex flex-wrap justify-center gap-2 max-h-24 overflow-y-auto pr-1">
-                                            {availableCourses.length > 0 ? (
-                                                availableCourses.map((course) => (
-                                                    <button
-                                                        key={`${course.sectionName}-${course.code}`}
-                                                        type="button"
-                                                        onClick={() => handleJumpToCourse(course.sectionName, course.code)}
-                                                        className="px-2 py-1 text-xs rounded-md border border-gray-300 dark:border-gray-600 bg-white/90 dark:bg-gray-800/80 text-gray-800 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                                                        title={`Jump to ${course.sectionName}`}
-                                                    >
-                                                        {course.code}
-                                                    </button>
-                                                ))
-                                            ) : (
-                                                <span className="text-xs text-gray-500 dark:text-gray-400">
-                                                    No available courses right now.
-                                                </span>
+                                {completedCourses.length > 0 && (
+                                    <button
+                                        type="button"
+                                        onClick={handleReset}
+                                        className="inline-flex items-center gap-1.5 rounded-full border border-red-300 bg-white/90 px-3 py-2 text-xs font-semibold text-red-600 shadow-lg backdrop-blur-xl transition-all hover:-translate-y-0.5 hover:bg-red-50 dark:border-red-700 dark:bg-gray-900/90 dark:text-red-400 dark:hover:bg-red-900/20"
+                                    >
+                                        <RefreshCw className="h-3.5 w-3.5" />
+                                        Reset
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="fixed bottom-4 left-1/2 z-50 w-[calc(100%-2.5rem)] max-w-2xl -translate-x-1/2">
+                            <div className="rounded-2xl border border-white/60 bg-white/85 px-4 py-3 shadow-2xl backdrop-blur-xl dark:border-gray-700/60 dark:bg-gray-900/80">
+                                <div className="flex items-start gap-3">
+                                    <div className="relative min-w-0 flex-1 space-y-3">
+                                        <div className="absolute right-0 top-0 flex items-center gap-2">
+                                            {completedCourses.length > 0 && (
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={handleReset}
+                                                    className="h-8 border-red-300 px-3 text-[13px] text-red-600 hover:bg-red-50 dark:border-red-700 dark:text-red-400"
+                                                >
+                                                    <RefreshCw className="mr-1.5 h-3.5 w-3.5" />
+                                                    Reset
+                                                </Button>
                                             )}
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowProgressPanel(false)}
+                                                className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white"
+                                                aria-label="Hide progress panel"
+                                            >
+                                                <ChevronDown className="h-4 w-4" />
+                                            </button>
                                         </div>
-                                    )}
+
+                                        <div className="flex flex-col items-center justify-center gap-2 pt-1 text-center">
+                                            <div
+                                                className="relative flex h-16 w-16 items-center justify-center rounded-full"
+                                                style={{
+                                                    background: `conic-gradient(rgb(34 197 94) ${progressPercent}%, rgb(229 231 235) ${progressPercent}%)`,
+                                                }}
+                                            >
+                                                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-[13px] font-bold text-gray-900 dark:bg-gray-900 dark:text-white">
+                                                    {progressPercent}%
+                                                </div>
+                                            </div>
+
+                                            <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[13px] text-gray-700 dark:text-gray-200">
+                                                <p>
+                                                    Courses {" "}
+                                                    <span className="font-semibold text-green-600 dark:text-green-400">
+                                                        {completedCourses.length}
+                                                    </span>
+                                                </p>
+                                                <p>
+                                                    Courses left {" "}
+                                                    <span className="font-semibold text-amber-600 dark:text-amber-400">
+                                                        {coursesLeft}
+                                                    </span>
+                                                </p>
+                                                <p>
+                                                    Credits {" "}
+                                                    <span className="font-semibold text-blue-600 dark:text-blue-400">
+                                                        {totalCompletedCredits} / {totalCredits}
+                                                    </span>
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <div className="rounded-xl border border-gray-200/70 bg-gray-50/90 px-3 py-2 text-center dark:border-gray-700/70 dark:bg-gray-800/60">
+                                            <div className="flex flex-wrap items-center justify-center gap-2">
+                                                <p className="inline-flex items-center gap-2 text-[13px] font-medium text-gray-700 dark:text-gray-200">
+                                                    <span>Available now</span>
+                                                    <span className="rounded-full bg-gray-900 px-2 py-0.5 text-[10px] font-semibold text-white dark:bg-white dark:text-gray-900">
+                                                        {availableCourses.length}
+                                                    </span>
+                                                </p>
+                                            </div>
+
+                                            <p className="mt-1 text-[13px] text-gray-500 dark:text-gray-400">
+                                                Click any course code to navigate.
+                                            </p>
+
+                                            <div className="mt-2 flex flex-wrap items-center justify-center gap-2 pr-1">
+                                                {availableCourses.length > 0 ? (
+                                                    availableCourses.map((course) => (
+                                                        <button
+                                                            key={`${course.sectionName}-${course.code}`}
+                                                            type="button"
+                                                            onClick={() => handleJumpToCourse(course.sectionName, course.code)}
+                                                            className="cursor-pointer rounded-full border border-gray-300 bg-white px-3 py-1 text-[13px] font-medium text-gray-800 transition-colors hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-900/80 dark:text-gray-100 dark:hover:bg-gray-800"
+                                                            title={`Jump to ${course.sectionName}`}
+                                                        >
+                                                            {course.code}
+                                                        </button>
+                                                    ))
+                                                ) : (
+                                                    <span className="text-[13px] text-gray-500 dark:text-gray-400">
+                                                        No available courses right now.
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-
-                            {completedCourses.length > 0 && (
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={handleReset}
-                                    className="border-red-300 text-red-600 hover:bg-red-50 dark:border-red-700 dark:text-red-400"
-                                >
-                                    <RefreshCw className="w-4 h-4 mr-2" />
-                                    Reset
-                                </Button>
-                            )}
                         </div>
-                    </div>
-                </div>
+                    )}
+                </>
             )}
         </div>
     );
