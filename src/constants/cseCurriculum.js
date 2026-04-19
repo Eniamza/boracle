@@ -1,3 +1,71 @@
+/*
+! MARK: Data Structure Tree
+! Adding This Here So Someone Else Understands What The Actual Fuck This Data Structure Is Supposed To Look Like
+? And Of Course- For Future References
+? But Mainly Because I believe I made it too complicated lmao (AI is also to partially blame for this)
+cseCurriculum (Array)
+│
+├── Section
+│   ├── section: "University & School Core"
+│   ├── credits: 51
+│   ├── description
+│   └── streams (Array)
+│       │
+│       ├── Stream
+│       │   ├── name: "Writing & Communication"
+│       │   ├── credits: 6
+│       │   └── courses (Array)
+│       │       ├── Course
+│       │       │   ├── code: "ENG091"
+│       │       │   ├── name
+│       │       │   ├── credits
+│       │       │   └── optional
+│       │       └── ...
+│       │
+│       ├── Stream
+│       │   ├── name: "Mathematics & Natural Sciences"
+│       │   └── courses [...]
+│       │
+│       └── ... (more streams)
+│
+├── Section
+│   ├── section: "Program Core"
+│   ├── credits: 75
+│   ├── description
+│   └── courses (Array)
+│       ├── Course
+│       │   ├── code: "CSE110"
+│       │   ├── name
+│       │   └── credits
+│       └── ...
+│
+├── Section
+│   ├── section: "Program Electives"
+│   ├── credits: 6
+│   ├── referenceLink
+│   └── courses (Array)
+│       ├── Elective Course
+│       └── ...
+│
+├── Section
+│   ├── section: "Final Requirement"
+│   ├── credits: 4
+│   └── courses (Array)
+│       └── Project / Thesis / Internship
+│
+└── (end)
+*/
+
+
+/*
+prerequisiteOverrides (Object)
+│
+├── courseCode: null (default = use CDN)
+├── courseCode: null
+├── CSE260: "CSE251"   // overridden prerequisite
+└── ...
+*/
+// ! MARK: JSON Starts Here
 // ! Calculate total credits from curriculum
 export function getTotalCredits() {
     return cseCurriculum.reduce((sum, section) => sum + (section.credits || 0), 0);
@@ -50,8 +118,8 @@ export const cseCurriculum = [
                     { code: "HUM103", name: "Ethics and Culture", credits: 3, optional: false },
                     { code: "BNG103", name: "Bangla Language and Literature", credits: 3, optional: false },
                     {
-                        code: "Required Course - S3",
-                        name: "Arts & Humanities Elective (Minimum one option)",
+                        code: "Stream 3 - COD",
+                        name: "Pick one course from the provided options above",
                         credits: 3,
                         optional: false,
                         alternatives: [
@@ -77,8 +145,8 @@ export const cseCurriculum = [
                 courses: [
                     { code: "EMB101", name: "Bangladesh Studies", credits: 3, optional: false, alternatives: ["DEV101"] },
                     {
-                        code: "Required Course - S4",
-                        name: "Social Sciences Elective (Minimum one option)",
+                        code: "Stream 4 - COD",
+                        name: "Pick one course from the provided options above",
                         credits: 3,
                         optional: false,
                         alternatives: [
@@ -114,8 +182,8 @@ export const cseCurriculum = [
                 credits: 3,
                 courses: [
                     {
-                        code: "Required Course - S5",
-                        name: "Community Service Course (Minimum one option)",
+                        code: "Stream 5 - COD",
+                        name: "Pick one course from the provided options above",
                         credits: 3,
                         optional: true,
                         alternatives: [
@@ -139,8 +207,8 @@ export const cseCurriculum = [
                 name: "Stream 6: Courses Out Of Department (COD)",
                 credits: 6,
                 courses: [
-                    { code: "COD - 1", name: "Courses Out Of Department Option 1", credits: 3, optional: true },
-                    { code: "COD - 2", name: "Courses Out Of Department Option 2", credits: 3, optional: true },
+                    { code: "COD - 1", name: "Pick one course from the provided options above", credits: 3, optional: true },
+                    { code: "COD - 2", name: "Pick another course from the provided options above", credits: 3, optional: true },
                 ],
                 note: "Two Courses From: HUM101, HUM102, HST102, HST103, HST104, HUM207, ENG110, ENG113, ENG114, ENG115, ENG333, PSY101, SOC101, ANT101, POL101, BUS201, ECO101, ECO102, ECO105, BUS102, POL102, POL103, POL201, POL202, PSY102, DEV104, DEV201, SOC201/ANT202, ANT342, ANT351, BUS333, BUS334, BUS335, CST201, CST301, CST302, CST303, CST304, CST305, CST306, CST307, CST308, CST309, CST310, CHE101, BIO101, ENV103",
             },

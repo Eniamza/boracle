@@ -189,11 +189,11 @@ function CourseCard({ course, isCompleted, isAvailable, isSelected, isHighlighte
         >
             <div className="flex items-start justify-between">
                 <div className="flex-1">
-                    <div className="font-mono font-bold text-sm mb-1">{course.code}</div>
-                    <div className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">
+                    <div className="font-mono font-bold text-base mb-1">{course.code}</div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
                         {course.name || courseDetails?.name || "Course"}
                     </div>
-                    <div className="text-xs text-gray-500 mt-2">{course.credits ?? courseDetails?.credits ?? 3} credits</div>
+                    <div className="text-sm text-gray-500 mt-2">{course.credits ?? courseDetails?.credits ?? 3} credits</div>
 
                     {courseDetails?.allPrereqs?.length > 0 && (
                         <div className="mt-2 flex flex-wrap gap-1.5">
@@ -205,7 +205,7 @@ function CourseCard({ course, isCompleted, isAvailable, isSelected, isHighlighte
                                         event.stopPropagation();
                                         onPrereqClick?.(prereq);
                                     }}
-                                    className="px-2 py-0.5 text-[10px] rounded-full border border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-300 bg-blue-50/80 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
+                                    className="px-2.5 py-0.5 text-[11px] rounded-full border border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-300 bg-blue-50/80 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
                                     title={`Jump to prerequisite ${prereq}`}
                                 >
                                     {prereq}
