@@ -3,7 +3,7 @@ import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cseCurriculum, getTotalCredits, prerequisiteOverrides } from "@/constants/cseCurriculum";
-import { CheckCircle2, Circle, Lock, Unlock, BookOpen, RefreshCw } from "lucide-react";
+import { CheckCircle2, Lock, Unlock, RefreshCw } from "lucide-react";
 
 const departments = [
     { code: "CSE", name: "Computer Science & Engineering" },
@@ -12,6 +12,14 @@ const departments = [
     { code: "BBA", name: "Business Administration" },
     { code: "LAW", name: "Law" },
 ];
+
+function getSectionAnchorId(sectionName) {
+    return `section-${sectionName.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+}
+
+function getCourseCardId(courseCode) {
+    return `course-card-${courseCode.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+}
 
 //! MARK: Prereq Parsing
 function parsePrereqString(prereqStr) {
@@ -146,7 +154,7 @@ function useConnectCDN() {
 }
 
 //! MARK: Course Card
-function CourseCard({ course, isCompleted, isAvailable, isSelected, onClick, courseDetails }) {
+function CourseCard({ course, isCompleted, isAvailable, isSelected, isHighlighted, onClick, courseDetails }) {
     const [showTooltip, setShowTooltip] = useState(false);
 
     let statusColor = "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800";
@@ -157,10 +165,6 @@ function CourseCard({ course, isCompleted, isAvailable, isSelected, onClick, cou
         statusColor = "border-green-500 bg-green-50 dark:bg-green-900/20 hover:border-green-600";
         statusIcon = <CheckCircle2 className="w-4 h-4 text-green-600 dark:text-green-400" />;
         statusText = "Completed (Click to undo)";
-    } else if (isSelected) {
-        statusColor = "border-blue-500 bg-blue-50 dark:bg-blue-900/20 ring-2 ring-blue-500";
-        statusIcon = <BookOpen className="w-4 h-4 text-blue-600 dark:text-blue-400" />;
-        statusText = "Selected";
     } else if (isAvailable) {
         statusColor = "border-yellow-500 bg-yellow-50 dark:bg-yellow-900/20 hover:border-yellow-600";
         statusIcon = <Unlock className="w-4 h-4 text-yellow-600 dark:text-yellow-400" />;
@@ -171,9 +175,14 @@ function CourseCard({ course, isCompleted, isAvailable, isSelected, onClick, cou
         statusText = "Locked - Prerequisites needed";
     }
 
+    const highlightClass = isHighlighted
+            ? "ring-2 ring--500 dark:ring-white-400 ring-offset-2 ring-offset-white dark:ring-offset-gray-900 shadow-lg shadow-white-500/30"
+        : "";
+
     return (
         <div
-            className={`relative p-4 rounded-lg border-2 transition-all duration-200 cursor-pointer hover:shadow-lg ${statusColor}`}
+            id={getCourseCardId(course.code)}
+            className={`relative p-4 rounded-lg border-2 transition-all duration-200 cursor-pointer hover:shadow-lg ${statusColor} ${highlightClass}`}
             onClick={() => onClick(course.code)}
             onMouseEnter={() => setShowTooltip(true)}
             onMouseLeave={() => setShowTooltip(false)}
@@ -193,6 +202,7 @@ function CourseCard({ course, isCompleted, isAvailable, isSelected, onClick, cou
             {showTooltip && (
                 <div className="absolute z-50 bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg shadow-xl whitespace-nowrap pointer-events-none">
                     {statusText}
+                    {isSelected && <div className="text-xs text-gray-300 mt-1">Selected</div>}
                     {courseDetails?.allPrereqs?.length > 0 && !isCompleted && !isAvailable && (
                         <div className="text-xs text-gray-300 mt-1">Requires: {courseDetails.allPrereqs.join(", ")}</div>
                     )}
@@ -207,7 +217,7 @@ function CourseCard({ course, isCompleted, isAvailable, isSelected, onClick, cou
 }
 
 //! MARK: SectionCourses
-function SectionCourses({ section, completedCourses, onCourseToggle, onCourseUntoggle }) {
+function SectionCourses({ section, completedCourses, highlightedCourseCode, onCourseToggle, onCourseUntoggle }) {
     const { courseMap, loading, error } = useConnectCDN();
     const [selectedCourse, setSelectedCourse] = useState(null);
 
@@ -227,10 +237,8 @@ function SectionCourses({ section, completedCourses, onCourseToggle, onCourseUnt
     const getCourseStatus = useCallback(
         (courseCode) => {
             const isCompleted = completedCourses.includes(courseCode);
-            const isSelectedCourse = selectedCourse === courseCode;
 
             if (isCompleted) return "completed";
-            if (isSelectedCourse) return "selected";
 
             // Check if prerequisites are satisfied
             const courseDetails = courseMap[courseCode];
@@ -244,7 +252,7 @@ function SectionCourses({ section, completedCourses, onCourseToggle, onCourseUnt
 
             return "locked";
         },
-        [completedCourses, selectedCourse, courseMap],
+        [completedCourses, courseMap],
     );
 
     // Handle course click
@@ -282,26 +290,6 @@ function SectionCourses({ section, completedCourses, onCourseToggle, onCourseUnt
 
     return (
         <div className="space-y-6">
-            {/* Legend */}
-            <div className="flex flex-wrap gap-4 justify-center text-xs">
-                <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 bg-green-500 rounded border border-green-600"></div>
-                    <span>Completed (Click to undo)</span>
-                </div>
-                <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 bg-blue-500 rounded border border-blue-600 ring-2 ring-blue-500"></div>
-                    <span>Selected</span>
-                </div>
-                <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 bg-yellow-500 rounded border border-yellow-600"></div>
-                    <span>Available</span>
-                </div>
-                <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 bg-gray-300 rounded border border-gray-400 opacity-60"></div>
-                    <span>Locked</span>
-                </div>
-            </div>
-
             {/* Streams/Categories */}
             {sectionObj.streams ? (
                 <div className="space-y-4">
@@ -324,6 +312,7 @@ function SectionCourses({ section, completedCourses, onCourseToggle, onCourseUnt
                                             isCompleted={status === "completed"}
                                             isAvailable={status === "available"}
                                             isSelected={status === "selected"}
+                                            isHighlighted={highlightedCourseCode === course.code}
                                             onClick={handleCourseClick}
                                             courseDetails={courseMap[course.code]}
                                         />
@@ -344,6 +333,7 @@ function SectionCourses({ section, completedCourses, onCourseToggle, onCourseUnt
                                 isCompleted={status === "completed"}
                                 isAvailable={status === "available"}
                                 isSelected={status === "selected"}
+                                isHighlighted={highlightedCourseCode === course.code}
                                 onClick={handleCourseClick}
                                 courseDetails={courseMap[course.code]}
                             />
@@ -352,19 +342,6 @@ function SectionCourses({ section, completedCourses, onCourseToggle, onCourseUnt
                 </div>
             )}
 
-            {/* Selected Course Info */}
-            {selectedCourse && courseMap[selectedCourse] && (
-                <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                    <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">Selected Course: {selectedCourse}</h4>
-                    <p className="text-sm text-blue-800 dark:text-blue-200">{courseMap[selectedCourse].name}</p>
-                    {courseMap[selectedCourse].allPrereqs?.length > 0 && (
-                        <div className="mt-2 text-xs text-blue-700 dark:text-blue-300">
-                            <span className="font-semibold">Prerequisites:</span>{" "}
-                            {courseMap[selectedCourse].allPrereqs.join(", ")}
-                        </div>
-                    )}
-                </div>
-            )}
         </div>
     );
 }
@@ -373,8 +350,9 @@ function SectionCourses({ section, completedCourses, onCourseToggle, onCourseUnt
 export default function CourseProgressionPage() {
     const [selectedDept, setSelectedDept] = useState(null);
     const [showComingSoon, setShowComingSoon] = useState(false);
-    const [selectedSection, setSelectedSection] = useState("Program Core");
     const [completedCourses, setCompletedCourses] = useState([]);
+    const [highlightedCourseCode, setHighlightedCourseCode] = useState(null);
+    const [showAvailableNow, setShowAvailableNow] = useState(true);
     const [showResetConfirm, setShowResetConfirm] = useState(false);
 
     // Use CDN prerequisite graph to auto-mark prerequisite chains when selecting a course.
@@ -450,7 +428,63 @@ export default function CourseProgressionPage() {
         name: s.section,
         credits: s.credits,
         description: s.description,
+        referenceLink: s.referenceLink,
     }));
+
+    const allSectionCourses = useMemo(
+        () =>
+            cseCurriculum.flatMap((section) => {
+                const courses = section.courses
+                    ? section.courses
+                    : section.streams
+                      ? section.streams.flatMap((stream) => stream.courses)
+                      : [];
+
+                return courses.map((course) => ({
+                    code: course.code,
+                    name: course.name,
+                    sectionName: section.section,
+                }));
+            }),
+        [],
+    );
+
+    const availableCourses = useMemo(() => {
+        const completedSet = new Set(completedCourses);
+
+        return allSectionCourses.filter((course) => {
+            if (completedSet.has(course.code)) return false;
+
+            const prereqTree = courseMap[course.code]?.prereqTree;
+            if (!prereqTree) return true;
+
+            return arePrerequisitesSatisfied(prereqTree, completedCourses);
+        });
+    }, [allSectionCourses, courseMap, completedCourses]);
+
+    const handleJumpToCourse = useCallback((sectionName, courseCode) => {
+        setHighlightedCourseCode(courseCode);
+        const cardEl = document.getElementById(getCourseCardId(courseCode));
+        if (cardEl) {
+            cardEl.scrollIntoView({ behavior: "smooth", block: "center" });
+            return;
+        }
+
+        const sectionEl = document.getElementById(getSectionAnchorId(sectionName));
+        if (sectionEl) {
+            sectionEl.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+    }, []);
+
+    useEffect(() => {
+        if (!highlightedCourseCode) return;
+
+        const timer = setTimeout(() => {
+            setHighlightedCourseCode(null);
+        }, 2600);
+
+        return () => clearTimeout(timer);
+    }, [highlightedCourseCode]);
 
     // Calculate total completed credits
     const totalCompletedCredits = completedCourses.reduce((total, code) => {
@@ -467,7 +501,7 @@ export default function CourseProgressionPage() {
     }, 0);
 
     return (
-        <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8 bg-gray-50/50 dark:bg-gray-950">
+        <div className="min-h-screen py-12 pb-44 px-4 sm:px-6 lg:px-8 bg-gray-50/50 dark:bg-gray-950">
             <div className="max-w-7xl mx-auto space-y-10">
                 <div className="text-center space-y-4">
                     <h1 className="text-4xl font-extrabold tracking-tight text-gray-900 dark:text-white sm:text-5xl">
@@ -500,70 +534,6 @@ export default function CourseProgressionPage() {
                     ))}
                 </div>
 
-                {/* Section Navigation for CSE */}
-                {selectedDept === "CSE" && (
-                    <div className="space-y-4">
-                        <div className="flex flex-wrap justify-center gap-2">
-                            {cseSections.map((section) => (
-                                <Button
-                                    key={section.name}
-                                    variant={selectedSection === section.name ? "default" : "outline"}
-                                    className={
-                                        `${
-                                            selectedSection === section.name
-                                                ? "bg-indigo-600 text-white border-indigo-600 hover:bg-indigo-700"
-                                                : "border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400"
-                                        } px-5 py-6 text-sm`
-                                    }
-                                    onClick={() => setSelectedSection(section.name)}
-                                >
-                                    <div className="flex flex-col items-center">
-                                        <span>{section.name}</span>
-                                        <span className="text-xs opacity-80">{section.credits} credits</span>
-                                    </div>
-                                </Button>
-                            ))}
-                        </div>
-
-                        {/* Progress Stats with Reset Button */}
-                        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg p-4">
-                            <div className="flex justify-between items-center">
-                                <div className="text-center flex-1">
-                                    <p className="text-sm text-gray-600 dark:text-gray-300">
-                                        Completed Courses:{" "}
-                                        <span className="font-bold text-green-600 dark:text-green-400">
-                                            {completedCourses.length}
-                                        </span>
-                                    </p>
-                                    <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
-                                        Completed Credits:{" "}
-                                        <span className="font-bold text-blue-600 dark:text-blue-400">
-                                            {totalCompletedCredits} / {getTotalCredits()}
-                                        </span>
-                                    </p>
-                                    <div className="mt-2 w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                                        <div
-                                            className="bg-gradient-to-r from-green-500 to-blue-500 h-2 rounded-full transition-all duration-300"
-                                            style={{ width: `${(totalCompletedCredits / getTotalCredits()) * 100}%` }}
-                                        />
-                                    </div>
-                                </div>
-                                {completedCourses.length > 0 && (
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={handleReset}
-                                        className="ml-4 border-red-300 text-red-600 hover:bg-red-50 dark:border-red-700 dark:text-red-400"
-                                    >
-                                        <RefreshCw className="w-4 h-4 mr-2" />
-                                        Reset
-                                    </Button>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                )}
-
                 {/* Main Content */}
                 <section className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-100 dark:border-blue-800/50 rounded-xl shadow p-8">
                     {!selectedDept ? (
@@ -579,15 +549,134 @@ export default function CourseProgressionPage() {
                             </span>
                         </div>
                     ) : (
-                        <SectionCourses
-                            section={selectedSection}
-                            completedCourses={completedCourses}
-                            onCourseToggle={handleCourseToggle}
-                            onCourseUntoggle={handleCourseUntoggle}
-                        />
+                        <div className="space-y-10">
+                            {cseSections.map((section) => (
+                                <div key={section.name} id={getSectionAnchorId(section.name)} className="space-y-4 scroll-mt-6">
+                                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-blue-200 dark:border-blue-800 pb-3">
+                                        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{section.name}</h2>
+                                        <Badge variant="secondary" className="w-fit text-sm">
+                                            {section.credits} credits
+                                        </Badge>
+                                    </div>
+                                    {section.description && (
+                                        <p className="text-sm text-gray-600 dark:text-gray-300">{section.description}</p>
+                                    )}
+                                    {section.referenceLink && (
+                                        <p className="text-sm text-blue-700 dark:text-blue-300">
+                                            You can see electives from here: {" "}
+                                            <a
+                                                href={section.referenceLink}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="underline font-medium hover:text-blue-800 dark:hover:text-blue-200"
+                                            >
+                                                Electives Sheet
+                                            </a>
+                                        </p>
+                                    )}
+                                    <SectionCourses
+                                        section={section.name}
+                                        completedCourses={completedCourses}
+                                        highlightedCourseCode={highlightedCourseCode}
+                                        onCourseToggle={handleCourseToggle}
+                                        onCourseUntoggle={handleCourseUntoggle}
+                                    />
+                                </div>
+                            ))}
+                        </div>
                     )}
                 </section>
             </div>
+
+            {/* Mini Sticky Progress (CSE) */}
+            {selectedDept === "CSE" && (
+                <div className="fixed bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-1.5rem)] max-w-5xl z-50">
+                    <div className="bg-white/55 dark:bg-gray-900/45 backdrop-blur-xl border border-white/50 dark:border-gray-700/70 rounded-xl shadow-2xl px-4 py-3">
+                        <div className="flex flex-col items-center text-center gap-3">
+                            <div className="w-full max-w-4xl">
+                                <div className="flex flex-wrap justify-center items-center gap-x-4 gap-y-1 text-sm text-gray-700 dark:text-gray-200">
+                                    <p>
+                                        Completed Courses:{" "}
+                                        <span className="font-bold text-green-600 dark:text-green-400">{completedCourses.length}</span>
+                                    </p>
+                                    <p>
+                                        Completed Credits:{" "}
+                                        <span className="font-bold text-blue-600 dark:text-blue-400">
+                                            {totalCompletedCredits} / {getTotalCredits()}
+                                        </span>
+                                    </p>
+                                </div>
+                                <div className="mt-2 w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                                    <div
+                                        className="bg-gradient-to-r from-green-500 to-blue-500 h-2 rounded-full transition-all duration-300"
+                                        style={{ width: `${(totalCompletedCredits / getTotalCredits()) * 100}%` }}
+                                    />
+                                </div>
+                                <div className="mt-3 flex flex-wrap justify-center items-center gap-3 text-xs text-gray-700 dark:text-gray-300">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-3 h-3 bg-green-500 rounded border border-green-600"></div>
+                                        <span>Completed (Click to undo)</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-3 h-3 bg-yellow-500 rounded border border-yellow-600"></div>
+                                        <span>Available</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-3 h-3 bg-gray-300 rounded border border-gray-400 opacity-70"></div>
+                                        <span>Locked</span>
+                                    </div>
+                                </div>
+
+                                <div className="mt-3 flex flex-col items-center">
+                                    <div className="flex flex-wrap items-center justify-center gap-3 mb-2">
+                                        <p className="text-xs font-semibold text-gray-700 dark:text-gray-200">
+                                            Available now ({availableCourses.length})
+                                        </p>
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowAvailableNow((prev) => !prev)}
+                                            className="text-xs px-2 py-1 rounded border border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-300 hover:bg-blue-100/70 dark:hover:bg-blue-900/40 transition-colors"
+                                        >
+                                            {showAvailableNow ? "Hide" : "Show"}
+                                        </button>
+                                    </div>
+                                    {showAvailableNow && (
+                                        <div className="flex flex-wrap justify-center gap-2 max-h-24 overflow-y-auto pr-1">
+                                            {availableCourses.length > 0 ? (
+                                                availableCourses.map((course) => (
+                                                    <button
+                                                        key={`${course.sectionName}-${course.code}`}
+                                                        type="button"
+                                                        onClick={() => handleJumpToCourse(course.sectionName, course.code)}
+                                                        className="px-2 py-1 text-xs rounded-md border border-yellow-400/70 bg-yellow-100/70 text-yellow-900 dark:bg-yellow-900/30 dark:text-yellow-100 dark:border-yellow-700/70 hover:bg-yellow-200/80 dark:hover:bg-yellow-800/40 transition-colors"
+                                                        title={`Jump to ${course.sectionName}`}
+                                                    >
+                                                        {course.code}
+                                                    </button>
+                                                ))
+                                            ) : (
+                                                <span className="text-xs text-gray-500 dark:text-gray-400">No available courses right now.</span>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {completedCourses.length > 0 && (
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleReset}
+                                    className="border-red-300 text-red-600 hover:bg-red-50 dark:border-red-700 dark:text-red-400"
+                                >
+                                    <RefreshCw className="w-4 h-4 mr-2" />
+                                    Reset
+                                </Button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

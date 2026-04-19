@@ -194,6 +194,7 @@ export const cseCurriculum = [
         section: "Program Electives",
         credits: 6,
         description: "Choose elective courses to specialize",
+        referenceLink: "https://docs.google.com/spreadsheets/d/1-JM6a-JM4y4TiqMv9M4OXMBTnIAbn0lhsvfVGlfR1OU/edit?gid=1207964579#gid=1207964579",
         courses: [
             { code: "CSEElective", name: "CSE Elective (Any 300/400 level CSE course)", credits: 3, elective: true },
             { code: "OpenElective", name: "Open Elective (CSE / Minor / GenEd)", credits: 3, elective: true },
