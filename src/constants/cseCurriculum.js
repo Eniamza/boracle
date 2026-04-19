@@ -1,4 +1,3 @@
-
 // ! Calculate total credits from curriculum
 export function getTotalCredits() {
     let total = 0;
@@ -81,7 +80,7 @@ export const cseCurriculum = [
                         ],
                     },
                 ],
-                note: "Minimum one from: HUM101, HUM102, HST102, HST103, HST104, HUM207, ENG110, ENG113, ENG114, ENG115, ENG333",
+                note: "One Course From: HUM101, HUM102, HST102, HST103, HST104, HUM207, ENG110, ENG113, ENG114, ENG115, ENG333",
             },
             {
                 name: "Stream 4: Social Sciences",
@@ -119,7 +118,7 @@ export const cseCurriculum = [
                         ],
                     },
                 ],
-                note: "Minimum one from: PSY101, SOC101, ANT101, POL101, BUS201, ECO101, ECO102, ECO105, BUS102, POL102, POL103, POL201, POL202, PSY102, DEV104, DEV201, SOC201/ANT202, ANT342, ANT351, BUS333, BUS334, BUS335",
+                note: "One Course From: PSY101, SOC101, ANT101, POL101, BUS201, ECO101, ECO102, ECO105, BUS102, POL102, POL103, POL201, POL202, PSY102, DEV104, DEV201, SOC201/ANT202, ANT342, ANT351, BUS333, BUS334, BUS335",
             },
             {
                 name: "Stream 5: Community Service & Transformation",
@@ -145,7 +144,7 @@ export const cseCurriculum = [
                         ],
                     },
                 ],
-                note: "Minimum one from: CST201, CST301, CST302, CST303, CST304, CST305, CST306, CST307, CST308, CST309, CST310",
+                note: "One Course From: CST201, CST301, CST302, CST303, CST304, CST305, CST306, CST307, CST308, CST309, CST310",
             },
             {
                 name: "Stream 6: Courses Out Of Department (COD)",
@@ -154,7 +153,7 @@ export const cseCurriculum = [
                     { code: "COD - 1", name: "Courses Out Of Department Option 1", credits: 3, optional: true },
                     { code: "COD - 2", name: "Courses Out Of Department Option 2", credits: 3, optional: true },
                 ],
-                note: "Choose any two 3-credit courses (6 credits total). Minimum one from: HUM101, HUM102, HST102, HST103, HST104, HUM207, ENG110, ENG113, ENG114, ENG115, ENG333, PSY101, SOC101, ANT101, POL101, BUS201, ECO101, ECO102, ECO105, BUS102, POL102, POL103, POL201, POL202, PSY102, DEV104, DEV201, SOC201/ANT202, ANT342, ANT351, BUS333, BUS334, BUS335, CST201, CST301, CST302, CST303, CST304, CST305, CST306, CST307, CST308, CST309, CST310, CHE101, BIO101, ENV103",
+                note: "Two Courses From: HUM101, HUM102, HST102, HST103, HST104, HUM207, ENG110, ENG113, ENG114, ENG115, ENG333, PSY101, SOC101, ANT101, POL101, BUS201, ECO101, ECO102, ECO105, BUS102, POL102, POL103, POL201, POL202, PSY102, DEV104, DEV201, SOC201/ANT202, ANT342, ANT351, BUS333, BUS334, BUS335, CST201, CST301, CST302, CST303, CST304, CST305, CST306, CST307, CST308, CST309, CST310, CHE101, BIO101, ENV103",
             },
         ],
     },
@@ -194,7 +193,8 @@ export const cseCurriculum = [
         section: "Program Electives",
         credits: 6,
         description: "Choose elective courses to specialize",
-        referenceLink: "https://docs.google.com/spreadsheets/d/1-JM6a-JM4y4TiqMv9M4OXMBTnIAbn0lhsvfVGlfR1OU/edit?gid=1207964579#gid=1207964579",
+        referenceLink:
+            "https://docs.google.com/spreadsheets/d/1-JM6a-JM4y4TiqMv9M4OXMBTnIAbn0lhsvfVGlfR1OU/edit?gid=1207964579#gid=1207964579",
         courses: [
             { code: "CSEElective", name: "CSE Elective (Any 300/400 level CSE course)", credits: 3, elective: true },
             { code: "OpenElective", name: "Open Elective (CSE / Minor / GenEd)", credits: 3, elective: true },
@@ -203,8 +203,10 @@ export const cseCurriculum = [
     {
         section: "Final Requirement",
         credits: 4,
-        description: "Capstone project or thesis",
-        courses: [{ code: "CSE400", name: "Project / Thesis", credits: 4 }],
+        description: "Thesis / Project / Internship",
+        referenceLink:
+            "https://docs.google.com/document/d/1pAMjuQAxSEcLgkbvmx9qJGvK2BlPQhvXhgev8OeJTas/edit?tab=t.0#heading=h.aczyuw2yex2w",
+        courses: [{ code: "CSE400", name: "Project  / Thesis / Internship", credits: 4 }],
     },
 ];
 
@@ -229,4 +231,3 @@ export const prerequisiteOverrides = {
     ...Object.fromEntries(allCurriculumCourseCodes.map((code) => [code, null])),
     CSE260: "CSE251",
 };
-

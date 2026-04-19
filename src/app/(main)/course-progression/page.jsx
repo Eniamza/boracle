@@ -154,7 +154,7 @@ function useConnectCDN() {
 }
 
 //! MARK: Course Card
-function CourseCard({ course, isCompleted, isAvailable, isSelected, isHighlighted, onClick, courseDetails }) {
+function CourseCard({ course, isCompleted, isAvailable, isSelected, isHighlighted, onClick, onPrereqClick, courseDetails }) {
     const [showTooltip, setShowTooltip] = useState(false);
 
     let statusColor = "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800";
@@ -170,13 +170,13 @@ function CourseCard({ course, isCompleted, isAvailable, isSelected, isHighlighte
         statusIcon = <Unlock className="w-4 h-4 text-yellow-600 dark:text-yellow-400" />;
         statusText = "Available (Click to complete)";
     } else {
-        statusColor = "border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800/50 opacity-60";
-        statusIcon = <Lock className="w-4 h-4 text-gray-400" />;
+        statusColor = "border-gray-300 dark:border-gray-800 bg-gray-200 dark:bg-gray-900/50 text-black dark:text-white";
+        statusIcon = <Lock className="w-4 h-4 text-black dark:text-white" />;
         statusText = "Locked - Prerequisites needed";
     }
 
     const highlightClass = isHighlighted
-            ? "ring-2 ring--500 dark:ring-white-400 ring-offset-2 ring-offset-white dark:ring-offset-gray-900 shadow-lg shadow-white-500/30"
+        ? "ring-2 ring-cyan-500 dark:ring-cyan-400 ring-offset-2 ring-offset-white dark:ring-offset-gray-900 shadow-lg shadow-cyan-500/30"
         : "";
 
     return (
@@ -194,6 +194,25 @@ function CourseCard({ course, isCompleted, isAvailable, isSelected, isHighlighte
                         {course.name || courseDetails?.name || "Course"}
                     </div>
                     <div className="text-xs text-gray-500 mt-2">{course.credits ?? courseDetails?.credits ?? 3} credits</div>
+
+                    {courseDetails?.allPrereqs?.length > 0 && (
+                        <div className="mt-2 flex flex-wrap gap-1.5">
+                            {courseDetails.allPrereqs.map((prereq) => (
+                                <button
+                                    key={`${course.code}-prereq-${prereq}`}
+                                    type="button"
+                                    onClick={(event) => {
+                                        event.stopPropagation();
+                                        onPrereqClick?.(prereq);
+                                    }}
+                                    className="px-2 py-0.5 text-[10px] rounded-full border border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-300 bg-blue-50/80 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
+                                    title={`Jump to prerequisite ${prereq}`}
+                                >
+                                    {prereq}
+                                </button>
+                            ))}
+                        </div>
+                    )}
                 </div>
                 <div className="ml-2">{statusIcon}</div>
             </div>
@@ -217,7 +236,7 @@ function CourseCard({ course, isCompleted, isAvailable, isSelected, isHighlighte
 }
 
 //! MARK: SectionCourses
-function SectionCourses({ section, completedCourses, highlightedCourseCode, onCourseToggle, onCourseUntoggle }) {
+function SectionCourses({ section, completedCourses, highlightedCourseCode, onCourseToggle, onCourseUntoggle, onPrereqClick }) {
     const { courseMap, loading, error } = useConnectCDN();
     const [selectedCourse, setSelectedCourse] = useState(null);
 
@@ -314,6 +333,7 @@ function SectionCourses({ section, completedCourses, highlightedCourseCode, onCo
                                             isSelected={status === "selected"}
                                             isHighlighted={highlightedCourseCode === course.code}
                                             onClick={handleCourseClick}
+                                            onPrereqClick={onPrereqClick}
                                             courseDetails={courseMap[course.code]}
                                         />
                                     );
@@ -335,13 +355,13 @@ function SectionCourses({ section, completedCourses, highlightedCourseCode, onCo
                                 isSelected={status === "selected"}
                                 isHighlighted={highlightedCourseCode === course.code}
                                 onClick={handleCourseClick}
+                                onPrereqClick={onPrereqClick}
                                 courseDetails={courseMap[course.code]}
                             />
                         );
                     })}
                 </div>
             )}
-
         </div>
     );
 }
@@ -476,6 +496,14 @@ export default function CourseProgressionPage() {
         }
     }, []);
 
+    const handlePrereqJump = useCallback((courseCode) => {
+        setHighlightedCourseCode(courseCode);
+        const cardEl = document.getElementById(getCourseCardId(courseCode));
+        if (cardEl) {
+            cardEl.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+    }, []);
+
     useEffect(() => {
         if (!highlightedCourseCode) return;
 
@@ -501,7 +529,7 @@ export default function CourseProgressionPage() {
     }, 0);
 
     return (
-        <div className="min-h-screen py-12 pb-44 px-4 sm:px-6 lg:px-8 bg-gray-50/50 dark:bg-gray-950">
+        <div className="min-h-screen py-12 pb-44 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-gray-50 via-white to-gray-100 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
             <div className="max-w-7xl mx-auto space-y-10">
                 <div className="text-center space-y-4">
                     <h1 className="text-4xl font-extrabold tracking-tight text-gray-900 dark:text-white sm:text-5xl">
@@ -563,14 +591,13 @@ export default function CourseProgressionPage() {
                                     )}
                                     {section.referenceLink && (
                                         <p className="text-sm text-blue-700 dark:text-blue-300">
-                                            You can see electives from here: {" "}
                                             <a
                                                 href={section.referenceLink}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 className="underline font-medium hover:text-blue-800 dark:hover:text-blue-200"
                                             >
-                                                Electives Sheet
+                                                Reference Link
                                             </a>
                                         </p>
                                     )}
@@ -580,6 +607,7 @@ export default function CourseProgressionPage() {
                                         highlightedCourseCode={highlightedCourseCode}
                                         onCourseToggle={handleCourseToggle}
                                         onCourseUntoggle={handleCourseUntoggle}
+                                        onPrereqClick={handlePrereqJump}
                                     />
                                 </div>
                             ))}
@@ -597,7 +625,9 @@ export default function CourseProgressionPage() {
                                 <div className="flex flex-wrap justify-center items-center gap-x-4 gap-y-1 text-sm text-gray-700 dark:text-gray-200">
                                     <p>
                                         Completed Courses:{" "}
-                                        <span className="font-bold text-green-600 dark:text-green-400">{completedCourses.length}</span>
+                                        <span className="font-bold text-green-600 dark:text-green-400">
+                                            {completedCourses.length}
+                                        </span>
                                     </p>
                                     <p>
                                         Completed Credits:{" "}
@@ -648,14 +678,16 @@ export default function CourseProgressionPage() {
                                                         key={`${course.sectionName}-${course.code}`}
                                                         type="button"
                                                         onClick={() => handleJumpToCourse(course.sectionName, course.code)}
-                                                        className="px-2 py-1 text-xs rounded-md border border-yellow-400/70 bg-yellow-100/70 text-yellow-900 dark:bg-yellow-900/30 dark:text-yellow-100 dark:border-yellow-700/70 hover:bg-yellow-200/80 dark:hover:bg-yellow-800/40 transition-colors"
+                                                        className="px-2 py-1 text-xs rounded-md border border-gray-300 dark:border-gray-600 bg-white/90 dark:bg-gray-800/80 text-gray-800 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                                                         title={`Jump to ${course.sectionName}`}
                                                     >
                                                         {course.code}
                                                     </button>
                                                 ))
                                             ) : (
-                                                <span className="text-xs text-gray-500 dark:text-gray-400">No available courses right now.</span>
+                                                <span className="text-xs text-gray-500 dark:text-gray-400">
+                                                    No available courses right now.
+                                                </span>
                                             )}
                                         </div>
                                     )}
