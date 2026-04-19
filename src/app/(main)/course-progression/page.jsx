@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { cseCurriculum, getTotalCredits } from "@/constants/cseCurriculum";
+import { cseCurriculum, getTotalCredits, prerequisiteOverrides } from "@/constants/cseCurriculum";
 import { CheckCircle2, Circle, Lock, Unlock, BookOpen, RefreshCw } from "lucide-react";
 
 const departments = [
@@ -118,13 +118,17 @@ function useConnectCDN() {
                 const map = {};
                 for (const c of data) {
                     if (!map[c.courseCode]) {
+                        const overridePrereq = prerequisiteOverrides[c.courseCode];
+                        const effectivePrereqRaw = overridePrereq ?? c.prerequisiteCourses;
+                        const effectivePrereqTree = parsePrereqString(effectivePrereqRaw);
+
                         map[c.courseCode] = {
                             code: c.courseCode,
                             name: c.courseName,
                             credits: c.courseCredit,
-                            prereqRaw: c.prerequisiteCourses,
-                            prereqTree: parsePrereqString(c.prerequisiteCourses),
-                            allPrereqs: getAllPrerequisiteCodes(parsePrereqString(c.prerequisiteCourses)),
+                            prereqRaw: effectivePrereqRaw,
+                            prereqTree: effectivePrereqTree,
+                            allPrereqs: getAllPrerequisiteCodes(effectivePrereqTree),
                         };
                     }
                 }
@@ -180,7 +184,7 @@ function CourseCard({ course, isCompleted, isAvailable, isSelected, onClick, cou
                     <div className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">
                         {course.name || courseDetails?.name || "Course"}
                     </div>
-                    <div className="text-xs text-gray-500 mt-2">{course.credits || courseDetails?.credits || 3} credits</div>
+                    <div className="text-xs text-gray-500 mt-2">{course.credits ?? courseDetails?.credits ?? 3} credits</div>
                 </div>
                 <div className="ml-2">{statusIcon}</div>
             </div>
@@ -247,27 +251,15 @@ function SectionCourses({ section, completedCourses, onCourseToggle, onCourseUnt
     const handleCourseClick = (courseCode) => {
         const status = getCourseStatus(courseCode);
 
-        // Allow clicking on completed courses to undo them
+        // Toggle completed state directly for any course.
         if (status === "completed") {
-            if (
-                window.confirm(
-                    `Are you sure you want to mark ${courseCode} as incomplete?\nThis will also lock any courses that depend on it.`,
-                )
-            ) {
-                onCourseUntoggle(courseCode);
-                if (selectedCourse === courseCode) {
-                    setSelectedCourse(null);
-                }
+            onCourseUntoggle(courseCode);
+            if (selectedCourse === courseCode) {
+                setSelectedCourse(null);
             }
-        }
-        // Allow clicking on available courses to complete them
-        else if (status === "available") {
+        } else {
             onCourseToggle(courseCode);
             setSelectedCourse(courseCode);
-        }
-        // Allow clicking on selected to deselect
-        else if (status === "selected") {
-            setSelectedCourse(null);
         }
     };
 
@@ -290,16 +282,6 @@ function SectionCourses({ section, completedCourses, onCourseToggle, onCourseUnt
 
     return (
         <div className="space-y-6">
-            {/* Section Description */}
-            {sectionObj.description && (
-                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-                    <p className="text-sm text-blue-800 dark:text-blue-200">{sectionObj.description}</p>
-                    <p className="text-sm font-semibold text-blue-800 dark:text-blue-200 mt-2">
-                        Total Credits: {sectionObj.credits}
-                    </p>
-                </div>
-            )}
-
             {/* Legend */}
             <div className="flex flex-wrap gap-4 justify-center text-xs">
                 <div className="flex items-center gap-2">
@@ -389,11 +371,14 @@ function SectionCourses({ section, completedCourses, onCourseToggle, onCourseUnt
 
 //! MARK: Main Page
 export default function CourseProgressionPage() {
-    const [selectedDept, setSelectedDept] = useState("CSE");
+    const [selectedDept, setSelectedDept] = useState(null);
     const [showComingSoon, setShowComingSoon] = useState(false);
-    const [selectedSection, setSelectedSection] = useState("Foundation & Core Skills");
+    const [selectedSection, setSelectedSection] = useState("Program Core");
     const [completedCourses, setCompletedCourses] = useState([]);
     const [showResetConfirm, setShowResetConfirm] = useState(false);
+
+    // Use CDN prerequisite graph to auto-mark prerequisite chains when selecting a course.
+    const { courseMap } = useConnectCDN();
 
     const handleDeptClick = (code) => {
         if (code === "CSE") {
@@ -405,60 +390,53 @@ export default function CourseProgressionPage() {
         }
     };
 
-    // Get courseMap from CDN for dependency checks
-    const { courseMap } = useConnectCDN();
-
     // Mark as completed
     const handleCourseToggle = (courseCode) => {
-        if (!completedCourses.includes(courseCode)) {
-            setCompletedCourses([...completedCourses, courseCode]);
-        }
+        setCompletedCourses((prev) => {
+            const next = new Set(prev);
+            const stack = [courseCode];
+
+            while (stack.length > 0) {
+                const code = stack.pop();
+                if (!code || next.has(code)) continue;
+
+                next.add(code);
+
+                const prereqCodes = getAllPrerequisiteCodes(courseMap[code]?.prereqTree);
+                for (const prereqCode of prereqCodes) {
+                    if (!next.has(prereqCode)) {
+                        stack.push(prereqCode);
+                    }
+                }
+            }
+
+            return Array.from(next);
+        });
     };
 
-    // Mark as incomplete and recursively lock dependents
-    const handleCourseUntoggle = useCallback(
-        (courseCode) => {
-            setCompletedCourses((prev) => {
-                // Find all dependents that should be removed
-                const toRemove = new Set([courseCode]);
+    // Mark as incomplete and remove its prerequisite chain.
+    const handleCourseUntoggle = (courseCode) => {
+        setCompletedCourses((prev) => {
+            const toRemove = new Set();
+            const stack = [courseCode];
 
-                // Build a map of prerequisites for quick lookup
-                const prerequisiteMap = new Map();
-                for (const [code, details] of Object.entries(courseMap)) {
-                    if (details.prereqTree) {
-                        prerequisiteMap.set(code, getAllPrerequisiteCodes(details.prereqTree));
+            while (stack.length > 0) {
+                const code = stack.pop();
+                if (!code || toRemove.has(code)) continue;
+
+                toRemove.add(code);
+
+                const prereqCodes = getAllPrerequisiteCodes(courseMap[code]?.prereqTree);
+                for (const prereqCode of prereqCodes) {
+                    if (!toRemove.has(prereqCode)) {
+                        stack.push(prereqCode);
                     }
                 }
+            }
 
-                // Recursively find all courses that depend on courseCode
-                let changed = true;
-                while (changed) {
-                    changed = false;
-                    for (const [code, prereqs] of prerequisiteMap) {
-                        if (!toRemove.has(code) && prev.includes(code)) {
-                            // Check if any prerequisite is being removed
-                            const hasRemovedPrereq = prereqs.some((prereq) => toRemove.has(prereq));
-                            if (hasRemovedPrereq) {
-                                // Check if prerequisites are still satisfied without the removed ones
-                                const newCompletedSet = new Set(prev.filter((c) => !toRemove.has(c)));
-                                const stillSatisfied = arePrerequisitesSatisfied(
-                                    courseMap[code]?.prereqTree,
-                                    Array.from(newCompletedSet),
-                                );
-                                if (!stillSatisfied) {
-                                    toRemove.add(code);
-                                    changed = true;
-                                }
-                            }
-                        }
-                    }
-                }
-
-                return prev.filter((c) => !toRemove.has(c));
-            });
-        },
-        [courseMap],
-    );
+            return prev.filter((c) => !toRemove.has(c));
+        });
+    };
 
     // Reset all progress
     const handleReset = () => {
@@ -483,7 +461,7 @@ export default function CourseProgressionPage() {
             else if (section.streams) courses = section.streams.flatMap((s) => s.courses);
 
             const course = courses.find((c) => c.code === code);
-            if (course) return total + (course.credits || 3);
+            if (course) return total + Number(course.credits ?? 3);
         }
         return total + 3; // Default 3 credits if not found
     }, 0);
@@ -531,9 +509,11 @@ export default function CourseProgressionPage() {
                                     key={section.name}
                                     variant={selectedSection === section.name ? "default" : "outline"}
                                     className={
-                                        selectedSection === section.name
-                                            ? "bg-indigo-600 text-white border-indigo-600 hover:bg-indigo-700"
-                                            : "border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400"
+                                        `${
+                                            selectedSection === section.name
+                                                ? "bg-indigo-600 text-white border-indigo-600 hover:bg-indigo-700"
+                                                : "border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400"
+                                        } px-5 py-6 text-sm`
                                     }
                                     onClick={() => setSelectedSection(section.name)}
                                 >
@@ -586,7 +566,13 @@ export default function CourseProgressionPage() {
 
                 {/* Main Content */}
                 <section className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-100 dark:border-blue-800/50 rounded-xl shadow p-8">
-                    {showComingSoon ? (
+                    {!selectedDept ? (
+                        <div className="flex flex-col items-center justify-center min-h-[200px]">
+                            <span className="text-blue-500 dark:text-blue-300 text-lg font-semibold text-center">
+                                Select a department to view its course progression.
+                            </span>
+                        </div>
+                    ) : showComingSoon ? (
                         <div className="flex flex-col items-center justify-center min-h-[200px]">
                             <span className="text-blue-400 dark:text-blue-300 text-xl font-semibold">
                                 {departments.find((d) => d.code === selectedDept)?.name} outline coming soon...

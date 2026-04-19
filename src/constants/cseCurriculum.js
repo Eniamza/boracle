@@ -17,13 +17,13 @@ export function getTotalCredits() {
 
 export const cseCurriculum = [
     {
-        section: "Foundation & Core Skills",
-        credits: 51, // 39 + 12 = 51 total credits
+        section: "University & School Core",
+        credits: 51,
         description: "Combined University Core and School Core courses",
         streams: [
             {
-                name: "Writing & Communication",
-                credits: 9,
+                name: "Stream 1: Writing & Communication",
+                credits: 6,
                 courses: [
                     { code: "ENG091", name: "Foundation Course (in English)", credits: 0, optional: false },
                     { code: "ENG101", name: "Fundamentals of English", credits: 3, optional: false },
@@ -32,8 +32,8 @@ export const cseCurriculum = [
                 ],
             },
             {
-                name: "Mathematics & Natural Sciences",
-                credits: 18,
+                name: "Stream 2: Mathematics & Natural Sciences + School Core",
+                credits: 21,
                 courses: [
                     { code: "MAT092", name: "Remedial Mathematics", credits: 0, optional: false },
                     { code: "MAT110", name: "Math I: Differential Calculus & Coordinate Geometry", credits: 3, optional: false },
@@ -56,27 +56,105 @@ export const cseCurriculum = [
                 ],
             },
             {
-                name: "Arts & Humanities",
-                credits: 6,
+                name: "Stream 3: Arts & Humanities",
+                credits: 9,
                 courses: [
                     { code: "HUM103", name: "Ethics and Culture", credits: 3, optional: false },
                     { code: "BNG103", name: "Bangla Language and Literature", credits: 3, optional: false },
+                    {
+                        code: "Required Course - S3",
+                        name: "Arts & Humanities Elective (Minimum one option)",
+                        credits: 3,
+                        optional: false,
+                        alternatives: [
+                            "HUM101",
+                            "HUM102",
+                            "HST102",
+                            "HST103",
+                            "HST104",
+                            "HUM207",
+                            "ENG110",
+                            "ENG113",
+                            "ENG114",
+                            "ENG115",
+                            "ENG333",
+                        ],
+                    },
                 ],
+                note: "Minimum one from: HUM101, HUM102, HST102, HST103, HST104, HUM207, ENG110, ENG113, ENG114, ENG115, ENG333",
             },
             {
-                name: "Social Sciences",
-                credits: 3,
-                courses: [{ code: "EMB101", name: "Bangladesh Studies", credits: 3, optional: false, alternatives: ["DEV101"] }],
-            },
-            {
-                name: "Community Service & Transformation",
-                credits: 9,
+                name: "Stream 4: Social Sciences",
+                credits: 6,
                 courses: [
-                    { code: "CST201", name: "Community Service I", credits: 3, optional: true },
-                    { code: "CST301", name: "Community Service II", credits: 3, optional: true },
-                    { code: "CST310", name: "Community Leadership", credits: 3, optional: true },
+                    { code: "EMB101", name: "Bangladesh Studies", credits: 3, optional: false, alternatives: ["DEV101"] },
+                    {
+                        code: "Required Course - S4",
+                        name: "Social Sciences Elective (Minimum one option)",
+                        credits: 3,
+                        optional: false,
+                        alternatives: [
+                            "PSY101",
+                            "SOC101",
+                            "ANT101",
+                            "POL101",
+                            "BUS201",
+                            "ECO101",
+                            "ECO102",
+                            "ECO105",
+                            "BUS102",
+                            "POL102",
+                            "POL103",
+                            "POL201",
+                            "POL202",
+                            "PSY102",
+                            "DEV104",
+                            "DEV201",
+                            "SOC201/ANT202",
+                            "ANT342",
+                            "ANT351",
+                            "BUS333",
+                            "BUS334",
+                            "BUS335",
+                        ],
+                    },
                 ],
-                note: "Choose any 3 credits from optional courses",
+                note: "Minimum one from: PSY101, SOC101, ANT101, POL101, BUS201, ECO101, ECO102, ECO105, BUS102, POL102, POL103, POL201, POL202, PSY102, DEV104, DEV201, SOC201/ANT202, ANT342, ANT351, BUS333, BUS334, BUS335",
+            },
+            {
+                name: "Stream 5: Community Service & Transformation",
+                credits: 3,
+                courses: [
+                    {
+                        code: "Required Course - S5",
+                        name: "Community Service Course (Minimum one option)",
+                        credits: 3,
+                        optional: true,
+                        alternatives: [
+                            "CST201",
+                            "CST301",
+                            "CST302",
+                            "CST303",
+                            "CST304",
+                            "CST305",
+                            "CST306",
+                            "CST307",
+                            "CST308",
+                            "CST309",
+                            "CST310",
+                        ],
+                    },
+                ],
+                note: "Minimum one from: CST201, CST301, CST302, CST303, CST304, CST305, CST306, CST307, CST308, CST309, CST310",
+            },
+            {
+                name: "Stream 6: Courses Out Of Department (COD)",
+                credits: 6,
+                courses: [
+                    { code: "COD - 1", name: "Courses Out Of Department Option 1", credits: 3, optional: true },
+                    { code: "COD - 2", name: "Courses Out Of Department Option 2", credits: 3, optional: true },
+                ],
+                note: "Choose any two 3-credit courses (6 credits total). Minimum one from: HUM101, HUM102, HST102, HST103, HST104, HUM207, ENG110, ENG113, ENG114, ENG115, ENG333, PSY101, SOC101, ANT101, POL101, BUS201, ECO101, ECO102, ECO105, BUS102, POL102, POL103, POL201, POL202, PSY102, DEV104, DEV201, SOC201/ANT202, ANT342, ANT351, BUS333, BUS334, BUS335, CST201, CST301, CST302, CST303, CST304, CST305, CST306, CST307, CST308, CST309, CST310, CHE101, BIO101, ENV103",
             },
         ],
     },
@@ -128,4 +206,26 @@ export const cseCurriculum = [
         courses: [{ code: "CSE400", name: "Project / Thesis", credits: 4 }],
     },
 ];
+
+// ! Pre-req override map
+// null means "use prerequisite from Connect CDN".
+// Any non-null string overrides the CDN prerequisite for that course code.
+const allCurriculumCourseCodes = Array.from(
+    new Set(
+        cseCurriculum.flatMap((section) => {
+            if (Array.isArray(section.courses)) {
+                return section.courses.map((course) => course.code);
+            }
+            if (Array.isArray(section.streams)) {
+                return section.streams.flatMap((stream) => stream.courses.map((course) => course.code));
+            }
+            return [];
+        }),
+    ),
+);
+
+export const prerequisiteOverrides = {
+    ...Object.fromEntries(allCurriculumCourseCodes.map((code) => [code, null])),
+    CSE260: "CSE251",
+};
 
