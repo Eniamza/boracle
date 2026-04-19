@@ -35,6 +35,14 @@ const featureList = [
     },
     {
         index: 5,
+        title: "Course Progression",
+        description: "Track completed courses, check prerequisites, and visualize your graduation progress.",
+        footer: "🟡 Work In Progress",
+        href: "/course-progression",
+        dashboardHref: "/course-progression"
+    },
+    {
+        index: 6,
         title: "Faculty Review",
         description: "Rate your faculty and provide feedback. Scrolling through useless reviews is a thing of the past!",
         footer: "🟡 Coming Soon"

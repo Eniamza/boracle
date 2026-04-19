@@ -1,17 +1,6 @@
 // ! Calculate total credits from curriculum
 export function getTotalCredits() {
-    let total = 0;
-    for (const section of cseCurriculum) {
-        if (Array.isArray(section.courses)) {
-            total += section.courses.reduce((sum, c) => sum + (c.credits || 0), 0);
-        }
-        if (Array.isArray(section.streams)) {
-            for (const stream of section.streams) {
-                total += stream.courses.reduce((sum, c) => sum + (c.credits || 0), 0);
-            }
-        }
-    }
-    return total;
+    return cseCurriculum.reduce((sum, section) => sum + (section.credits || 0), 0);
 }
 
 export const cseCurriculum = [

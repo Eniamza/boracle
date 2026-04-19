@@ -525,7 +525,7 @@ export default function CourseProgressionPage() {
             const course = courses.find((c) => c.code === code);
             if (course) return total + Number(course.credits ?? 3);
         }
-        return total + 3; // Default 3 credits if not found
+        return total;
     }, 0);
 
     return (
