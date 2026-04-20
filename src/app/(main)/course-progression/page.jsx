@@ -2,7 +2,16 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { cseCurriculum, getTotalCredits, prerequisiteOverrides } from "@/constants/cseCurriculum";
+import {
+    cseCurriculum,
+    getTotalCredits as getCseTotalCredits,
+    prerequisiteOverrides as csePrerequisiteOverrides,
+} from "@/constants/cseCurriculum";
+import {
+    csCurriculum,
+    getTotalCredits as getCsTotalCredits,
+    prerequisiteOverrides as csPrerequisiteOverrides,
+} from "@/constants/csCurriculum";
 import { CheckCircle2, ChevronDown, ChevronUp, Lock, Unlock, RefreshCw } from "lucide-react";
 
 const departments = [
@@ -12,6 +21,41 @@ const departments = [
     { code: "BBA", name: "Business Administration" },
     { code: "LAW", name: "Law" },
 ];
+
+const departmentCurricula = {
+    CSE: cseCurriculum,
+    CS: csCurriculum,
+};
+
+const departmentPrerequisiteOverrides = {
+    CSE: csePrerequisiteOverrides,
+    CS: csPrerequisiteOverrides,
+};
+
+const supportedDepartments = new Set(["CSE", "CS"]);
+
+function getCurriculumForDepartment(code) {
+    return departmentCurricula[code] ?? [];
+}
+
+function getPrerequisiteOverridesForDepartment(code) {
+    return departmentPrerequisiteOverrides[code] ?? csePrerequisiteOverrides;
+}
+
+function getCompletedCoursesForCurriculum(curriculum, completedCourses) {
+    return completedCourses.reduce((total, courseCode) => {
+        for (const section of curriculum) {
+            let courses = [];
+            if (section.courses) courses = section.courses;
+            else if (section.streams) courses = section.streams.flatMap((stream) => stream.courses);
+
+            const course = courses.find((c) => c.code === courseCode);
+            if (course) return total + Number(course.credits ?? 3);
+        }
+
+        return total;
+    }, 0);
+}
 
 function getSectionAnchorId(sectionName) {
     return `section-${sectionName.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
@@ -109,7 +153,7 @@ function arePrerequisitesSatisfied(prereqTree, completedCourses) {
 
 //! MARK: Course Data Fetch
 //! CDN
-function useConnectCDN() {
+function useConnectCDN(prereqOverrides = csePrerequisiteOverrides) {
     const [courseMap, setCourseMap] = useState({});
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -126,7 +170,7 @@ function useConnectCDN() {
                 const map = {};
                 for (const c of data) {
                     if (!map[c.courseCode]) {
-                        const overridePrereq = prerequisiteOverrides[c.courseCode];
+                        const overridePrereq = prereqOverrides[c.courseCode];
                         const effectivePrereqRaw = overridePrereq ?? c.prerequisiteCourses;
                         const effectivePrereqTree = parsePrereqString(effectivePrereqRaw);
 
@@ -148,7 +192,7 @@ function useConnectCDN() {
             }
         }
         fetchData();
-    }, []);
+    }, [prereqOverrides]);
 
     return { courseMap, loading, error };
 }
@@ -236,11 +280,21 @@ function CourseCard({ course, isCompleted, isAvailable, isSelected, isHighlighte
 }
 
 //! MARK: SectionCourses
-function SectionCourses({ section, completedCourses, highlightedCourseCode, onCourseToggle, onCourseUntoggle, onPrereqClick }) {
-    const { courseMap, loading, error } = useConnectCDN();
+function SectionCourses({
+    section,
+    curriculum,
+    courseMap,
+    loading,
+    error,
+    completedCourses,
+    highlightedCourseCode,
+    onCourseToggle,
+    onCourseUntoggle,
+    onPrereqClick,
+}) {
     const [selectedCourse, setSelectedCourse] = useState(null);
 
-    const sectionObj = cseCurriculum.find((s) => s.section === section);
+    const sectionObj = curriculum.find((s) => s.section === section);
 
     if (!sectionObj) return <div>Section not found.</div>;
 
@@ -302,7 +356,9 @@ function SectionCourses({ section, completedCourses, highlightedCourseCode, onCo
     }
 
     if (error) {
-        return <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">Error loading course data: {error}</div>;
+        return (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">Error loading course data: {error}</div>
+        );
     }
 
     return (
@@ -367,17 +423,20 @@ function SectionCourses({ section, completedCourses, highlightedCourseCode, onCo
 export default function CourseProgressionPage() {
     const [selectedDept, setSelectedDept] = useState(null);
     const [showComingSoon, setShowComingSoon] = useState(false);
-    const [completedCourses, setCompletedCourses] = useState([]);
+    const [completedCoursesByDept, setCompletedCoursesByDept] = useState({});
     const [highlightedCourseCode, setHighlightedCourseCode] = useState(null);
     const [showProgressPanel, setShowProgressPanel] = useState(false);
-    const [showResetConfirm, setShowResetConfirm] = useState(false);
 
-    // Use CDN prerequisite graph to auto-mark prerequisite chains when selecting a course.
-    const { courseMap } = useConnectCDN();
+    const activeCurriculum = getCurriculumForDepartment(selectedDept);
+    const activePrerequisiteOverrides = getPrerequisiteOverridesForDepartment(selectedDept);
+    const completedCourses = selectedDept ? (completedCoursesByDept[selectedDept] ?? []) : [];
+
+    // Use the selected department's prerequisite graph to auto-mark prerequisite chains when selecting a course.
+    const { courseMap, loading, error } = useConnectCDN(activePrerequisiteOverrides);
 
     const handleDeptClick = (code) => {
-        if (code === "CSE") {
-            setSelectedDept("CSE");
+        if (supportedDepartments.has(code)) {
+            setSelectedDept(code);
             setShowComingSoon(false);
         } else {
             setSelectedDept(code);
@@ -387,8 +446,11 @@ export default function CourseProgressionPage() {
 
     // Mark as completed
     const handleCourseToggle = (courseCode) => {
-        setCompletedCourses((prev) => {
-            const next = new Set(prev);
+        if (!selectedDept || !supportedDepartments.has(selectedDept)) return;
+
+        setCompletedCoursesByDept((prev) => {
+            const currentCompleted = prev[selectedDept] ?? [];
+            const next = new Set(currentCompleted);
             const stack = [courseCode];
 
             while (stack.length > 0) {
@@ -405,13 +467,19 @@ export default function CourseProgressionPage() {
                 }
             }
 
-            return Array.from(next);
+            return {
+                ...prev,
+                [selectedDept]: Array.from(next),
+            };
         });
     };
 
     // Mark as incomplete and remove its prerequisite chain.
     const handleCourseUntoggle = (courseCode) => {
-        setCompletedCourses((prev) => {
+        if (!selectedDept || !supportedDepartments.has(selectedDept)) return;
+
+        setCompletedCoursesByDept((prev) => {
+            const currentCompleted = prev[selectedDept] ?? [];
             const toRemove = new Set();
             const stack = [courseCode];
 
@@ -429,19 +497,26 @@ export default function CourseProgressionPage() {
                 }
             }
 
-            return prev.filter((c) => !toRemove.has(c));
+            return {
+                ...prev,
+                [selectedDept]: currentCompleted.filter((c) => !toRemove.has(c)),
+            };
         });
     };
 
     // Reset all progress
     const handleReset = () => {
+        if (!selectedDept || !supportedDepartments.has(selectedDept)) return;
+
         if (window.confirm("Are you sure you want to reset all your progress? This cannot be undone.")) {
-            setCompletedCourses([]);
-            setShowResetConfirm(false);
+            setCompletedCoursesByDept((prev) => ({
+                ...prev,
+                [selectedDept]: [],
+            }));
         }
     };
 
-    const cseSections = cseCurriculum.map((s) => ({
+    const activeSections = activeCurriculum.map((s) => ({
         name: s.section,
         credits: s.credits,
         description: s.description,
@@ -450,7 +525,7 @@ export default function CourseProgressionPage() {
 
     const allSectionCourses = useMemo(
         () =>
-            cseCurriculum.flatMap((section) => {
+            activeCurriculum.flatMap((section) => {
                 const courses = section.courses
                     ? section.courses
                     : section.streams
@@ -463,7 +538,7 @@ export default function CourseProgressionPage() {
                     sectionName: section.section,
                 }));
             }),
-        [],
+        [activeCurriculum],
     );
 
     const availableCourses = useMemo(() => {
@@ -512,20 +587,9 @@ export default function CourseProgressionPage() {
     }, [highlightedCourseCode]);
 
     // Calculate total completed credits
-    const totalCompletedCredits = completedCourses.reduce((total, code) => {
-        // Find course in curriculum
-        for (const section of cseCurriculum) {
-            let courses = [];
-            if (section.courses) courses = section.courses;
-            else if (section.streams) courses = section.streams.flatMap((s) => s.courses);
+    const totalCompletedCredits = getCompletedCoursesForCurriculum(activeCurriculum, completedCourses);
 
-            const course = courses.find((c) => c.code === code);
-            if (course) return total + Number(course.credits ?? 3);
-        }
-        return total;
-    }, 0);
-
-    const totalCredits = getTotalCredits();
+    const totalCredits = selectedDept === "CS" ? getCsTotalCredits(activeCurriculum) : getCseTotalCredits(activeCurriculum);
     const progressPercent = totalCredits > 0 ? Math.min(100, Math.round((totalCompletedCredits / totalCredits) * 100)) : 0;
     const coursesLeft = Math.max(0, allSectionCourses.length - completedCourses.length);
 
@@ -541,9 +605,10 @@ export default function CourseProgressionPage() {
                     </h1>
                     <p className="text-lg text-gray-600 dark:text-gray-400">
                         Click any <span className="font-semibold text-yellow-600 dark:text-yellow-400">Available</span> course to
-                        mark it complete. Click a <span className="font-semibold text-green-600 dark:text-green-400">Completed</span>{" "}
-                        course to undo it; dependent courses will become <span className="font-semibold text-gray-500 dark:text-gray-300">Locked</span>{" "}
-                        again automatically.
+                        mark it complete. Click a{" "}
+                        <span className="font-semibold text-green-600 dark:text-green-400">Completed</span> course to undo it;
+                        dependent courses will become{" "}
+                        <span className="font-semibold text-gray-500 dark:text-gray-300">Locked</span> again automatically.
                     </p>
 
                     <div className="flex flex-wrap items-center justify-center gap-2 text-xs text-gray-700 dark:text-gray-300">
@@ -596,7 +661,7 @@ export default function CourseProgressionPage() {
                         </div>
                     ) : (
                         <div className="space-y-10">
-                            {cseSections.map((section) => (
+                            {activeSections.map((section) => (
                                 <div key={section.name} id={getSectionAnchorId(section.name)} className="space-y-4 scroll-mt-6">
                                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-blue-200 dark:border-blue-800 pb-3">
                                         <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{section.name}</h2>
@@ -621,6 +686,10 @@ export default function CourseProgressionPage() {
                                     )}
                                     <SectionCourses
                                         section={section.name}
+                                        curriculum={activeCurriculum}
+                                        courseMap={courseMap}
+                                        loading={loading}
+                                        error={error}
                                         completedCourses={completedCourses}
                                         highlightedCourseCode={highlightedCourseCode}
                                         onCourseToggle={handleCourseToggle}
@@ -634,7 +703,7 @@ export default function CourseProgressionPage() {
                 </section>
             </div>
 
-            {selectedDept === "CSE" && (
+            {selectedDept && (
                 <>
                     {!showProgressPanel ? (
                         <div className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2">
@@ -647,10 +716,10 @@ export default function CourseProgressionPage() {
                                     <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-300">
                                         <ChevronUp className="h-3.5 w-3.5" />
                                     </span>
-                                    Credits {totalCompletedCredits} / {totalCredits}
+                                    {selectedDept} credits {totalCompletedCredits} / {totalCredits}
                                 </button>
 
-                                {completedCourses.length > 0 && (
+                                {completedCourses.length > 0 && supportedDepartments.has(selectedDept) && (
                                     <button
                                         type="button"
                                         onClick={handleReset}
@@ -668,7 +737,7 @@ export default function CourseProgressionPage() {
                                 <div className="flex items-start gap-3">
                                     <div className="relative min-w-0 flex-1 space-y-3">
                                         <div className="absolute right-0 top-0 flex items-center gap-2">
-                                            {completedCourses.length > 0 && (
+                                            {completedCourses.length > 0 && supportedDepartments.has(selectedDept) && (
                                                 <Button
                                                     variant="outline"
                                                     size="sm"
@@ -703,19 +772,19 @@ export default function CourseProgressionPage() {
 
                                             <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[13px] text-gray-700 dark:text-gray-200">
                                                 <p>
-                                                    Courses {" "}
+                                                    Courses{" "}
                                                     <span className="font-semibold text-green-600 dark:text-green-400">
                                                         {completedCourses.length}
                                                     </span>
                                                 </p>
                                                 <p>
-                                                    Courses left {" "}
+                                                    Courses left{" "}
                                                     <span className="font-semibold text-amber-600 dark:text-amber-400">
                                                         {coursesLeft}
                                                     </span>
                                                 </p>
                                                 <p>
-                                                    Credits {" "}
+                                                    Credits{" "}
                                                     <span className="font-semibold text-blue-600 dark:text-blue-400">
                                                         {totalCompletedCredits} / {totalCredits}
                                                     </span>
@@ -738,7 +807,7 @@ export default function CourseProgressionPage() {
                                             </p>
 
                                             <div className="mt-2 flex flex-wrap items-center justify-center gap-2 pr-1">
-                                                {availableCourses.length > 0 ? (
+                                                {supportedDepartments.has(selectedDept) && availableCourses.length > 0 ? (
                                                     availableCourses.map((course) => (
                                                         <button
                                                             key={`${course.sectionName}-${course.code}`}
@@ -756,6 +825,12 @@ export default function CourseProgressionPage() {
                                                     </span>
                                                 )}
                                             </div>
+
+                                            {!supportedDepartments.has(selectedDept) && (
+                                                <p className="mt-2 text-[13px] text-amber-600 dark:text-amber-400">
+                                                    Progress tracking for this department is not configured yet.
+                                                </p>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
