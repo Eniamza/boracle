@@ -17,24 +17,26 @@ cseCurriculum (Array)
 │       │   └── courses (Array)
 │       │       ├── Course
 │       │       │   ├── code: "ENG091"
-        courses: [
-            { code: "CS Elective - 1", name: "CSE Elective", credits: 3, elective: true },
-            { code: "CS Elective - 2", name: "CSE / Minor / GenEd Elective", credits: 3, elective: true },
-            { code: "CS Elective - 3", name: "CSE / Minor / GenEd Elective", credits: 3, elective: true },
-            { code: "CS Elective - 4", name: "CSE / Minor / GenEd Elective", credits: 3, elective: true },
-            { code: "CS Elective - 5", name: "CSE / Minor / GenEd Elective", credits: 3, elective: true },
-            { code: "CS Elective - 6", name: "CSE / Minor / GenEd Elective", credits: 3, elective: true },
-            { code: "CS Elective - 7", name: "CSE / Minor / GenEd Elective", credits: 3, elective: true },
-        ],
+│       │       │   ├── name
+│       │       │   ├── credits
+│       │       │   └── optional
+│       │       └── ...
+│       │
+│       ├── Stream
 │       │   ├── name: "Mathematics & Natural Sciences"
 │       │   └── courses [...]
 │       │
 │       └── ... (more streams)
 │
-        description: "Thesis / Project / Internship",
-        referenceLink:
-            "https://docs.google.com/document/d/1pAMjuQAxSEcLgkbvmx9qJGvK2BlPQhvXhgev8OeJTas/edit?tab=t.0#heading=h.aczyuw2yex2w",
-        courses: [{ code: "CSE400", name: "Project / Thesis / Internship", credits: 4 }],
+├── Section
+│   ├── section: "Program Core"
+│   ├── credits: 75
+│   ├── description
+│   └── courses (Array)
+│       ├── Course
+│       │   ├── code: "CSE110"
+│       │   ├── name
+│       │   └── credits
 │       └── ...
 │
 ├── Section
@@ -70,7 +72,7 @@ export const csCurriculum = [
         description: "University Core (39) + School Core (12)",
         streams: [
             {
-                name: "Stream 1: Writing Comprehension",
+                name: "Stream 1: Writing & Communication",
                 credits: 6,
                 courses: [
                     { code: "ENG091", name: "Foundation Course", credits: 0 },
@@ -80,19 +82,27 @@ export const csCurriculum = [
                 ],
             },
             {
-                name: "Stream 2: Math & Natural Sciences",
-                credits: 9,
+                name: "Stream 2: Mathematics & Natural Sciences + School Core",
+                credits: 21,
                 courses: [
-                    { code: "MAT092", name: "Remedial Mathematics", credits: 0 },
-                    { code: "MAT110", name: "Math I: Differential Calculus & Coordinate Geometry", credits: 3 },
-                    { code: "PHY111", name: "Principles of Physics I", credits: 3 },
-                    { code: "STA201", name: "Statistics & Probability", credits: 3 },
+                    { code: "MAT092", name: "Remedial Mathematics", credits: 0, optional: false },
+                    { code: "MAT110", name: "Math I: Differential Calculus & Coordinate Geometry", credits: 3, optional: false },
                     {
-                        code: "SCI_OPTION",
-                        name: "Optional: CHE101 / BIO101 / ENV103",
-                        credits: 0,
-                        optional: true,
+                        code: "MAT120",
+                        name: "Math II: Integral Calculus and Differential Equations",
+                        credits: 3,
+                        optional: false,
                     },
+                    {
+                        code: "MAT215",
+                        name: "Math III: Complex Variables and Laplace Transformations",
+                        credits: 3,
+                        optional: false,
+                    },
+                    { code: "MAT216", name: "Math IV: Linear Algebra and Fourier Analysis", credits: 3, optional: false },
+                    { code: "PHY111", name: "Principles of Physics I", credits: 3, optional: false },
+                    { code: "PHY112", name: "Principles of Physics II", credits: 3, optional: false },
+                    { code: "STA201", name: "Statistics and Probability", credits: 3, optional: false },
                 ],
             },
             {
@@ -120,6 +130,7 @@ export const csCurriculum = [
                         ],
                     },
                 ],
+                note: "One Course From: HUM101, HUM102, HST102, HST103, HST104, HUM207, ENG110, ENG113, ENG114, ENG115, ENG333",
             },
             {
                 name: "Stream 4: Social Sciences",
@@ -160,9 +171,10 @@ export const csCurriculum = [
                         ],
                     },
                 ],
+                note: "One Course From: PSY101, SOC101, ANT101, POL101, BUS201, ECO101, ECO102, ECO105, BUS102, POL102, POL103, POL201, POL202, PSY102, DEV104, DEV201, SOC201/ANT202, ANT342, ANT351, BUS333, BUS334, BUS335",
             },
             {
-                name: "Stream 5: Community Transformation",
+                name: "Stream 5: Community Service & Transformation",
                 credits: 3,
                 courses: [
                     {
@@ -184,24 +196,16 @@ export const csCurriculum = [
                         ],
                     },
                 ],
+                note: "One Course From: CST201, CST301, CST302, CST303, CST304, CST305, CST306, CST307, CST308, CST309, CST310",
             },
             {
-                name: "GenEd Electives",
+                name: "Courses Out Of Department (COD)",
                 credits: 6,
                 courses: [
                     { code: "COD - 4", name: "GenEd Elective", credits: 3, optional: true },
                     { code: "COD - 5", name: "GenEd Elective", credits: 3, optional: true },
                 ],
-            },
-            {
-                name: "School Core",
-                credits: 12,
-                courses: [
-                    { code: "MAT120", name: "Math II: Integral Calculus & Differential Equations", credits: 3 },
-                    { code: "MAT215", name: "Math III: Complex Variables & Laplace Transform", credits: 3 },
-                    { code: "MAT216", name: "Math IV: Linear Algebra & Fourier Analysis", credits: 3 },
-                    { code: "PHY112", name: "Principles of Physics II", credits: 3 },
-                ],
+                note: "Two Courses From: HUM101, HUM102, HST102, HST103, HST104, HUM207, ENG110, ENG113, ENG114, ENG115, ENG333, PSY101, SOC101, ANT101, POL101, BUS201, ECO101, ECO102, ECO105, BUS102, POL102, POL103, POL201, POL202, PSY102, DEV104, DEV201, SOC201/ANT202, ANT342, ANT351, BUS333, BUS334, BUS335, CST201, CST301, CST302, CST303, CST304, CST305, CST306, CST307, CST308, CST309, CST310, CHE101, BIO101, ENV103",
             },
         ],
     },
@@ -209,7 +213,7 @@ export const csCurriculum = [
     {
         section: "Program Core",
         credits: 48,
-        description: "Core CSE courses",
+        description: "Core Computer Science and Engineering courses",
         courses: [
             { code: "CSE110", name: "Programming Language I", credits: 3 },
             { code: "CSE111", name: "Programming Language II", credits: 3 },
@@ -234,17 +238,17 @@ export const csCurriculum = [
         section: "Program Electives",
         credits: 21,
         description:
-            "Elective courses (minimum one must be a CSE elective) || Research the Elective Pre-Requisites Carefully On the Google Sheet",
+            "Elective courses (minimum one must be a CSE elective) || Research the Elective Pre-Requisites Carefully From the Reference Link",
         referenceLink:
             "https://docs.google.com/spreadsheets/d/1-JM6a-JM4y4TiqMv9M4OXMBTnIAbn0lhsvfVGlfR1OU/edit?gid=1207964579#gid=1207964579",
         courses: [
             { code: "CS Elective - 1", name: "CSE Elective", credits: 3, elective: true },
-            { code: "CS Elective - 2", name: "CSE / Minor / GenEd Elective", credits: 3, elective: true },
-            { code: "CS Elective - 3", name: "CSE / Minor / GenEd Elective", credits: 3, elective: true },
-            { code: "CS Elective - 4", name: "CSE / Minor / GenEd Elective", credits: 3, elective: true },
-            { code: "CS Elective - 5", name: "CSE / Minor / GenEd Elective", credits: 3, elective: true },
-            { code: "CS Elective - 6", name: "CSE / Minor / GenEd Elective", credits: 3, elective: true },
-            { code: "CS Elective - 7", name: "CSE / Minor / GenEd Elective", credits: 3, elective: true },
+            { code: "Open Elective - 2", name: "CSE / Minor / GenEd Elective", credits: 3, elective: true },
+            { code: "Open Elective - 3", name: "CSE / Minor / GenEd Elective", credits: 3, elective: true },
+            { code: "Open Elective - 4", name: "CSE / Minor / GenEd Elective", credits: 3, elective: true },
+            { code: "Open Elective - 5", name: "CSE / Minor / GenEd Elective", credits: 3, elective: true },
+            { code: "Open Elective - 6", name: "CSE / Minor / GenEd Elective", credits: 3, elective: true },
+            { code: "Open Elective - 7", name: "CSE / Minor / GenEd Elective", credits: 3, elective: true },
         ],
     },
 

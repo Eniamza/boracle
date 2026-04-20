@@ -66,8 +66,8 @@ prerequisiteOverrides (Object)
 */
 // ! MARK: JSON Starts Here
 // ! Calculate total credits from curriculum
-export function getTotalCredits() {
-    return cseCurriculum.reduce((sum, section) => sum + (section.credits || 0), 0);
+export function getTotalCredits(curriculum = cseCurriculum) {
+    return curriculum.reduce((sum, section) => sum + (section.credits || 0), 0);
 }
 
 export const cseCurriculum = [
@@ -147,7 +147,7 @@ export const cseCurriculum = [
                 name: "Stream 4: Social Sciences",
                 credits: 6,
                 courses: [
-                    { code: "EMB101", name: "Bangladesh Studies", credits: 3, optional: false, alternatives: ["DEV101"] },
+                    { code: "EMB101", name: "Emergence of Bangladesh / Bangladesh Studies", credits: 3, optional: false, alternatives: ["DEV101"] },
                     {
                         code: "Stream 4 - COD",
                         name: "Pick one course from the provided options above",
@@ -208,7 +208,7 @@ export const cseCurriculum = [
                 note: "One Course From: CST201, CST301, CST302, CST303, CST304, CST305, CST306, CST307, CST308, CST309, CST310",
             },
             {
-                name: "Stream 6: Courses Out Of Department (COD)",
+                name: "Courses Out Of Department (COD)",
                 credits: 6,
                 courses: [
                     { code: "COD - 4", name: "Pick one course from the provided options above", credits: 3, optional: true },
@@ -253,12 +253,12 @@ export const cseCurriculum = [
     {
         section: "Program Electives",
         credits: 6,
-        description: "Choose elective courses to specialize",
+        description: "Choose elective courses to specialize || Research the Elective Pre-Requisites Carefully From the Reference Link",
         referenceLink:
             "https://docs.google.com/spreadsheets/d/1-JM6a-JM4y4TiqMv9M4OXMBTnIAbn0lhsvfVGlfR1OU/edit?gid=1207964579#gid=1207964579",
         courses: [
-            { code: "CSEElective", name: "CSE Elective (Any 300/400 level CSE course)", credits: 3, elective: true },
-            { code: "OpenElective", name: "Open Elective (CSE / Minor / GenEd)", credits: 3, elective: true },
+            { code: "CSE Elective", name: "CSE Elective", credits: 3, elective: true },
+            { code: "Open Elective", name: "CSE / Minor / GenEd", credits: 3, elective: true },
         ],
     },
     {
@@ -267,7 +267,7 @@ export const cseCurriculum = [
         description: "Thesis / Project / Internship",
         referenceLink:
             "https://docs.google.com/document/d/1pAMjuQAxSEcLgkbvmx9qJGvK2BlPQhvXhgev8OeJTas/edit?tab=t.0#heading=h.aczyuw2yex2w",
-        courses: [{ code: "CSE400", name: "Project  / Thesis / Internship", credits: 4 }],
+        courses: [{ code: "CSE400", name: "Project / Thesis / Internship", credits: 4 }],
     },
 ];
 
