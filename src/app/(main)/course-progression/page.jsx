@@ -12,7 +12,7 @@ import {
     getTotalCredits as getCsTotalCredits,
     prerequisiteOverrides as csPrerequisiteOverrides,
 } from "@/constants/csCurriculum";
-import { CheckCircle2, ChevronDown, ChevronUp, Lock, Unlock, RefreshCw } from "lucide-react";
+import { CheckCircle2, ChevronDown, ChevronUp, Lock, Unlock, RefreshCw, Undo2 } from "lucide-react";
 
 const departments = [
     { code: "CSE", name: "Computer Science & Engineering" },
@@ -63,6 +63,27 @@ function getSectionAnchorId(sectionName) {
 
 function getCourseCardId(courseCode) {
     return `course-card-${courseCode.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+}
+
+function areCourseListsEqual(left, right) {
+    if (left.length !== right.length) return false;
+    return left.every((courseCode, index) => courseCode === right[index]);
+}
+
+function addUndoSnapshot(setUndoStackByDept, dept, snapshot) {
+    setUndoStackByDept((prev) => {
+        const history = prev[dept] ?? [];
+        const lastSnapshot = history[history.length - 1];
+
+        if (lastSnapshot && areCourseListsEqual(lastSnapshot, snapshot)) {
+            return prev;
+        }
+
+        return {
+            ...prev,
+            [dept]: [...history, snapshot].slice(-10),
+        };
+    });
 }
 
 //! MARK: Prereq Parsing
@@ -129,6 +150,30 @@ function getAllPrerequisiteCodes(prereqTree) {
     if (Array.isArray(prereqTree)) return prereqTree.flatMap(getAllPrerequisiteCodes);
     if (prereqTree.args) return prereqTree.args.flatMap(getAllPrerequisiteCodes);
     return [];
+}
+
+function getDependentCompletedCourses(courseCode, completedCourses, courseMap) {
+    const toRemove = new Set([courseCode]);
+    const completedSet = new Set(completedCourses);
+    let changed = true;
+
+    while (changed) {
+        changed = false;
+
+        for (const completedCourse of completedCourses) {
+            if (toRemove.has(completedCourse)) continue;
+
+            const prereqCodes = getAllPrerequisiteCodes(courseMap[completedCourse]?.prereqTree);
+            const dependsOnRemovedCourse = prereqCodes.some((prereqCode) => toRemove.has(prereqCode));
+
+            if (dependsOnRemovedCourse && completedSet.has(completedCourse)) {
+                toRemove.add(completedCourse);
+                changed = true;
+            }
+        }
+    }
+
+    return toRemove;
 }
 
 //! MARK: Prereq Satisfaction
@@ -424,12 +469,14 @@ export default function CourseProgressionPage() {
     const [selectedDept, setSelectedDept] = useState(null);
     const [showComingSoon, setShowComingSoon] = useState(false);
     const [completedCoursesByDept, setCompletedCoursesByDept] = useState({});
+    const [undoStackByDept, setUndoStackByDept] = useState({});
     const [highlightedCourseCode, setHighlightedCourseCode] = useState(null);
     const [showProgressPanel, setShowProgressPanel] = useState(false);
 
     const activeCurriculum = getCurriculumForDepartment(selectedDept);
     const activePrerequisiteOverrides = getPrerequisiteOverridesForDepartment(selectedDept);
     const completedCourses = selectedDept ? (completedCoursesByDept[selectedDept] ?? []) : [];
+    const undoStack = selectedDept ? (undoStackByDept[selectedDept] ?? []) : [];
 
     // Use the selected department's prerequisite graph to auto-mark prerequisite chains when selecting a course.
     const { courseMap, loading, error } = useConnectCDN(activePrerequisiteOverrides);
@@ -448,43 +495,74 @@ export default function CourseProgressionPage() {
     const handleCourseToggle = (courseCode) => {
         if (!selectedDept || !supportedDepartments.has(selectedDept)) return;
 
-        setCompletedCoursesByDept((prev) => {
-            const currentCompleted = prev[selectedDept] ?? [];
-            const next = new Set(currentCompleted);
-            const stack = [courseCode];
+        const currentCompleted = completedCoursesByDept[selectedDept] ?? [];
+        const next = new Set(currentCompleted);
+        const stack = [courseCode];
 
-            while (stack.length > 0) {
-                const code = stack.pop();
-                if (!code || next.has(code)) continue;
+        while (stack.length > 0) {
+            const code = stack.pop();
+            if (!code || next.has(code)) continue;
 
-                next.add(code);
+            next.add(code);
 
-                const prereqCodes = getAllPrerequisiteCodes(courseMap[code]?.prereqTree);
-                for (const prereqCode of prereqCodes) {
-                    if (!next.has(prereqCode)) {
-                        stack.push(prereqCode);
-                    }
+            const prereqCodes = getAllPrerequisiteCodes(courseMap[code]?.prereqTree);
+            for (const prereqCode of prereqCodes) {
+                if (!next.has(prereqCode)) {
+                    stack.push(prereqCode);
                 }
             }
+        }
 
-            return {
-                ...prev,
-                [selectedDept]: Array.from(next),
-            };
-        });
+        const nextCompleted = Array.from(next);
+
+        if (areCourseListsEqual(currentCompleted, nextCompleted)) {
+            return;
+        }
+
+        addUndoSnapshot(setUndoStackByDept, selectedDept, currentCompleted);
+        setCompletedCoursesByDept((prev) => ({
+            ...prev,
+            [selectedDept]: nextCompleted,
+        }));
     };
 
-    // Mark as incomplete without affecting other completed courses.
+    // Mark as incomplete and remove any completed courses that depend on it.
     const handleCourseUntoggle = (courseCode) => {
         if (!selectedDept || !supportedDepartments.has(selectedDept)) return;
 
-        setCompletedCoursesByDept((prev) => {
-            const currentCompleted = prev[selectedDept] ?? [];
-            return {
-                ...prev,
-                [selectedDept]: currentCompleted.filter((c) => c !== courseCode),
-            };
-        });
+        const currentCompleted = completedCoursesByDept[selectedDept] ?? [];
+
+        if (!currentCompleted.includes(courseCode)) {
+            return;
+        }
+
+        const toRemove = getDependentCompletedCourses(courseCode, currentCompleted, courseMap);
+        const nextCompleted = currentCompleted.filter((c) => !toRemove.has(c));
+
+        addUndoSnapshot(setUndoStackByDept, selectedDept, currentCompleted);
+        setCompletedCoursesByDept((prev) => ({
+            ...prev,
+            [selectedDept]: nextCompleted,
+        }));
+    };
+
+    const handleUndo = () => {
+        if (!selectedDept || !supportedDepartments.has(selectedDept)) return;
+
+        const history = undoStackByDept[selectedDept] ?? [];
+        if (history.length === 0) return;
+
+        const previousCompleted = history[history.length - 1];
+
+        setCompletedCoursesByDept((prev) => ({
+            ...prev,
+            [selectedDept]: previousCompleted,
+        }));
+
+        setUndoStackByDept((prev) => ({
+            ...prev,
+            [selectedDept]: history.slice(0, -1),
+        }));
     };
 
     // Reset all progress
@@ -492,6 +570,11 @@ export default function CourseProgressionPage() {
         if (!selectedDept || !supportedDepartments.has(selectedDept)) return;
 
         if (window.confirm("Are you sure you want to reset all your progress? This cannot be undone.")) {
+            setUndoStackByDept((prev) => ({
+                ...prev,
+                [selectedDept]: [...(prev[selectedDept] ?? []), completedCourses].slice(-10),
+            }));
+
             setCompletedCoursesByDept((prev) => ({
                 ...prev,
                 [selectedDept]: [],
@@ -691,6 +774,19 @@ export default function CourseProgressionPage() {
                     {!showProgressPanel ? (
                         <div className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2">
                             <div className="flex items-center gap-2">
+                                {supportedDepartments.has(selectedDept) && (
+                                    <button
+                                        type="button"
+                                        onClick={handleUndo}
+                                        disabled={undoStack.length === 0}
+                                        className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white/90 px-3 py-2 text-xs font-semibold text-slate-700 shadow-lg backdrop-blur-xl transition-all hover:-translate-y-0.5 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0 dark:border-slate-700 dark:bg-gray-900/90 dark:text-slate-200 dark:hover:bg-gray-800"
+                                        title={undoStack.length === 0 ? "Nothing to undo" : "Undo last change"}
+                                    >
+                                        <Undo2 className="h-3.5 w-3.5" />
+                                        Undo
+                                    </button>
+                                )}
+
                                 <button
                                     type="button"
                                     onClick={() => setShowProgressPanel(true)}
@@ -718,9 +814,25 @@ export default function CourseProgressionPage() {
                         <div className="fixed bottom-4 left-1/2 z-50 w-[calc(100%-2.5rem)] max-w-2xl -translate-x-1/2">
                             <div className="rounded-2xl border border-white/60 bg-white/85 px-4 py-3 shadow-2xl backdrop-blur-xl dark:border-gray-700/60 dark:bg-gray-900/80">
                                 <div className="flex items-start gap-3">
-                                    <div className="relative min-w-0 flex-1 space-y-3">
-                                        <div className="absolute right-0 top-0 flex items-center gap-2">
-                                            {completedCourses.length > 0 && supportedDepartments.has(selectedDept) && (
+                                    <div className="min-w-0 flex-1 space-y-3">
+                                        <div className="flex items-center justify-between gap-2">
+                                            <div>
+                                                {supportedDepartments.has(selectedDept) && (
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={handleUndo}
+                                                        disabled={undoStack.length === 0}
+                                                        className="h-8 border-slate-300 px-3 text-[13px] text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:text-slate-200"
+                                                    >
+                                                        <Undo2 className="mr-1.5 h-3.5 w-3.5" />
+                                                        Undo
+                                                    </Button>
+                                                )}
+                                            </div>
+
+                                            <div className="flex items-center gap-2">
+                                                {completedCourses.length > 0 && supportedDepartments.has(selectedDept) && (
                                                 <Button
                                                     variant="outline"
                                                     size="sm"
@@ -739,6 +851,7 @@ export default function CourseProgressionPage() {
                                             >
                                                 <ChevronDown className="h-4 w-4" />
                                             </button>
+                                            </div>
                                         </div>
 
                                         <div className="flex flex-col items-center justify-center gap-2 pt-1 text-center">
