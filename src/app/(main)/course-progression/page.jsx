@@ -265,17 +265,17 @@ function CourseCard({ course, isCompleted, isAvailable, isSelected, isHighlighte
         statusText = "Locked - Prerequisites needed";
     }
 
-    const highlightClass = isHighlighted
-        ? "ring-2 ring-cyan-500 dark:ring-cyan-400 ring-offset-2 ring-offset-white dark:ring-offset-gray-900 shadow-lg shadow-cyan-500/30"
-        : "";
+    const highlightClass = isHighlighted ? "course-card-flash" : "";
 
     return (
         <div
             id={getCourseCardId(course.code)}
             className={`relative p-4 rounded-lg border-2 transition-all duration-200 cursor-pointer hover:shadow-lg ${statusColor} ${highlightClass}`}
+            style={{ cursor: "pointer" }}
             onClick={() => onClick(course.code)}
             onMouseEnter={() => setShowTooltip(true)}
             onMouseLeave={() => setShowTooltip(false)}
+            title="Click to complete or undo. Prerequisite tags jump to courses."
         >
             <div className="flex items-start justify-between">
                 <div className="flex-1">
@@ -314,6 +314,9 @@ function CourseCard({ course, isCompleted, isAvailable, isSelected, isHighlighte
                     {isSelected && <div className="text-xs text-gray-300 mt-1">Selected</div>}
                     {courseDetails?.allPrereqs?.length > 0 && !isCompleted && !isAvailable && (
                         <div className="text-xs text-gray-300 mt-1">Requires: {courseDetails.allPrereqs.join(", ")}</div>
+                    )}
+                    {courseDetails?.allPrereqs?.length > 0 && (
+                        <div className="text-xs text-gray-300 mt-1">Click prerequisite tags to jump</div>
                     )}
                     {isCompleted && courseDetails?.allPrereqs?.length > 0 && (
                         <div className="text-xs text-gray-300 mt-1">Note: Uncompleting will lock dependent courses</div>
@@ -902,7 +905,7 @@ export default function CourseProgressionPage() {
                                             </div>
 
                                             <p className="mt-1 text-[13px] text-gray-500 dark:text-gray-400">
-                                                Click any course code to navigate.
+                                                Click any course code to jump to that course.
                                             </p>
 
                                             <div className="mt-2 flex flex-wrap items-center justify-center gap-2 pr-1">
