@@ -783,7 +783,7 @@ export default function CourseProgressionPage() {
                                         title={undoStack.length === 0 ? "Nothing to undo" : "Undo last change"}
                                     >
                                         <Undo2 className="h-3.5 w-3.5" />
-                                        Undo
+                                        Undo({undoStack.length})
                                     </button>
                                 )}
 
@@ -798,7 +798,7 @@ export default function CourseProgressionPage() {
                                     {selectedDept} credits {totalCompletedCredits} / {totalCredits}
                                 </button>
 
-                                {completedCourses.length > 0 && supportedDepartments.has(selectedDept) && (
+                                {supportedDepartments.has(selectedDept) && (
                                     <button
                                         type="button"
                                         onClick={handleReset}
@@ -826,13 +826,13 @@ export default function CourseProgressionPage() {
                                                         className="h-8 border-slate-300 px-3 text-[13px] text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:text-slate-200"
                                                     >
                                                         <Undo2 className="mr-1.5 h-3.5 w-3.5" />
-                                                        Undo
+                                                        Undo({undoStack.length})
                                                     </Button>
                                                 )}
                                             </div>
 
                                             <div className="flex items-center gap-2">
-                                                {completedCourses.length > 0 && supportedDepartments.has(selectedDept) && (
+                                                {supportedDepartments.has(selectedDept) && (
                                                 <Button
                                                     variant="outline"
                                                     size="sm"
