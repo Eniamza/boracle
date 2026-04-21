@@ -147,7 +147,13 @@ export const cseCurriculum = [
                 name: "Stream 4: Social Sciences",
                 credits: 6,
                 courses: [
-                    { code: "EMB101", name: "Emergence of Bangladesh / Bangladesh Studies", credits: 3, optional: false, alternatives: ["DEV101"] },
+                    {
+                        code: "EMB101",
+                        name: "Emergence of Bangladesh / Bangladesh Studies",
+                        credits: 3,
+                        optional: false,
+                        alternatives: ["DEV101"],
+                    },
                     {
                         code: "Stream 4 - COD",
                         name: "Pick one course from the provided options above",
@@ -253,7 +259,8 @@ export const cseCurriculum = [
     {
         section: "Program Electives",
         credits: 6,
-        description: "Choose elective courses to specialize || Research the Elective Pre-Requisites Carefully From the Reference Link",
+        description:
+            "Choose elective courses to specialize || Research the Elective Pre-Requisites Carefully From the Reference Link",
         referenceLink:
             "https://docs.google.com/spreadsheets/d/1-JM6a-JM4y4TiqMv9M4OXMBTnIAbn0lhsvfVGlfR1OU/edit?gid=1207964579#gid=1207964579",
         courses: [

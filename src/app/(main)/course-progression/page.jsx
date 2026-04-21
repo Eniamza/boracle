@@ -65,6 +65,7 @@ function getCourseCardId(courseCode) {
     return `course-card-${courseCode.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
 }
 
+//! MARK: Helpers
 function areCourseListsEqual(left, right) {
     if (left.length !== right.length) return false;
     return left.every((courseCode, index) => courseCode === right[index]);
@@ -465,6 +466,7 @@ function SectionCourses({
     );
 }
 
+//! MARK: Page State
 export default function CourseProgressionPage() {
     const [selectedDept, setSelectedDept] = useState(null);
     const [showComingSoon, setShowComingSoon] = useState(false);
@@ -659,6 +661,7 @@ export default function CourseProgressionPage() {
     const progressPercent = totalCredits > 0 ? Math.min(100, Math.round((totalCompletedCredits / totalCredits) * 100)) : 0;
     const coursesLeft = Math.max(0, allSectionCourses.length - completedCourses.length);
 
+    //! MARK: Bottom Panel
     return (
         <div className="min-h-screen py-12 pb-28 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-gray-50 via-white to-gray-100 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
             <div className="max-w-7xl mx-auto space-y-10">
@@ -833,24 +836,24 @@ export default function CourseProgressionPage() {
 
                                             <div className="flex items-center gap-2">
                                                 {supportedDepartments.has(selectedDept) && (
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    onClick={handleReset}
-                                                    className="h-8 border-red-300 px-3 text-[13px] text-red-600 hover:bg-red-50 dark:border-red-700 dark:text-red-400"
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={handleReset}
+                                                        className="h-8 border-red-300 px-3 text-[13px] text-red-600 hover:bg-red-50 dark:border-red-700 dark:text-red-400"
+                                                    >
+                                                        <RefreshCw className="mr-1.5 h-3.5 w-3.5" />
+                                                        Reset
+                                                    </Button>
+                                                )}
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowProgressPanel(false)}
+                                                    className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white"
+                                                    aria-label="Hide progress panel"
                                                 >
-                                                    <RefreshCw className="mr-1.5 h-3.5 w-3.5" />
-                                                    Reset
-                                                </Button>
-                                            )}
-                                            <button
-                                                type="button"
-                                                onClick={() => setShowProgressPanel(false)}
-                                                className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white"
-                                                aria-label="Hide progress panel"
-                                            >
-                                                <ChevronDown className="h-4 w-4" />
-                                            </button>
+                                                    <ChevronDown className="h-4 w-4" />
+                                                </button>
                                             </div>
                                         </div>
 
