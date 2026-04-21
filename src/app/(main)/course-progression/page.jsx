@@ -682,7 +682,6 @@ export default function CourseProgressionPage() {
                         dependent courses will become{" "}
                         <span className="font-semibold text-gray-500 dark:text-gray-300">Locked</span> again automatically.
                     </p>
-
                     <div className="flex flex-wrap items-center justify-center gap-2 text-xs text-gray-700 dark:text-gray-300">
                         <span className="inline-flex items-center gap-1.5 rounded-full bg-green-500/10 px-2.5 py-1">
                             <span className="h-2 w-2 rounded-full bg-green-500" />
@@ -697,6 +696,47 @@ export default function CourseProgressionPage() {
                             Locked
                         </span>
                     </div>
+                    <details className="group mx-auto w-full max-w-md text-center">
+                        <summary className="inline-flex cursor-pointer list-none items-center gap-2 rounded-full border border-blue-200 px-4 py-1.5 transition-colors hover:bg-blue-50 focus:outline-none dark:border-blue-800/60 dark:hover:bg-blue-900/20">
+                            <span className="text-sm font-semibold text-blue-900 dark:text-blue-200">How it works</span>
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="14"
+                                height="14"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="3"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                className="text-blue-500 transition-transform group-open:rotate-180"
+                            >
+                                <path d="m6 9 6 6 6-6" />
+                            </svg>
+                        </summary>
+
+                        <div className="mt-6 flex flex-col items-center gap-4">
+                            <div className="text-sm text-blue-800/80 dark:text-blue-300/80">Select a department to begin</div>
+
+                            <div className="h-px w-8 bg-blue-100 dark:bg-blue-900/50" />
+
+                            <div className="text-sm text-blue-800/80 dark:text-blue-300/80">
+                                Click courses to complete or undo them
+                            </div>
+
+                            <div className="h-px w-8 bg-blue-100 dark:bg-blue-900/50" />
+
+                            <div className="text-sm text-blue-800/80 dark:text-blue-300/80">
+                                Undo reverses up to 10 recent steps
+                            </div>
+
+                            <div className="h-px w-8 bg-blue-100 dark:bg-blue-900/50" />
+
+                            <div className="text-sm text-blue-800/80 dark:text-blue-300/80">
+                                Click Mini CourseCode Chups to jump quickly to the specific courses
+                            </div>
+                        </div>
+                    </details>
                 </div>
 
                 {/* Department Selection */}
