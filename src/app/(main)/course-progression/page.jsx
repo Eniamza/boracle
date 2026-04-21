@@ -474,32 +474,15 @@ export default function CourseProgressionPage() {
         });
     };
 
-    // Mark as incomplete and remove its prerequisite chain.
+    // Mark as incomplete without affecting other completed courses.
     const handleCourseUntoggle = (courseCode) => {
         if (!selectedDept || !supportedDepartments.has(selectedDept)) return;
 
         setCompletedCoursesByDept((prev) => {
             const currentCompleted = prev[selectedDept] ?? [];
-            const toRemove = new Set();
-            const stack = [courseCode];
-
-            while (stack.length > 0) {
-                const code = stack.pop();
-                if (!code || toRemove.has(code)) continue;
-
-                toRemove.add(code);
-
-                const prereqCodes = getAllPrerequisiteCodes(courseMap[code]?.prereqTree);
-                for (const prereqCode of prereqCodes) {
-                    if (!toRemove.has(prereqCode)) {
-                        stack.push(prereqCode);
-                    }
-                }
-            }
-
             return {
                 ...prev,
-                [selectedDept]: currentCompleted.filter((c) => !toRemove.has(c)),
+                [selectedDept]: currentCompleted.filter((c) => c !== courseCode),
             };
         });
     };
