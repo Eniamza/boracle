@@ -1,4 +1,4 @@
-import { Home, Sigma, Star, ChevronsLeftRightEllipsis, Hammer, Cable, BookOpen, Users, ArrowRightLeft, FileText } from "lucide-react"
+import { Home, Sigma, Star, ChevronsLeftRightEllipsis, Hammer, Cable, BookOpen, Users, ArrowRightLeft, FileText, CheckCircle2 } from "lucide-react"
 
 const sidebarGroups = [
     {
@@ -42,6 +42,13 @@ const sidebarGroups = [
                 href: '/dashboard/merge-routines',
                 description: 'Merge multiple course routines into one optimized schedule. Perfect for group studies and project collaborations!',
                 icon: Cable,
+                enabled: true
+            },
+            {
+                title: "Course Progression",
+                href: '/course-progression',
+                description: 'Track your course completion progress and visualize prerequisites.',
+                icon: CheckCircle2,
                 enabled: true
             }
         ]
