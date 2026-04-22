@@ -150,10 +150,15 @@ const CourseHoverTooltip = ({ course: propCourse, position: propPosition, course
                     <div className="font-bold text-lg text-gray-900 dark:text-gray-100 flex items-center justify-between">
                         <span>{displayTitle} - {course.sectionName}</span>
                         {/* Credits Badge */}
-                        <span className="text-xs px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full font-medium">
+                        <span className="text-xs px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full font-medium shrink-0 ml-2">
                             {course.courseCredit || 0} Credits
                         </span>
                     </div>
+                    {course.courseName && (
+                        <div className="text-sm text-gray-600 dark:text-gray-400 mt-1 leading-snug">
+                            {course.courseName}
+                        </div>
+                    )}
                 </div>
 
                 {/* Extra fields (e.g. Friend name for merged routines) */}
