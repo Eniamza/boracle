@@ -40,6 +40,8 @@ const AdminSwapsPageContent = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [swapToDelete, setSwapToDelete] = useState(null);
   const [deleting, setDeleting] = useState(false);
+  const [deleteAllDialogOpen, setDeleteAllDialogOpen] = useState(false);
+  const [deletingAll, setDeletingAll] = useState(false);
 
   useEffect(() => {
     const fetchCourses = async () => {
@@ -165,6 +167,31 @@ const AdminSwapsPageContent = () => {
     }
   };
 
+  const handleDeleteAllConfirm = async () => {
+    setDeletingAll(true);
+    try {
+      const response = await fetch('/api/admin/swap', {
+        method: 'DELETE',
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        toast.success(`Deleted ${data.deletedCount} swap(s) successfully`);
+        setSwaps([]);
+        setFilteredSwaps([]);
+      } else {
+        toast.error(data.error || 'Failed to delete all swaps');
+      }
+    } catch (error) {
+      console.error('Error deleting all swaps:', error);
+      toast.error('Error deleting all swaps');
+    } finally {
+      setDeletingAll(false);
+      setDeleteAllDialogOpen(false);
+    }
+  };
+
   // Check if user is not admin
   if (status === 'loading') {
     return (
@@ -226,6 +253,15 @@ const AdminSwapsPageContent = () => {
               className="bg-white dark:bg-gray-800"
             >
               <Loader2 className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            </Button>
+            <Button
+              onClick={() => setDeleteAllDialogOpen(true)}
+              variant="destructive"
+              className="bg-red-600 hover:bg-red-700"
+              disabled={swaps.length === 0 || loading}
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Delete All
             </Button>
           </div>
         </div>
@@ -412,6 +448,42 @@ const AdminSwapsPageContent = () => {
                 </>
               ) : (
                 'Delete Swap'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={deleteAllDialogOpen} onOpenChange={setDeleteAllDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-red-600" />
+              Delete All Swaps
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2">
+                <p>Are you sure you want to delete <strong>all {swaps.length} swap(s)</strong>?</p>
+                <p className="text-red-600 dark:text-red-400 font-medium mt-3">
+                  This will permanently remove every swap request and cannot be undone.
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deletingAll}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteAllConfirm}
+              disabled={deletingAll}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {deletingAll ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Deleting All...
+                </>
+              ) : (
+                'Delete All Swaps'
               )}
             </AlertDialogAction>
           </AlertDialogFooter>
