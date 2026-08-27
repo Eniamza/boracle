@@ -1,3 +1,4 @@
+import { Home, Sigma, Star, ChevronsLeftRightEllipsis, Hammer, Cable, BookOpen, Users, ArrowRightLeft, FileText, CheckCircle2 } from "lucide-react"
 import { Home, Sigma, Star, ChevronsLeftRightEllipsis, Hammer, Cable, BookOpen, Users, ArrowRightLeft, FileText, LineChart, Drumstick } from "lucide-react"
 
 const sidebarGroups = [
@@ -45,6 +46,10 @@ const sidebarGroups = [
                 enabled: true
             },
             {
+                title: "Course Progression",
+                href: '/course-progression',
+                description: 'Track your course completion progress and visualize prerequisites.',
+                icon: CheckCircle2,
                 title: 'Gradesheet Analyzer',
                 href: '/dashboard/gradesheet',
                 description: 'Upload your grade sheet PDF to analyze your CGPA and plan retakes',
