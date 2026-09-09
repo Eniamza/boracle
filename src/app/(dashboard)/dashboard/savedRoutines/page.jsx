@@ -14,6 +14,7 @@ import { toast } from 'sonner';
 import { exportRoutineToPNG } from '@/components/routine/ExportRoutinePNG';
 import { getRoutineTimings, REGULAR_TIMINGS } from '@/constants/routineTimings';
 import { fetchCourses } from '@/lib/api/courseFetcher';
+import { decodeAndEnrichRoutine, decodeAndFetchRoutineCourses, decodeRoutineSections, routineCacheKey, ROUTINE_CACHE_TTL } from '@/lib/routineUtils';
 import { getStaleCache, setCache } from '@/lib/idb';
 import ShareModal from '@/components/savedRoutine/ShareModal';
 import RoutineView from '@/components/routine/RoutineView';
@@ -614,11 +615,10 @@ const SavedRoutinesPage = () => {
     }
   };
 
-  // Parse routine string to get course info
+  // Parse routine string to get course count
   const parseRoutineString = (routineStr) => {
     try {
-      const sectionIds = JSON.parse(atob(routineStr));
-      return sectionIds.length;
+      return decodeRoutineSections(routineStr).length;
     } catch (err) {
       return 0;
     }
@@ -776,7 +776,7 @@ const SavedRoutinesPage = () => {
   // View routine details - fetch course data and show in modal
   const viewRoutine = async (routine) => {
     try {
-      const CACHE_KEY = `view_routine_${routine.id}`;
+      const CACHE_KEY = routineCacheKey(routine.id);
       const staleData = await getStaleCache(CACHE_KEY);
       let hasStaleData = false;
       
@@ -789,30 +789,13 @@ const SavedRoutinesPage = () => {
         setViewingRoutine(routine);
       }
 
-      // Decode the routine string to get section IDs
-      const sectionIds = JSON.parse(atob(routine.routineStr));
-
-      // Fetch course data dynamically supporting past semesters
-      const allCourses = await fetchCourses(routine.semester);
-
-      // Filter courses that match the section IDs in the routine
-      const matchedCourses = allCourses.filter(course =>
-        sectionIds.includes(course.sectionId)
-      );
-
-      const enrichedCourses = matchedCourses.map(course => ({
-        ...course,
-        employeeName: getFacultyDetails(course.faculties).facultyName,
-        employeeEmail: getFacultyDetails(course.faculties).facultyEmail,
-        imgUrl: getFacultyDetails(course.faculties).imgUrl,
-      }));
+      const enrichedCourses = await decodeAndEnrichRoutine(routine.routineStr, routine.semester, getFacultyDetails);
 
       setRoutineCourses(enrichedCourses);
       
-      // Save to cache for 30 days
-      await setCache(CACHE_KEY, enrichedCourses, 30 * 24 * 60 * 60 * 1000);
+      await setCache(CACHE_KEY, enrichedCourses, ROUTINE_CACHE_TTL);
 
-      if (matchedCourses.length === 0 && !hasStaleData) {
+      if (enrichedCourses.length === 0 && !hasStaleData) {
         toast.error('No matching courses found for this routine');
       }
     } catch (err) {
@@ -829,16 +812,7 @@ const SavedRoutinesPage = () => {
     try {
       toast.loading('Loading routine for editing...', { id: 'edit-routine' });
 
-      // Decode the routine string to get section IDs
-      const sectionIds = JSON.parse(atob(routine.routineStr));
-
-      // Fetch course data dynamically supporting past semesters
-      const allCourses = await fetchCourses(routine.semester);
-
-      // Filter courses that match the section IDs
-      const matchedCourses = allCourses.filter(course =>
-        sectionIds.includes(course.sectionId)
-      );
+      const matchedCourses = await decodeAndFetchRoutineCourses(routine.routineStr, routine.semester);
 
       // Write matched courses to localStorage (same key preprereg uses)
       localStorage.setItem('boracle_selected_courses', JSON.stringify(matchedCourses));
