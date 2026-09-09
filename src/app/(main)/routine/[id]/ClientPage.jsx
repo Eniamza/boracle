@@ -21,7 +21,7 @@ import {
     TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-const SharedRoutinePage = () => {
+const SharedRoutinePage = ({ initialRoutine }) => {
     const { id } = useParams();
     const { data: session } = useSession();
     const [routine, setRoutine] = useState(null);
@@ -49,6 +49,20 @@ const SharedRoutinePage = () => {
         }
     }, [id, facultyLoading]);
 
+    const enrichAndSetCourses = async (routineData) => {
+        const sectionIds = JSON.parse(atob(routineData.routineStr));
+        const allCourses = await fetchCourses(routineData.semester);
+
+        return allCourses
+            .filter(course => sectionIds.includes(course.sectionId))
+            .map(course => ({
+                ...course,
+                employeeName: getFacultyDetails(course.faculties).facultyName,
+                employeeEmail: getFacultyDetails(course.faculties).facultyEmail,
+                imgUrl: getFacultyDetails(course.faculties).imgUrl,
+            }));
+    };
+
     const fetchRoutine = async () => {
         try {
             const CACHE_KEY = `routine_${id}`;
@@ -66,42 +80,38 @@ const SharedRoutinePage = () => {
             
             setError(null);
 
-            const response = await fetch(`/api/routine/${id}`);
+            // Use server-provided routine if available, otherwise fetch from API
+            let routineData = initialRoutine;
 
-            if (!response.ok) {
-                if (!hasStaleData) {
-                    if (response.status === 404) setError('not_found');
-                    else setError('fetch_failed');
+            if (!routineData) {
+                const response = await fetch(`/api/routine/${id}`);
+
+                if (!response.ok) {
+                    if (!hasStaleData) {
+                        if (response.status === 404) setError('not_found');
+                        else setError('fetch_failed');
+                    }
+                    return;
                 }
-                return;
-            }
 
-            const data = await response.json();
+                const data = await response.json();
 
-            if (!data.success) {
-                if (!hasStaleData) setError('fetch_failed');
-                return;
+                if (!data.success) {
+                    if (!hasStaleData) setError('fetch_failed');
+                    return;
+                }
+
+                routineData = data.routine;
             }
             
             // Decode routineStr and fetch course data
-            const sectionIds = JSON.parse(atob(data.routine.routineStr));
+            const matchedCourses = await enrichAndSetCourses(routineData);
 
-            const allCourses = await fetchCourses(data.routine.semester);
-
-            const matchedCourses = allCourses
-                .filter(course => sectionIds.includes(course.sectionId))
-                .map(course => ({
-                    ...course,
-                    employeeName: getFacultyDetails(course.faculties).facultyName,
-                    employeeEmail: getFacultyDetails(course.faculties).facultyEmail,
-                    imgUrl: getFacultyDetails(course.faculties).imgUrl,
-                }));
-
-            setRoutine(data.routine);
+            setRoutine(routineData);
             setCourses(matchedCourses);
             
             // Save to IDB Cache (30 days TTL)
-            await setCache(CACHE_KEY, { routine: data.routine, courses: matchedCourses }, 30 * 24 * 60 * 60 * 1000);
+            await setCache(CACHE_KEY, { routine: routineData, courses: matchedCourses }, 30 * 24 * 60 * 60 * 1000);
         } catch (err) {
             console.error('Error fetching shared routine:', err);
             setLoading((prevLoading) => {

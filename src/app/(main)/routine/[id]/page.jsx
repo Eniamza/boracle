@@ -37,11 +37,17 @@ export default async function Page({ params }) {
     const { id } = await params;
     const routine = await getCachedRoutine(id);
 
-    if (!routine) {
-        // Optional: Could let ClientPage handle the "not found" state, but Server can also 404 fast.
-        // We'll pass it down like normal or throw notFound()
-        // Here we just let the client handle it exactly as before to avoid layout jumps
-    }
+    // Normalize to match the shape ClientPage expects from /api/routine/[id]
+    const initialRoutine = routine
+        ? {
+            id: routine.routineId,
+            routineStr: routine.routineStr,
+            email: "Anonymous",
+            createdAt: routine.createdAt,
+            semester: routine.semester,
+            ownerName: routine.ownerName,
+        }
+        : null;
 
-    return <ClientPage />;
+    return <ClientPage initialRoutine={initialRoutine} />;
 }
