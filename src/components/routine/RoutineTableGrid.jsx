@@ -6,6 +6,12 @@ import { getRoutineTimings, REGULAR_TIMINGS } from '@/constants/routineTimings';
 import { useIsMobile } from '@/hooks/use-mobile';
 import MobileRoutineView from '@/components/routine/MobileRoutineView';
 
+// Trash cursor shown once a course has been hovered long enough to be removable
+const TRASH_CURSOR = "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 24 24' fill='none' stroke-linecap='round' stroke-linejoin='round'%3E%3Cg stroke='%23ffffff' stroke-width='4.5'%3E%3Cpath d='M3 6h18'/%3E%3Cpath d='M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2'/%3E%3Cpath d='M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6'/%3E%3Cpath d='M10 11v6'/%3E%3Cpath d='M14 11v6'/%3E%3C/g%3E%3Cg stroke='%23dc2626' stroke-width='2.25'%3E%3Cpath d='M3 6h18'/%3E%3Cpath d='M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2'/%3E%3Cpath d='M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6'/%3E%3Cpath d='M10 11v6'/%3E%3Cpath d='M14 11v6'/%3E%3C/g%3E%3C/svg%3E\") 14 14, pointer";
+
+// How long a course has to be hovered before it turns into a remove target
+const HOVER_REMOVE_DELAY = 200;
+
 const RoutineTableGrid = ({
   selectedCourses = [],
   onRemoveCourse = null,
@@ -14,12 +20,33 @@ const RoutineTableGrid = ({
   className = "",
   forceDesktop = false,
   mobileAction,
+  compact = false,
+  hoverRemove = false,
 }) => {
   const routineRef = useRef(null);
   const [hoveredCourse, setHoveredCourse] = useState(null);
   const [hoveredCourseTitle, setHoveredCourseTitle] = useState(null);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0, showLeft: false });
+  const [pendingRemoveId, setPendingRemoveId] = useState(null);
+  const hoverRemoveTimeoutRef = useRef(null);
   const isMobile = useIsMobile();
+
+  const canHoverRemove = hoverRemove && !!onRemoveCourse;
+
+  const startHoverRemove = (course) => {
+    clearTimeout(hoverRemoveTimeoutRef.current);
+    hoverRemoveTimeoutRef.current = setTimeout(() => {
+      setPendingRemoveId(course.sectionId);
+    }, HOVER_REMOVE_DELAY);
+  };
+
+  const cancelHoverRemove = () => {
+    clearTimeout(hoverRemoveTimeoutRef.current);
+    hoverRemoveTimeoutRef.current = null;
+    setPendingRemoveId(null);
+  };
+
+  React.useEffect(() => () => clearTimeout(hoverRemoveTimeoutRef.current), []);
 
   // Clear hovered course if it gets removed from selectedCourses
   React.useEffect(() => {
@@ -115,13 +142,13 @@ const RoutineTableGrid = ({
 
   return (
     <div className={`w-full ${className}`}>
-      <div ref={routineRef} className="bg-gray-50 dark:bg-gray-900 p-4">
-        <table className="w-full border-collapse border border-gray-300 dark:border-gray-700">
+      <div ref={routineRef} className={`bg-gray-50 dark:bg-gray-900 ${compact ? 'p-2' : 'p-4'}`}>
+        <table className={`w-full border-collapse ${compact ? '' : 'border border-gray-300 dark:border-gray-700'}`}>
           <thead>
             <tr className="border-b border-gray-300 dark:border-gray-700">
-              <th className="text-left py-4 px-4 text-base font-medium text-gray-600 dark:text-gray-400 w-44 border-r border-gray-300 dark:border-gray-700">Time/Day</th>
+              <th className={`text-left font-medium text-gray-600 dark:text-gray-400 border-r border-gray-300 dark:border-gray-700 ${compact ? 'py-1.5 px-2 text-xs w-32' : 'py-4 px-4 text-base w-44'}`}>Time/Day</th>
               {days.map(day => (
-                <th key={day} className="text-center py-4 px-3 text-base font-medium text-gray-600 dark:text-gray-400 border-r border-gray-300 dark:border-gray-700 last:border-r-0">
+                <th key={day} className={`text-center font-medium text-gray-600 dark:text-gray-400 border-r border-gray-300 dark:border-gray-700 last:border-r-0 ${compact ? 'py-1.5 px-2 text-xs' : 'py-4 px-3 text-base'}`}>
                   {day}
                 </th>
               ))}
@@ -131,8 +158,8 @@ const RoutineTableGrid = ({
             {timeSlots.map((timeSlot, index) => {
               const matchSlot = REGULAR_TIMINGS[index];
               return (
-                <tr key={timeSlot} className="border-b border-gray-300 dark:border-gray-700">
-                  <td className="py-4 px-4 text-base font-medium text-gray-600 dark:text-gray-400 whitespace-nowrap border-r border-gray-300 dark:border-gray-700">
+                <tr key={timeSlot} className={`border-b border-gray-300 dark:border-gray-700 ${compact ? 'last:border-b-0' : ''}`}>
+                  <td className={`font-medium text-gray-600 dark:text-gray-400 whitespace-nowrap border-r border-gray-300 dark:border-gray-700 ${compact ? 'py-1.5 px-2 text-[11px]' : 'py-4 px-4 text-base'}`}>
                     {timeSlot}
                   </td>
                   {days.map(day => {
@@ -140,9 +167,9 @@ const RoutineTableGrid = ({
                     const conflict = hasConflict(day, matchSlot);
 
                     return (
-                      <td key={`${day}-${timeSlot}`} className="p-2 border-r border-gray-300 dark:border-gray-700 last:border-r-0 relative">
+                      <td key={`${day}-${timeSlot}`} className={`border-r border-gray-300 dark:border-gray-700 last:border-r-0 relative ${compact ? 'p-1' : 'p-2'}`}>
                         {courses.length > 0 && (
-                          <div className={`min-h-[80px] ${conflict ? 'space-y-1' : ''}`}>
+                          <div className={`${compact ? 'min-h-[38px]' : 'min-h-[80px]'} ${conflict ? 'space-y-1' : ''}`}>
                             {courses.map(course => {
                               const isLab = course.labSchedules?.some(s => {
                                 if (s.day !== day.toUpperCase()) return false;
@@ -154,16 +181,27 @@ const RoutineTableGrid = ({
                                 return scheduleStart < slotEndMin && scheduleEnd > slotStartMin;
                               });
 
+                              const isPendingRemove = canHoverRemove && pendingRemoveId === course.sectionId;
+
                               return (
                                 <div
                                   key={course.sectionId}
-                                  className={`p-2.5 rounded-r-lg rounded-l-[4px] transition-all duration-200 ${conflict
-                                    ? 'bg-red-50/90 dark:bg-red-900/30 border-l-4 border-red-500 text-red-900 dark:text-red-100 shadow-[0_2px_10px_-3px_rgba(239,68,68,0.2)] hover:shadow-[0_4px_12px_-2px_rgba(239,68,68,0.3)]'
-                                    : isLab
-                                      ? 'bg-purple-50/90 dark:bg-purple-900/30 border-l-4 border-purple-500 text-purple-900 dark:text-purple-100 shadow-[0_2px_10px_-3px_rgba(168,85,247,0.2)] hover:shadow-[0_4px_12px_-2px_rgba(168,85,247,0.3)]'
-                                      : 'bg-blue-50/90 dark:bg-blue-900/30 border-l-4 border-blue-500 text-blue-900 dark:text-blue-100 shadow-[0_2px_10px_-3px_rgba(59,130,246,0.2)] hover:shadow-[0_4px_12px_-2px_rgba(59,130,246,0.3)]'
-                                    } group relative flex flex-col justify-center min-h-[76px]`}
+                                  style={isPendingRemove ? { cursor: TRASH_CURSOR } : undefined}
+                                  onClick={isPendingRemove ? () => {
+                                    cancelHoverRemove();
+                                    onRemoveCourse(course);
+                                  } : undefined}
+                                  className={`${compact ? 'p-1.5' : 'p-2.5'} rounded-r-lg rounded-l-[4px] ${canHoverRemove ? '' : 'transition-all duration-200'} ${isPendingRemove
+                                    ? 'bg-red-100 dark:bg-red-900/60 border-l-4 border-red-600 text-red-900 dark:text-red-50 ring-1 ring-red-500 shadow-[0_2px_10px_-3px_rgba(239,68,68,0.4)]'
+                                    : conflict
+                                      ? 'bg-red-50/90 dark:bg-red-900/30 border-l-4 border-red-500 text-red-900 dark:text-red-100 shadow-[0_2px_10px_-3px_rgba(239,68,68,0.2)] hover:shadow-[0_4px_12px_-2px_rgba(239,68,68,0.3)]'
+                                      : isLab
+                                        ? 'bg-purple-50/90 dark:bg-purple-900/30 border-l-4 border-purple-500 text-purple-900 dark:text-purple-100 shadow-[0_2px_10px_-3px_rgba(168,85,247,0.2)] hover:shadow-[0_4px_12px_-2px_rgba(168,85,247,0.3)]'
+                                        : 'bg-blue-50/90 dark:bg-blue-900/30 border-l-4 border-blue-500 text-blue-900 dark:text-blue-100 shadow-[0_2px_10px_-3px_rgba(59,130,246,0.2)] hover:shadow-[0_4px_12px_-2px_rgba(59,130,246,0.3)]'
+                                    } group relative flex flex-col justify-center ${compact ? 'min-h-[36px]' : 'min-h-[76px]'}`}
                                   onMouseEnter={(e) => {
+                                    if (canHoverRemove) startHoverRemove(course);
+                                    if (compact) return;
                                     setHoveredCourse(course);
                                     setHoveredCourseTitle(`${course.courseCode}${isLab ? 'L' : ''}`);
                                     const rect = e.currentTarget.getBoundingClientRect();
@@ -180,15 +218,18 @@ const RoutineTableGrid = ({
                                     });
                                   }}
                                   onMouseLeave={() => {
+                                    if (canHoverRemove) cancelHoverRemove();
+                                    if (compact) return;
                                     setHoveredCourse(null);
                                     setHoveredCourseTitle(null);
                                   }}
                                 >
-                                  <div className="font-bold text-sm tracking-tight leading-tight flex items-center gap-1.5">
+                                  <div className={`font-bold tracking-tight leading-tight flex items-center ${compact ? 'text-xs gap-1' : 'text-sm gap-1.5'}`}>
                                     {course.courseCode}{isLab && 'L'}
-                                    <span className="text-xs uppercase font-black px-1.5 py-0.5 rounded-sm bg-black/10 dark:bg-white/20 text-gray-900 dark:text-gray-100 shadow-sm">{course.sectionName}</span>
+                                    <span className={`uppercase font-black rounded-sm bg-black/10 dark:bg-white/20 text-gray-900 dark:text-gray-100 shadow-sm ${compact ? 'text-[10px] px-1' : 'text-xs px-1.5 py-0.5'}`}>{course.sectionName}</span>
                                   </div>
 
+                                  {!compact && (
                                   <div className="text-xs font-bold mt-1.5 flex flex-col gap-0.5">
                                     <div className="flex items-start gap-1">
                                       <svg className="w-3 h-3 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -202,9 +243,10 @@ const RoutineTableGrid = ({
                                       </div>
                                     </div>
                                   </div>
+                                  )}
 
                                   {course.faculties && (
-                                    <div className="text-[11px] opacity-70 mt-0.5 flex items-center gap-1 font-medium">
+                                    <div className={`opacity-70 mt-0.5 flex items-center gap-1 font-medium ${compact ? 'text-[10px]' : 'text-[11px]'}`}>
                                       <svg className="w-3 h-3 opacity-70 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                       </svg>
@@ -242,7 +284,7 @@ const RoutineTableGrid = ({
         <CourseHoverTooltip course={hoveredCourse} position={tooltipPosition} courseTitle={hoveredCourseTitle} />
 
         {/* Color Legend - inside the export area so it's included in PNG */}
-        {selectedCourses.length > 0 && (
+        {!compact && selectedCourses.length > 0 && (
           <div className="mt-4 flex gap-4 text-sm">
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 bg-blue-100 dark:bg-blue-900/50 border border-blue-400 dark:border-blue-600 rounded"></div>
@@ -259,9 +301,11 @@ const RoutineTableGrid = ({
           </div>
         )}
 
-        <div className="mt-4 text-center text-sm text-gray-500">
-          Made with ❤️ from https://boracle.app
-        </div>
+        {!compact && (
+          <div className="mt-4 text-center text-sm text-gray-500">
+            Made with ❤️ from https://boracle.app
+          </div>
+        )}
       </div>
 
       {

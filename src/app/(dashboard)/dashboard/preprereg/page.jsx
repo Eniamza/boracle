@@ -4,6 +4,7 @@ import { Search, Filter, Plus, Calendar, Clock, X, Users, BookOpen, Download, Sa
 import { useSession } from 'next-auth/react';
 import RoutineTableGrid from '@/components/routine/RoutineTableGrid';
 import RoutineView from '@/components/routine/RoutineView';
+import RoutinePeek from '@/components/routine/RoutinePeek';
 import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
 import MobileCourseCard from '@/components/ui/MobileCourseCard';
@@ -23,6 +24,7 @@ const PreRegistrationPage = () => {
   const [loading, setLoading] = useState(true);
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [showRoutineModal, setShowRoutineModal] = useState(false);
+  const [showRoutinePeek, setShowRoutinePeek] = useState(false);
   const [seatAnimations, setSeatAnimations] = useState({}); // Keep track of animations { sectionId: 'decrease' | 'increase' }
   const [selectedCourses, setSelectedCourses] = useLocalStorage('boracle_selected_courses', []);
   const [savingRoutine, setSavingRoutine] = useState(false);
@@ -58,6 +60,9 @@ const PreRegistrationPage = () => {
   const facultyListRef = useRef(null);
   const filterDropdownRef = useRef(null);
   const facultyTooltipTimeoutRef = useRef(null);
+  const routineButtonRef = useRef(null);
+  const routinePeekOpenTimeoutRef = useRef(null);
+  const routinePeekCloseTimeoutRef = useRef(null);
   const semesterDropdownRef = useRef(null);
   const prevSemesterRef = useRef(selectedSemester);
 
@@ -638,6 +643,71 @@ const PreRegistrationPage = () => {
       </div>
     );
   };
+
+  // --- Routine peek (desktop only) ---
+  // Hovering the floating "View Routine" button for 400ms expands a scaled-down
+  // routine into the lower-right quadrant. Leaving is debounced (same as the
+  // faculty tooltip) so the pointer can travel from the button into the panel.
+  const cancelRoutinePeekOpen = () => {
+    if (routinePeekOpenTimeoutRef.current) {
+      clearTimeout(routinePeekOpenTimeoutRef.current);
+      routinePeekOpenTimeoutRef.current = null;
+    }
+  };
+
+  const cancelRoutinePeekClose = () => {
+    if (routinePeekCloseTimeoutRef.current) {
+      clearTimeout(routinePeekCloseTimeoutRef.current);
+      routinePeekCloseTimeoutRef.current = null;
+    }
+  };
+
+  const handleRoutinePeekButtonEnter = () => {
+    if (isMobile !== false) return;
+    cancelRoutinePeekClose();
+    if (showRoutinePeek || routinePeekOpenTimeoutRef.current) return;
+    routinePeekOpenTimeoutRef.current = setTimeout(() => {
+      routinePeekOpenTimeoutRef.current = null;
+      setShowRoutinePeek(true);
+    }, 400);
+  };
+
+  const handleRoutinePeekLeave = () => {
+    cancelRoutinePeekOpen();
+    cancelRoutinePeekClose();
+    routinePeekCloseTimeoutRef.current = setTimeout(() => {
+      routinePeekCloseTimeoutRef.current = null;
+      setShowRoutinePeek(false);
+    }, 100);
+  };
+
+  const closeRoutinePeek = () => {
+    cancelRoutinePeekOpen();
+    cancelRoutinePeekClose();
+    setShowRoutinePeek(false);
+  };
+
+  // Never keep the peek around on mobile or behind the full modal
+  useEffect(() => {
+    if (showRoutineModal || isMobile !== false) {
+      closeRoutinePeek();
+    }
+  }, [showRoutineModal, isMobile]);
+
+  useEffect(() => {
+    return () => {
+      cancelRoutinePeekOpen();
+      cancelRoutinePeekClose();
+    };
+  }, []);
+
+  const routineHeaderExtras = (
+    <p className="text-sm text-gray-600 dark:text-gray-400">
+      Total Credits: <span className={`font-bold ${totalCredits > 25 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
+        {totalCredits}/25
+      </span>
+    </p>
+  );
 
   return (
     <div className="min-h-screen text-gray-100 pb-24">
@@ -1487,13 +1557,7 @@ const PreRegistrationPage = () => {
         isSaving={savingRoutine}
         onRemoveCourse={addToRoutine}
         showRemoveButtons={true}
-        headerExtras={
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            Total Credits: <span className={`font-bold ${totalCredits > 25 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
-              {totalCredits}/25
-            </span>
-          </p>
-        }
+        headerExtras={routineHeaderExtras}
       />
 
       {/* Faculty Hover Tooltip */}
@@ -1562,10 +1626,26 @@ const PreRegistrationPage = () => {
         onClose={() => setBottomSheetCourse(null)}
       />
 
+      {/* Routine Peek — desktop-only hover preview in the lower-right quadrant */}
+      <RoutinePeek
+        courses={enrichedSelectedCourses}
+        onRemoveCourse={addToRoutine}
+        anchorRef={routineButtonRef}
+        isOpen={showRoutinePeek && !showRoutineModal && isMobile === false}
+        onMouseEnter={cancelRoutinePeekClose}
+        onMouseLeave={handleRoutinePeekLeave}
+      />
+
       {/* Floating Routine Button */}
       <button
-        onClick={() => setShowRoutineModal(true)}
-        className="fixed bottom-6 z-40 flex items-center gap-3 px-5 py-3 bg-blue-600 hover:bg-blue-700 rounded-full shadow-lg transition-all hover:scale-105 left-1/2 -translate-x-1/2 md:left-auto md:right-6 md:translate-x-0"
+        ref={routineButtonRef}
+        onClick={() => {
+          closeRoutinePeek();
+          setShowRoutineModal(true);
+        }}
+        onMouseEnter={handleRoutinePeekButtonEnter}
+        onMouseLeave={handleRoutinePeekLeave}
+        className="fixed bottom-6 z-[46] flex items-center gap-3 px-5 py-3 bg-blue-600 hover:bg-blue-700 rounded-full shadow-lg transition-all hover:scale-105 left-1/2 -translate-x-1/2 md:left-auto md:right-6 md:translate-x-0"
       >
         <div className="relative">
           <Calendar className="w-5 h-5" />
