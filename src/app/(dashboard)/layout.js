@@ -16,6 +16,11 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+// This route group is its own root layout, so it needs its own metadataBase
+export const metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://boracle.app"),
+};
+
 export default async function RootLayout({ children }) {
   const session = await auth();
   if (!session) {
