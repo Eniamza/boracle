@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Search, Filter, Plus, Calendar, Clock, X, Users, BookOpen, Download, Save, AlertCircle, ChevronDown } from 'lucide-react';
+import { Search, Filter, Plus, Calendar, Clock, X, Users, BookOpen, Download, Save, AlertCircle, ChevronDown, Lock, Unlock } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import RoutineTableGrid from '@/components/routine/RoutineTableGrid';
 import RoutineView from '@/components/routine/RoutineView';
@@ -16,6 +16,12 @@ import SignInPrompt from '@/components/shared/SignInPrompt';
 import { fetchBackupIndex, normalizeSemester } from '@/lib/api/courseFetcher';
 import globalInfo from '@/constants/globalInfo';
 
+// Stable empty array so the peek grid doesn't re-measure on every render
+const NO_PREVIEW_COURSES = [];
+
+// How long a course row has to be hovered before it is ghosted onto the peek grid
+const ROUTINE_PREVIEW_DELAY = 50;
+
 const PreRegistrationPage = () => {
   const { data: session } = useSession();
   const [courses, setCourses] = useState([]);
@@ -25,6 +31,8 @@ const PreRegistrationPage = () => {
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [showRoutineModal, setShowRoutineModal] = useState(false);
   const [showRoutinePeek, setShowRoutinePeek] = useState(false);
+  const [routinePeekLocked, setRoutinePeekLocked] = useState(false);
+  const [routinePreviewCourse, setRoutinePreviewCourse] = useState(null);
   const [seatAnimations, setSeatAnimations] = useState({}); // Keep track of animations { sectionId: 'decrease' | 'increase' }
   const [selectedCourses, setSelectedCourses] = useLocalStorage('boracle_selected_courses', []);
   const [savingRoutine, setSavingRoutine] = useState(false);
@@ -63,6 +71,7 @@ const PreRegistrationPage = () => {
   const routineButtonRef = useRef(null);
   const routinePeekOpenTimeoutRef = useRef(null);
   const routinePeekCloseTimeoutRef = useRef(null);
+  const routinePreviewTimeoutRef = useRef(null);
   const semesterDropdownRef = useRef(null);
   const prevSemesterRef = useRef(selectedSemester);
 
@@ -672,9 +681,11 @@ const PreRegistrationPage = () => {
     }, 400);
   };
 
+  // Locked: the panel is pinned open and the pointer can roam the course list
   const handleRoutinePeekLeave = () => {
-    cancelRoutinePeekOpen();
     cancelRoutinePeekClose();
+    if (routinePeekLocked) return;
+    cancelRoutinePeekOpen();
     routinePeekCloseTimeoutRef.current = setTimeout(() => {
       routinePeekCloseTimeoutRef.current = null;
       setShowRoutinePeek(false);
@@ -685,7 +696,46 @@ const PreRegistrationPage = () => {
     cancelRoutinePeekOpen();
     cancelRoutinePeekClose();
     setShowRoutinePeek(false);
+    clearRoutinePreview();
   };
+
+  const toggleRoutinePeekLock = () => {
+    setRoutinePeekLocked(prev => {
+      const next = !prev;
+      if (next) {
+        // Pin it open right away, so the toggle reads as "stays put"
+        cancelRoutinePeekOpen();
+        cancelRoutinePeekClose();
+        setShowRoutinePeek(true);
+      }
+      return next;
+    });
+  };
+
+  // --- Ghost preview ---
+  // Hovering a course row for 50ms drops that section onto the peek grid as a
+  // dashed ghost, so its slot (and any clash) is visible before it is added.
+  const clearRoutinePreview = () => {
+    if (routinePreviewTimeoutRef.current) {
+      clearTimeout(routinePreviewTimeoutRef.current);
+      routinePreviewTimeoutRef.current = null;
+    }
+    setRoutinePreviewCourse(prev => (prev ? null : prev));
+  };
+
+  const handleCoursePreviewEnter = (course) => {
+    if (isMobile !== false || !showRoutinePeek || showRoutineModal) return;
+    if (routinePreviewTimeoutRef.current) clearTimeout(routinePreviewTimeoutRef.current);
+    routinePreviewTimeoutRef.current = setTimeout(() => {
+      routinePreviewTimeoutRef.current = null;
+      setRoutinePreviewCourse(course);
+    }, ROUTINE_PREVIEW_DELAY);
+  };
+
+  const routinePreviewCourses = useMemo(
+    () => (routinePreviewCourse ? [routinePreviewCourse] : NO_PREVIEW_COURSES),
+    [routinePreviewCourse]
+  );
 
   // Never keep the peek around on mobile or behind the full modal
   useEffect(() => {
@@ -695,9 +745,14 @@ const PreRegistrationPage = () => {
   }, [showRoutineModal, isMobile]);
 
   useEffect(() => {
+    if (!showRoutinePeek) clearRoutinePreview();
+  }, [showRoutinePeek]);
+
+  useEffect(() => {
     return () => {
       cancelRoutinePeekOpen();
       cancelRoutinePeekClose();
+      if (routinePreviewTimeoutRef.current) clearTimeout(routinePreviewTimeoutRef.current);
     };
   }, []);
 
@@ -1170,6 +1225,8 @@ const PreRegistrationPage = () => {
                     <tr
                       key={course.sectionId}
                       ref={isLast && displayCount < filteredCourses.length ? lastCourseRef : null}
+                      onMouseEnter={() => handleCoursePreviewEnter(course)}
+                      onMouseLeave={clearRoutinePreview}
                       className={`
                         border-b border-gray-200 dark:border-gray-800 transition-colors duration-500
                         ${seatAnimations[course.sectionId] === 'decrease'
@@ -1629,6 +1686,7 @@ const PreRegistrationPage = () => {
       {/* Routine Peek — desktop-only hover preview in the lower-right quadrant */}
       <RoutinePeek
         courses={enrichedSelectedCourses}
+        previewCourses={routinePreviewCourses}
         onRemoveCourse={addToRoutine}
         anchorRef={routineButtonRef}
         isOpen={showRoutinePeek && !showRoutineModal && isMobile === false}
@@ -1636,27 +1694,43 @@ const PreRegistrationPage = () => {
         onMouseLeave={handleRoutinePeekLeave}
       />
 
-      {/* Floating Routine Button */}
-      <button
-        ref={routineButtonRef}
-        onClick={() => {
-          closeRoutinePeek();
-          setShowRoutineModal(true);
-        }}
-        onMouseEnter={handleRoutinePeekButtonEnter}
-        onMouseLeave={handleRoutinePeekLeave}
-        className="fixed bottom-6 z-[46] flex items-center gap-3 px-5 py-3 bg-blue-600 hover:bg-blue-700 rounded-full shadow-lg transition-all hover:scale-105 left-1/2 -translate-x-1/2 md:left-auto md:right-6 md:translate-x-0"
-      >
-        <div className="relative">
-          <Calendar className="w-5 h-5" />
-          {selectedCourses.length > 0 && (
-            <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center text-[10px]">
-              {selectedCourses.length}
-            </span>
-          )}
-        </div>
-        <span className="text-sm font-medium">View Routine</span>
-      </button>
+      {/* Floating Routine Button (+ peek lock on its left) */}
+      <div className="fixed bottom-6 z-[46] flex items-center gap-3 left-1/2 -translate-x-1/2 md:left-auto md:right-6 md:translate-x-0">
+        <button
+          type="button"
+          onClick={toggleRoutinePeekLock}
+          onMouseEnter={cancelRoutinePeekClose}
+          onMouseLeave={handleRoutinePeekLeave}
+          aria-pressed={routinePeekLocked}
+          title={routinePeekLocked ? 'Unlock routine preview' : 'Keep routine preview open'}
+          className={`hidden md:flex items-center justify-center w-11 h-11 rounded-full shadow-lg transition-all hover:scale-105 ${routinePeekLocked
+            ? 'bg-blue-600 hover:bg-blue-700 text-white'
+            : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
+            } ${showRoutinePeek || routinePeekLocked ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+        >
+          {routinePeekLocked ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
+        </button>
+        <button
+          ref={routineButtonRef}
+          onClick={() => {
+            closeRoutinePeek();
+            setShowRoutineModal(true);
+          }}
+          onMouseEnter={handleRoutinePeekButtonEnter}
+          onMouseLeave={handleRoutinePeekLeave}
+          className="flex items-center gap-3 px-5 py-3 bg-blue-600 hover:bg-blue-700 rounded-full shadow-lg transition-all hover:scale-105"
+        >
+          <div className="relative">
+            <Calendar className="w-5 h-5" />
+            {selectedCourses.length > 0 && (
+              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center text-[10px]">
+                {selectedCourses.length}
+              </span>
+            )}
+          </div>
+          <span className="text-sm font-medium">View Routine</span>
+        </button>
+      </div>
       <SignInPrompt
         open={showSignInPrompt}
         onOpenChange={setShowSignInPrompt}

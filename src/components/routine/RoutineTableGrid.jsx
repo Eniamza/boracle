@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import { X } from 'lucide-react';
 import CourseHoverTooltip from '@/components/ui/CourseHoverTooltip';
 import { getRoutineTimings, REGULAR_TIMINGS } from '@/constants/routineTimings';
@@ -22,6 +22,7 @@ const RoutineTableGrid = ({
   mobileAction,
   compact = false,
   hoverRemove = false,
+  previewCourses = [],
 }) => {
   const routineRef = useRef(null);
   const [hoveredCourse, setHoveredCourse] = useState(null);
@@ -32,6 +33,17 @@ const RoutineTableGrid = ({
   const isMobile = useIsMobile();
 
   const canHoverRemove = hoverRemove && !!onRemoveCourse;
+
+  // Ghost sections drawn on top of the routine — where a course *would* land if
+  // it were added. Anything already selected wins over its preview copy.
+  const gridCourses = useMemo(() => {
+    if (!previewCourses.length) return selectedCourses;
+    const selectedIds = new Set(selectedCourses.map(c => c.sectionId));
+    const ghosts = previewCourses
+      .filter(c => c && !selectedIds.has(c.sectionId))
+      .map(c => ({ ...c, isPreview: true }));
+    return ghosts.length ? [...selectedCourses, ...ghosts] : selectedCourses;
+  }, [selectedCourses, previewCourses]);
 
   const startHoverRemove = (course) => {
     clearTimeout(hoverRemoveTimeoutRef.current);
@@ -86,7 +98,7 @@ const RoutineTableGrid = ({
     const slotStartMin = timeToMinutes(slotStart);
     const slotEndMin = timeToMinutes(slotEnd);
 
-    return selectedCourses.filter(course => {
+    return gridCourses.filter(course => {
       // Check class schedules
       const classMatch = course.sectionSchedule?.classSchedules?.some(schedule => {
         if (schedule.day !== day.toUpperCase()) return false;
@@ -181,17 +193,22 @@ const RoutineTableGrid = ({
                                 return scheduleStart < slotEndMin && scheduleEnd > slotStartMin;
                               });
 
-                              const isPendingRemove = canHoverRemove && pendingRemoveId === course.sectionId;
+                              const isPreview = !!course.isPreview;
+                              const isPendingRemove = canHoverRemove && !isPreview && pendingRemoveId === course.sectionId;
 
                               return (
                                 <div
-                                  key={course.sectionId}
+                                  key={`${course.sectionId}${isPreview ? '-preview' : ''}`}
                                   style={isPendingRemove ? { cursor: TRASH_CURSOR } : undefined}
                                   onClick={isPendingRemove ? () => {
                                     cancelHoverRemove();
                                     onRemoveCourse(course);
                                   } : undefined}
-                                  className={`${compact ? 'p-1.5' : 'p-2.5'} rounded-r-lg rounded-l-[4px] ${canHoverRemove ? '' : 'transition-all duration-200'} ${isPendingRemove
+                                  className={`${compact ? 'p-1.5' : 'p-2.5'} rounded-r-lg rounded-l-[4px] ${canHoverRemove ? '' : 'transition-all duration-200'} ${isPreview
+                                    ? conflict
+                                      ? 'bg-red-50/70 dark:bg-red-900/25 border-l-4 border-dashed border-red-500 text-red-900 dark:text-red-100 ring-1 ring-red-400/60 opacity-90'
+                                      : 'bg-emerald-50/80 dark:bg-emerald-900/30 border-l-4 border-dashed border-emerald-500 text-emerald-900 dark:text-emerald-100 ring-1 ring-emerald-400/50 opacity-90'
+                                    : isPendingRemove
                                     ? 'bg-red-100 dark:bg-red-900/60 border-l-4 border-red-600 text-red-900 dark:text-red-50 ring-1 ring-red-500 shadow-[0_2px_10px_-3px_rgba(239,68,68,0.4)]'
                                     : conflict
                                       ? 'bg-red-50/90 dark:bg-red-900/30 border-l-4 border-red-500 text-red-900 dark:text-red-100 shadow-[0_2px_10px_-3px_rgba(239,68,68,0.2)] hover:shadow-[0_4px_12px_-2px_rgba(239,68,68,0.3)]'
@@ -200,7 +217,7 @@ const RoutineTableGrid = ({
                                         : 'bg-blue-50/90 dark:bg-blue-900/30 border-l-4 border-blue-500 text-blue-900 dark:text-blue-100 shadow-[0_2px_10px_-3px_rgba(59,130,246,0.2)] hover:shadow-[0_4px_12px_-2px_rgba(59,130,246,0.3)]'
                                     } group relative flex flex-col justify-center ${compact ? 'min-h-[36px]' : 'min-h-[76px]'}`}
                                   onMouseEnter={(e) => {
-                                    if (canHoverRemove) startHoverRemove(course);
+                                    if (canHoverRemove && !isPreview) startHoverRemove(course);
                                     if (compact) return;
                                     setHoveredCourse(course);
                                     setHoveredCourseTitle(`${course.courseCode}${isLab ? 'L' : ''}`);
@@ -218,7 +235,7 @@ const RoutineTableGrid = ({
                                     });
                                   }}
                                   onMouseLeave={() => {
-                                    if (canHoverRemove) cancelHoverRemove();
+                                    if (canHoverRemove && !isPreview) cancelHoverRemove();
                                     if (compact) return;
                                     setHoveredCourse(null);
                                     setHoveredCourseTitle(null);
@@ -254,7 +271,7 @@ const RoutineTableGrid = ({
                                     </div>
                                   )}
 
-                                  {showRemoveButtons && onRemoveCourse && (
+                                  {showRemoveButtons && onRemoveCourse && !isPreview && (
                                     <button
                                       onClick={(e) => {
                                         e.stopPropagation();
@@ -284,7 +301,7 @@ const RoutineTableGrid = ({
         <CourseHoverTooltip course={hoveredCourse} position={tooltipPosition} courseTitle={hoveredCourseTitle} />
 
         {/* Color Legend - inside the export area so it's included in PNG */}
-        {!compact && selectedCourses.length > 0 && (
+        {!compact && gridCourses.length > 0 && (
           <div className="mt-4 flex gap-4 text-sm">
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 bg-blue-100 dark:bg-blue-900/50 border border-blue-400 dark:border-blue-600 rounded"></div>
@@ -309,7 +326,7 @@ const RoutineTableGrid = ({
       </div>
 
       {
-        selectedCourses.length === 0 && (
+        gridCourses.length === 0 && (
           <div className="text-center py-12 text-gray-500">
             No courses selected. Add courses from the list to see them in your routine.
           </div>

@@ -19,6 +19,7 @@ const FALLBACK_ANCHOR = { right: 24, bottom: 88 };
  */
 const RoutinePeek = ({
     courses = [],
+    previewCourses = [],
     onRemoveCourse,
     isOpen = false,
     anchorRef,
@@ -102,7 +103,7 @@ const RoutinePeek = ({
 
     useLayoutEffect(() => {
         if (shouldRender) measure();
-    }, [shouldRender, courses, measure]);
+    }, [shouldRender, courses, previewCourses, measure]);
 
     // The grid renders one tick late (it waits for the mobile breakpoint to resolve),
     // and the panel resizes with the viewport — re-fit on any of it.
@@ -155,6 +156,7 @@ const RoutinePeek = ({
                             >
                                 <RoutineTableGrid
                                     selectedCourses={courses}
+                                    previewCourses={previewCourses}
                                     showRemoveButtons={false}
                                     onRemoveCourse={onRemoveCourse}
                                     hoverRemove={true}
