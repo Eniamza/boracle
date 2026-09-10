@@ -1157,6 +1157,7 @@ const PreRegistrationPage = () => {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-gray-200 dark:border-gray-800">
+                  <th className="text-center py-3 px-2 text-sm font-medium text-gray-600 dark:text-gray-400 w-[80px]">Action</th>
                   <th
                     className="text-left py-3 px-2 text-sm font-medium text-gray-600 dark:text-gray-400 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800/50 transition-colors group select-none w-[140px]"
                     onClick={() => handleSort('courseCode')}
@@ -1212,7 +1213,6 @@ const PreRegistrationPage = () => {
                       Exam Day
                     </div>
                   </th>
-                  <th className="text-center py-3 px-2 text-sm font-medium text-gray-600 dark:text-gray-400 min-w-[80px]">Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -1239,6 +1239,17 @@ const PreRegistrationPage = () => {
                         }
                       `}
                     >
+                      <td className="py-3 px-2 text-center">
+                        <button
+                          onClick={() => addToRoutine(course)}
+                          className={`p-2 rounded-lg transition-colors ${isSelected
+                            ? 'bg-red-600 hover:bg-red-700 text-white'
+                            : 'border border-gray-400 dark:border-white text-gray-700 dark:text-white hover:bg-green-600 hover:border-green-600 hover:text-white'
+                            }`}
+                        >
+                          {isSelected ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+                        </button>
+                      </td>
                       <td className="py-3 px-2 text-sm font-medium text-gray-900 dark:text-gray-100">
                         {course.courseCode}-[{course.sectionName}]
                       </td>
@@ -1300,17 +1311,6 @@ const PreRegistrationPage = () => {
                       </td>
                       <td className="py-3 px-2 text-xs text-gray-700 dark:text-gray-300">
                         {course.sectionSchedule?.finalExamDetail || 'TBA'}
-                      </td>
-                      <td className="py-3 px-2 text-center">
-                        <button
-                          onClick={() => addToRoutine(course)}
-                          className={`p-2 rounded-lg transition-colors ${isSelected
-                            ? 'bg-red-600 hover:bg-red-700 text-white'
-                            : 'border border-gray-400 dark:border-white text-gray-700 dark:text-white hover:bg-green-600 hover:border-green-600 hover:text-white'
-                            }`}
-                        >
-                          {isSelected ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-                        </button>
                       </td>
                     </tr>
                   );
