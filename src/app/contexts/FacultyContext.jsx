@@ -1,23 +1,49 @@
 'use client';
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { getStaleCache, setCache } from '@/lib/idb';
 
 const FacultyContext = createContext();
+
+// This provider mounts on every route, so the lookup used to cost a DB join per
+// cold start. Serve the last map immediately, then revalidate in the background.
+const FACULTY_CACHE_KEY = 'faculty_map';
+const FACULTY_CACHE_TTL = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 export function FacultyProvider({ children }) {
     const [facultyMap, setFacultyMap] = useState({});
     const [loading, setLoading] = useState(true);
 
-    // Fetch faculty data once on provider mount
+    // Fetch faculty data once on provider mount (stale-while-revalidate)
     useEffect(() => {
-        fetch('/api/faculty/lookup')
-            .then(res => res.json())
-            .then(data => {
+        let cancelled = false;
+
+        const load = async () => {
+            const cached = await getStaleCache(FACULTY_CACHE_KEY);
+            if (cancelled) return;
+            if (cached && Object.keys(cached).length > 0) {
+                setFacultyMap(cached);
+                setLoading(false);
+            }
+
+            try {
+                const res = await fetch('/api/faculty/lookup');
+                const data = await res.json();
                 if (data.success) {
-                    setFacultyMap(data.facultyMap || {});
+                    const map = data.facultyMap || {};
+                    if (!cancelled) setFacultyMap(map);
+                    if (Object.keys(map).length > 0) {
+                        await setCache(FACULTY_CACHE_KEY, map, FACULTY_CACHE_TTL);
+                    }
                 }
-            })
-            .catch(err => console.error('Error fetching global faculty data:', err))
-            .finally(() => setLoading(false));
+            } catch (err) {
+                console.error('Error fetching global faculty data:', err);
+            } finally {
+                if (!cancelled) setLoading(false);
+            }
+        };
+
+        load();
+        return () => { cancelled = true; };
     }, []);
 
     // Helper to get faculty details for a single course

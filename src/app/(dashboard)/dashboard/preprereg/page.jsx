@@ -130,13 +130,18 @@ const PreRegistrationPage = () => {
 
   // Fetch backup index for semester dropdown
   useEffect(() => {
+    let cancelled = false;
+    // Exclude the current semester
+    const applyBackups = (backups) => {
+      if (cancelled) return;
+      setPastSemesters(backups.filter(b => !b.isCurrent));
+    };
+
     const loadBackupIndex = async () => {
-      const backups = await fetchBackupIndex();
-      // Exclude the current semester
-      const past = backups.filter(b => !b.isCurrent);
-      setPastSemesters(past);
+      applyBackups(await fetchBackupIndex({ onRevalidated: applyBackups }));
     };
     loadBackupIndex();
+    return () => { cancelled = true; };
   }, []);
 
   // Sort helper for course data
@@ -1077,30 +1082,36 @@ const PreRegistrationPage = () => {
       <div className="container mx-auto mt-6">
         {loading ? (
           <div className="space-y-0">
-            {/* Skeleton table header */}
+            {/* Skeleton table header — Action first, matching the real column order */}
             <div className="flex gap-2 py-3 border-b border-gray-200 dark:border-gray-800">
+              <div className="w-[80px] flex justify-center shrink-0">
+                <Skeleton className="h-4 w-[44px]" />
+              </div>
               <Skeleton className="h-4 w-[140px]" />
               <Skeleton className="h-4 w-[100px]" />
               <Skeleton className="h-4 w-[150px]" />
-              <Skeleton className="h-4 w-[80px]" />
-              <Skeleton className="h-4 w-[80px]" />
-              <Skeleton className="h-4 w-[80px]" />
-              <Skeleton className="h-4 w-[140px]" />
-              <Skeleton className="h-4 w-[140px]" />
-              <Skeleton className="h-4 w-[80px]" />
+              <Skeleton className="h-4 w-[100px]" />
+              <Skeleton className="h-4 w-[100px]" />
+              <Skeleton className="h-4 w-[100px]" />
+              <Skeleton className="h-4 w-[160px]" />
+              <Skeleton className="h-4 w-[160px]" />
+              <Skeleton className="h-4 w-[120px]" />
             </div>
             {/* Skeleton rows */}
             {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
               <div key={i} className="flex items-center gap-2 py-3 border-b border-gray-200 dark:border-gray-800">
+                <div className="w-[80px] flex justify-center shrink-0">
+                  <Skeleton className="h-8 w-8 rounded-lg" />
+                </div>
                 <Skeleton className="h-4 w-[140px]" />
                 <Skeleton className="h-4 w-[100px]" />
                 <Skeleton className="h-4 w-[150px]" />
-                <Skeleton className="h-4 w-[80px]" />
-                <Skeleton className="h-4 w-[80px]" />
-                <Skeleton className="h-4 w-[80px]" />
-                <Skeleton className="h-5 w-[140px]" />
-                <Skeleton className="h-5 w-[140px]" />
-                <Skeleton className="h-8 w-8 rounded-lg mx-auto" />
+                <Skeleton className="h-4 w-[100px]" />
+                <Skeleton className="h-4 w-[100px]" />
+                <Skeleton className="h-4 w-[100px]" />
+                <Skeleton className="h-5 w-[160px]" />
+                <Skeleton className="h-5 w-[160px]" />
+                <Skeleton className="h-5 w-[120px]" />
               </div>
             ))}
           </div>

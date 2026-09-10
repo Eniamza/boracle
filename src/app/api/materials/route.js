@@ -121,7 +121,11 @@ export async function GET(req) {
         }, {
             status: 200,
             headers: {
-                'Cache-Control': 'private, max-age=3600, stale-while-revalidate=300',
+                // Never HTTP-cache this: the payload carries per-viewer state
+                // (userVote, isOwner) and a counter other users change constantly.
+                // A max-age here suppresses the request entirely, so a fresh vote
+                // reads back as "not counted" until it lapses.
+                'Cache-Control': 'private, no-store',
             },
         });
     } catch (error) {

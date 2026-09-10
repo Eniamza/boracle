@@ -4,7 +4,7 @@ import { Calendar, Download, RefreshCw, AlertCircle, Copy, Check, Save, Info } f
 import { useParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import RoutineView from '@/components/routine/RoutineView';
-import { decodeAndEnrichRoutine, routineCacheKey, ROUTINE_CACHE_TTL } from '@/lib/routineUtils';
+import { decodeAndEnrichRoutine, readRoutineCache, routineCacheKey, ROUTINE_CACHE_TTL } from '@/lib/routineUtils';
 import { getStaleCache, setCache } from '@/lib/idb';
 import { copyToClipboard } from '@/lib/utils';
 import { exportRoutineToPNG } from '@/components/routine/ExportRoutinePNG';
@@ -41,6 +41,15 @@ const SharedRoutinePage = ({ initialRoutine }) => {
         setMounted(true);
     }, []);
 
+    // Background catalog refreshes land after the fetch resolves — don't set
+    // state once this page is gone
+    const isLiveRef = useRef(true);
+    const requestTokenRef = useRef(0);
+    useEffect(() => {
+        isLiveRef.current = true;
+        return () => { isLiveRef.current = false; };
+    }, []);
+
     const { getFacultyDetails, loading: facultyLoading } = useFaculty();
 
     useEffect(() => {
@@ -52,13 +61,14 @@ const SharedRoutinePage = ({ initialRoutine }) => {
 
 
     const fetchRoutine = async () => {
+        const token = ++requestTokenRef.current;
         try {
             const CACHE_KEY = routineCacheKey(id);
-            const staleData = await getStaleCache(CACHE_KEY);
+            const staleData = readRoutineCache(await getStaleCache(CACHE_KEY));
             let hasStaleData = false;
-            
-            if (staleData) {
-                setRoutine(staleData.routine);
+
+            if (staleData && (staleData.routine || initialRoutine)) {
+                setRoutine(staleData.routine || initialRoutine);
                 setCourses(staleData.courses);
                 setLoading(false);
                 hasStaleData = true;
@@ -93,13 +103,26 @@ const SharedRoutinePage = ({ initialRoutine }) => {
             }
             
             // Decode routineStr, fetch courses, and enrich with faculty data
-            const matchedCourses = await decodeAndEnrichRoutine(routineData.routineStr, routineData.semester, getFacultyDetails);
+            const persist = (courses) => setCache(CACHE_KEY, { routine: routineData, courses }, ROUTINE_CACHE_TTL);
+
+            const matchedCourses = await decodeAndEnrichRoutine(
+                routineData.routineStr,
+                routineData.semester,
+                getFacultyDetails,
+                {
+                    onRevalidated: (fresh) => {
+                        if (!isLiveRef.current || requestTokenRef.current !== token) return;
+                        setCourses(fresh);
+                        persist(fresh);
+                    },
+                }
+            );
 
             setRoutine(routineData);
             setCourses(matchedCourses);
             
             // Save to IDB Cache (30 days TTL)
-            await setCache(CACHE_KEY, { routine: routineData, courses: matchedCourses }, ROUTINE_CACHE_TTL);
+            await persist(matchedCourses);
         } catch (err) {
             console.error('Error fetching shared routine:', err);
             setLoading((prevLoading) => {

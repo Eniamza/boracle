@@ -293,7 +293,13 @@ const CourseHoverTooltip = ({ course: propCourse, position: propPosition, course
                     </div>
                     <div>
                         <span className="text-gray-500 dark:text-gray-400 text-xs block">Capacity</span>
-                        <span className="text-gray-900 dark:text-gray-200">{course.consumedSeat || 0} / {course.capacity || 0}</span>
+                        {/* Seats are live-only — cached course data carries none, and
+                            showing a stale count is worse than showing nothing. */}
+                        <span className="text-gray-900 dark:text-gray-200">
+                            {course.capacity == null
+                                ? <span className="text-gray-400 dark:text-gray-500">Live only</span>
+                                : `${course.consumedSeat || 0} / ${course.capacity}`}
+                        </span>
                     </div>
                     <div className="col-span-2">
                         <span className="text-gray-500 dark:text-gray-400 text-xs block">Prerequisites</span>

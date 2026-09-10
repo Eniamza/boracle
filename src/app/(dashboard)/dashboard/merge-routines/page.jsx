@@ -23,6 +23,7 @@ import { exportRoutineToPNG } from '@/components/routine/ExportRoutinePNG';
 import { useSession } from 'next-auth/react';
 import { useEffect } from 'react';
 import { useFaculty } from '@/app/contexts/FacultyContext';
+import { fetchCourses } from '@/lib/api/courseFetcher';
 import SignInPrompt from '@/components/shared/SignInPrompt';
 import {
   DropdownMenu,
@@ -109,9 +110,8 @@ const MergeRoutinesPage = () => {
         setLoading(true);
         const editData = JSON.parse(editDataStr);
 
-        // Fetch all available courses from CDN
-        const coursesResponse = await fetch('https://usis-cdn.eniamza.com/connect.json');
-        const allAvailableCourses = await coursesResponse.json();
+        // Course catalog (IDB-cached per semester)
+        const allAvailableCourses = await fetchCourses();
 
         const allCourses = [];
 
@@ -343,8 +343,7 @@ const MergeRoutinesPage = () => {
     // First, fetch all available courses from the external API
     let allAvailableCourses = [];
     try {
-      const coursesResponse = await fetch('https://usis-cdn.eniamza.com/connect.json');
-      allAvailableCourses = await coursesResponse.json();
+      allAvailableCourses = await fetchCourses();
     } catch (error) {
       console.error('Error fetching course data:', error);
       toast.error('Failed to fetch course data');

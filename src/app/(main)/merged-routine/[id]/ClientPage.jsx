@@ -7,6 +7,8 @@ import { useParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { exportRoutineToPNG } from '@/components/routine/ExportRoutinePNG';
 import { fetchCourses } from '@/lib/api/courseFetcher';
+import { mergedRoutineCacheKey, ROUTINE_CACHE_TTL } from '@/lib/routineUtils';
+import { getStaleCache, setCache } from '@/lib/idb';
 import { getRoutineTimings, REGULAR_TIMINGS } from '@/constants/routineTimings';
 import { copyToClipboard } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -35,6 +37,13 @@ const SharedMergedRoutinePage = () => {
     const [imported, setImported] = useState(false);
     const routineRef = useRef(null);
     const exportRef = useRef(null);
+    // Background catalog refreshes land after the fetch resolves
+    const isLiveRef = useRef(true);
+    const requestTokenRef = useRef(0);
+    useEffect(() => {
+        isLiveRef.current = true;
+        return () => { isLiveRef.current = false; };
+    }, []);
     const [hoveredCourse, setHoveredCourse] = useState(null);
     const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
     const isMobile = useIsMobile();
@@ -111,17 +120,34 @@ const SharedMergedRoutinePage = () => {
     };
 
     const fetchRoutine = async () => {
+        const token = ++requestTokenRef.current;
+        const CACHE_KEY = mergedRoutineCacheKey(id);
+        let hasStaleData = false;
+
         try {
-            setLoading(true);
             setError(null);
+
+            // Paint the last known copy first, then revalidate
+            const staleData = await getStaleCache(CACHE_KEY);
+            if (staleData?.routine && Array.isArray(staleData.courses)) {
+                setRoutine(staleData.routine);
+                setCourses(staleData.courses);
+                setFriends(staleData.friends || []);
+                setLoading(false);
+                hasStaleData = true;
+            } else {
+                setLoading(true);
+            }
 
             const response = await fetch(`/api/merged-routine/${id}`);
 
             if (!response.ok) {
-                if (response.status === 404) {
-                    setError('not_found');
-                } else {
-                    setError('fetch_failed');
+                if (!hasStaleData) {
+                    if (response.status === 404) {
+                        setError('not_found');
+                    } else {
+                        setError('fetch_failed');
+                    }
                 }
                 return;
             }
@@ -129,7 +155,7 @@ const SharedMergedRoutinePage = () => {
             const data = await response.json();
 
             if (!data.success) {
-                setError('fetch_failed');
+                if (!hasStaleData) setError('fetch_failed');
                 return;
             }
 
@@ -149,11 +175,8 @@ const SharedMergedRoutinePage = () => {
 
             const allSectionIds = routineData.flatMap(item => item.sectionIds || []);
 
-            // Fetch course data dynamically supporting past semesters
-            const allCourses = await fetchCourses(data.routine.semester);
-
             // Filter and attach friend info + faculty enrichment
-            const matchedCourses = allCourses
+            const buildCourses = (allCourses) => allCourses
                 .filter(course => allSectionIds.includes(course.sectionId))
                 .map(course => {
                     const friend = friendsData.find(f => f.sectionIds.includes(course.sectionId));
@@ -167,10 +190,29 @@ const SharedMergedRoutinePage = () => {
                     };
                 });
 
+            const persist = (courses) => setCache(
+                CACHE_KEY,
+                { routine: data.routine, courses, friends: friendsData },
+                ROUTINE_CACHE_TTL
+            );
+
+            // Fetch course data dynamically supporting past semesters
+            const allCourses = await fetchCourses(data.routine.semester, {
+                onRevalidated: (fresh) => {
+                    if (!isLiveRef.current || requestTokenRef.current !== token) return;
+                    const rebuilt = buildCourses(fresh);
+                    setCourses(rebuilt);
+                    persist(rebuilt);
+                },
+            });
+
+            const matchedCourses = buildCourses(allCourses);
             setCourses(matchedCourses);
+
+            await persist(matchedCourses);
         } catch (err) {
             console.error('Error fetching shared merged routine:', err);
-            setError('fetch_failed');
+            if (!hasStaleData) setError('fetch_failed');
         } finally {
             setLoading(false);
         }

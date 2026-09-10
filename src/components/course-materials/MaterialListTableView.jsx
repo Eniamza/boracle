@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { ArrowBigUp, ArrowBigDown, Loader2, Eye, X, User, ExternalLink, Youtube, Cloud, Trash2, Github, FileText, Presentation, Download, Share2, Filter, ArrowUpDown, ArrowUp, ArrowDown, Check } from 'lucide-react';
 import { toast } from 'sonner';
+import { submitMaterialVote } from '@/lib/api/materialVotes';
 import { copyToClipboard } from '@/lib/utils';
 import { useSession } from 'next-auth/react';
 
@@ -95,19 +96,9 @@ const MaterialListTableView = ({
         setVoteLoadingDirection(value === 1 ? 'up' : 'down');
 
         try {
-            if (material.userVote === value) {
-                const res = await fetch(`/api/materials/${material.materialId}/vote`, { method: 'DELETE' });
-                if (res.ok) onVote?.(material.materialId, null);
-            } else {
-                const res = await fetch(`/api/materials/${material.materialId}/vote`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ value }),
-                });
-                if (res.ok) onVote?.(material.materialId, value);
-            }
-        } catch (e) {
-            toast.error('Failed to vote');
+            const result = await submitMaterialVote(material, value);
+            if (result.ok) onVote?.(material.materialId, result.value);
+            else toast.error(result.error);
         } finally {
             setVoteLoadingId(null);
             setVoteLoadingDirection(null);

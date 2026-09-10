@@ -14,8 +14,8 @@ import { toast } from 'sonner';
 import { exportRoutineToPNG } from '@/components/routine/ExportRoutinePNG';
 import { getRoutineTimings, REGULAR_TIMINGS } from '@/constants/routineTimings';
 import { fetchCourses } from '@/lib/api/courseFetcher';
-import { decodeAndEnrichRoutine, decodeAndFetchRoutineCourses, decodeRoutineSections, routineCacheKey, ROUTINE_CACHE_TTL } from '@/lib/routineUtils';
-import { getStaleCache, setCache } from '@/lib/idb';
+import { decodeAndEnrichRoutine, decodeAndFetchRoutineCourses, decodeRoutineSections, mergedRoutineCacheKey, readRoutineCache, routineCacheKey, routineListCacheKey, ROUTINE_CACHE_TTL, ROUTINE_LIST_TTL } from '@/lib/routineUtils';
+import { deleteCache, getStaleCache, setCache } from '@/lib/idb';
 import ShareModal from '@/components/savedRoutine/ShareModal';
 import RoutineView from '@/components/routine/RoutineView';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -436,7 +436,7 @@ const MergedRoutineTableModal = ({ courses, friends, onClose, isOpen, isMobile, 
 
 
 const SavedRoutinesPage = () => {
-  const { data: session } = useSession();
+  const { data: session, status: sessionStatus } = useSession();
   const router = useRouter();
   const [routines, setRoutines] = useState([]);
   const [mergedRoutines, setMergedRoutines] = useState([]);
@@ -501,11 +501,25 @@ const SavedRoutinesPage = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showFloatingOptions]);
 
-  // Fetch saved routines
+  // Number routines by creation order, then show newest first
+  const withRoutineNumbers = (list) => (list || [])
+    .sort((a, b) => Number(a.createdAt || 0) - Number(b.createdAt || 0))
+    .map((routine, idx) => ({ ...routine, routineNumber: idx + 1 }))
+    .sort((a, b) => Number(b.createdAt || 0) - Number(a.createdAt || 0));
+
+  // Fetch saved routines (painted from IDB first, then revalidated)
   const fetchRoutines = async () => {
+    const cacheKey = routineListCacheKey(session?.user?.email, 'routines');
     try {
-      setLoading(true);
       setError(null);
+
+      const cachedList = await getStaleCache(cacheKey);
+      if (cachedList?.length) {
+        setRoutines(withRoutineNumbers(cachedList));
+        setLoading(false);
+      } else {
+        setLoading(true);
+      }
 
       const response = await fetch('/api/routine', {
         method: 'GET',
@@ -521,30 +535,35 @@ const SavedRoutinesPage = () => {
       const data = await response.json();
 
       if (data.success) {
-        // Sort routines by createdAt (newest first) for display, but keep original order info for numbering
-        const routinesWithIndex = (data.routines || [])
-          .sort((a, b) => Number(a.createdAt || 0) - Number(b.createdAt || 0)) // oldest first for numbering
-          .map((routine, idx) => ({ ...routine, routineNumber: idx + 1 })) // assign number based on creation order
-          .sort((a, b) => Number(b.createdAt || 0) - Number(a.createdAt || 0)); // newest first for display
-        setRoutines(routinesWithIndex);
-        console.log('Fetched routines:', routinesWithIndex);
+        setRoutines(withRoutineNumbers(data.routines));
+        await setCache(cacheKey, data.routines || [], ROUTINE_LIST_TTL);
       } else {
         throw new Error('Failed to fetch routines');
       }
 
     } catch (err) {
       console.error('Error fetching routines:', err);
-      setError('Failed to load saved routines');
-      toast.error('Failed to load saved routines');
+      // A cached list is already on screen — don't replace it with an error
+      if (!routines.length) {
+        setError('Failed to load saved routines');
+        toast.error('Failed to load saved routines');
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  // Fetch merged routines
+  // Fetch merged routines (painted from IDB first, then revalidated)
   const fetchMergedRoutines = async () => {
+    const cacheKey = routineListCacheKey(session?.user?.email, 'merged');
     try {
-      setLoadingMerged(true);
+      const cachedList = await getStaleCache(cacheKey);
+      if (cachedList?.length) {
+        setMergedRoutines(withRoutineNumbers(cachedList));
+        setLoadingMerged(false);
+      } else {
+        setLoadingMerged(true);
+      }
 
       const response = await fetch('/api/merged-routine', {
         method: 'GET',
@@ -560,13 +579,8 @@ const SavedRoutinesPage = () => {
       const data = await response.json();
 
       if (data.success) {
-        // Sort merged routines by createdAt (newest first) for display, but keep original order info for numbering
-        const routinesWithIndex = (data.routines || [])
-          .sort((a, b) => Number(a.createdAt || 0) - Number(b.createdAt || 0)) // oldest first for numbering
-          .map((routine, idx) => ({ ...routine, routineNumber: idx + 1 })) // assign number based on creation order
-          .sort((a, b) => Number(b.createdAt || 0) - Number(a.createdAt || 0)); // newest first for display
-        setMergedRoutines(routinesWithIndex);
-        console.log('Fetched merged routines:', routinesWithIndex);
+        setMergedRoutines(withRoutineNumbers(data.routines));
+        await setCache(cacheKey, data.routines || [], ROUTINE_LIST_TTL);
       } else {
         throw new Error('Failed to fetch merged routines');
       }
@@ -585,7 +599,10 @@ const SavedRoutinesPage = () => {
       });
 
       if (response.ok) {
-        setRoutines(prev => prev.filter(routine => routine.id !== routineId));
+        const next = routines.filter(routine => routine.id !== routineId);
+        setRoutines(next);
+        await setCache(routineListCacheKey(session?.user?.email, 'routines'), next, ROUTINE_LIST_TTL);
+        await deleteCache(routineCacheKey(routineId));
         toast.success('Routine deleted successfully');
       } else {
         throw new Error('Failed to delete routine');
@@ -604,7 +621,10 @@ const SavedRoutinesPage = () => {
       });
 
       if (response.ok) {
-        setMergedRoutines(prev => prev.filter(routine => routine.id !== routineId));
+        const next = mergedRoutines.filter(routine => routine.id !== routineId);
+        setMergedRoutines(next);
+        await setCache(routineListCacheKey(session?.user?.email, 'merged'), next, ROUTINE_LIST_TTL);
+        await deleteCache(mergedRoutineCacheKey(routineId));
         toast.success('Merged routine deleted successfully');
       } else {
         throw new Error('Failed to delete merged routine');
@@ -777,11 +797,11 @@ const SavedRoutinesPage = () => {
   const viewRoutine = async (routine) => {
     try {
       const CACHE_KEY = routineCacheKey(routine.id);
-      const staleData = await getStaleCache(CACHE_KEY);
+      const staleData = readRoutineCache(await getStaleCache(CACHE_KEY));
       let hasStaleData = false;
-      
+
       if (staleData) {
-        setRoutineCourses(staleData);
+        setRoutineCourses(staleData.courses);
         setViewingRoutine(routine);
         hasStaleData = true;
       } else {
@@ -789,11 +809,25 @@ const SavedRoutinesPage = () => {
         setViewingRoutine(routine);
       }
 
-      const enrichedCourses = await decodeAndEnrichRoutine(routine.routineStr, routine.semester, getFacultyDetails);
+      viewingRoutineIdRef.current = routine.id;
+      const persist = (courses) => setCache(CACHE_KEY, { routine, courses }, ROUTINE_CACHE_TTL);
+
+      const enrichedCourses = await decodeAndEnrichRoutine(
+        routine.routineStr,
+        routine.semester,
+        getFacultyDetails,
+        {
+          onRevalidated: (fresh) => {
+            if (viewingRoutineIdRef.current !== routine.id) return;
+            setRoutineCourses(fresh);
+            persist(fresh);
+          },
+        }
+      );
 
       setRoutineCourses(enrichedCourses);
-      
-      await setCache(CACHE_KEY, enrichedCourses, ROUTINE_CACHE_TTL);
+
+      await persist(enrichedCourses);
 
       if (enrichedCourses.length === 0 && !hasStaleData) {
         toast.error('No matching courses found for this routine');
@@ -801,6 +835,7 @@ const SavedRoutinesPage = () => {
     } catch (err) {
       console.error('Error viewing routine:', err);
       toast.error('Failed to load routine details');
+      viewingRoutineIdRef.current = null;
       setViewingRoutine(null);
     } finally {
       setLoadingRoutine(false);
@@ -846,11 +881,8 @@ const SavedRoutinesPage = () => {
 
       const allSectionIds = data.flatMap(item => item.sectionIds || []);
 
-      // Fetch course data dynamically supporting past semesters
-      const allCourses = await fetchCourses(routine.semester);
-
       // Filter courses that match the section IDs and attach friend info
-      const matchedCourses = allCourses
+      const buildCourses = (allCourses) => allCourses
         .filter(course => allSectionIds.includes(course.sectionId))
         .map(course => {
           // Find which friend this course belongs to
@@ -864,6 +896,18 @@ const SavedRoutinesPage = () => {
             imgUrl: getFacultyDetails(course.faculties).imgUrl,
           };
         });
+
+      viewingMergedIdRef.current = routine.id;
+
+      // Fetch course data dynamically supporting past semesters
+      const allCourses = await fetchCourses(routine.semester, {
+        onRevalidated: (fresh) => {
+          if (viewingMergedIdRef.current !== routine.id) return;
+          setMergedRoutineCourses(buildCourses(fresh));
+        },
+      });
+
+      const matchedCourses = buildCourses(allCourses);
 
       setMergedRoutineCourses(matchedCourses);
       setMergedRoutineFriends(friends);
@@ -924,12 +968,14 @@ const SavedRoutinesPage = () => {
   };
   // Helper to close modal
   const closeRoutineModal = () => {
+    viewingRoutineIdRef.current = null;
     setViewingRoutine(null);
     setRoutineCourses([]);
   };
 
   // Helper to close merged routine modal
   const closeMergedRoutineModal = () => {
+    viewingMergedIdRef.current = null;
     setViewingMergedRoutine(null);
     setMergedRoutineCourses([]);
     setMergedRoutineFriends([]);
@@ -937,10 +983,18 @@ const SavedRoutinesPage = () => {
 
   const isMobileDevice = useIsMobile();
 
+  // A background catalog refresh can land after the user has moved on — only
+  // apply it if the same routine is still open
+  const viewingRoutineIdRef = useRef(null);
+  const viewingMergedIdRef = useRef(null);
+
+  // Wait for the session to resolve — the list caches are keyed per account
   useEffect(() => {
+    if (sessionStatus === 'loading') return;
     fetchRoutines();
     fetchMergedRoutines();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionStatus, session?.user?.email]);
 
   // Back button/gesture handler
   useEffect(() => {
