@@ -20,15 +20,18 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+// Absolute base for every relative metadata URL — without it the file-based
+// opengraph-image routes resolve against http://localhost:<port> in production.
 export const metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://boracle.app"),
   title: "Boracle: One-Stop Destination for all your academic needs",
-  Description: "We aim to provide you with all the tools you need. From live seat status to routine builder, course swapping, faculty reviews and more!",
+  description: "We aim to provide you with all the tools you need. From live seat status to routine builder, course swapping, faculty reviews and more!",
   openGraph: {
     title: "Boracle: One-Stop Destination for all your academic needs",
     description: "We aim to provide you with all the tools you need. From live seat status to routine builder, course swapping, faculty reviews and more!",
     url: "https://boracle.app",
     siteName: "B.O.R.A.C.L.E",
-    image: "https://usis-cdn.eniamza.com/boracleOG.png",
+    images: "https://usis-cdn.eniamza.com/boracleOG.png",
   }
 
 }
