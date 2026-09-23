@@ -9,6 +9,7 @@ export default function MetricsCard({ statisticsCards }) {
           <div key={statCard.label} className="p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700/50">
             <div className="text-[10px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1.5">{statCard.label}</div>
             <div className={`text-2xl font-bold font-mono tracking-tight leading-none ${statCard.color}`}>{statCard.value}</div>
+            {statCard.sub && <div className="text-[10px] font-medium text-gray-400 dark:text-gray-500 mt-1.5 font-mono">{statCard.sub}</div>}
           </div>
         ))}
       </div>

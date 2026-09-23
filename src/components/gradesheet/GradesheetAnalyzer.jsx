@@ -249,6 +249,7 @@ export default function GradesheetAnalyzer({ allowSave = false, savedData = null
 
   // Calculations
   const totalCredits = courses.reduce((sum, course) => sum + course.credits, 0);
+  const earnedCredits = courses.reduce((sum, course) => course.gradePoints > 0 ? sum + course.credits : sum, 0);
   const totalQualityPoints = courses.reduce((sum, course) => sum + course.qualityPoints, 0);
   const newCgpa = totalCredits > 0 ? totalQualityPoints / totalCredits : 0;
 
@@ -302,7 +303,7 @@ export default function GradesheetAnalyzer({ allowSave = false, savedData = null
 
   const statisticsCards = [
     { label: "Total Courses", value: courses.length, color: "text-blue-600 dark:text-blue-400" },
-    { label: "Total Credits", value: totalCredits.toFixed(1), color: "text-blue-600 dark:text-blue-400" },
+    { label: "Earned Credits", value: earnedCredits.toFixed(1), sub: `Attempted: ${totalCredits.toFixed(1)}`, color: "text-blue-600 dark:text-blue-400" },
     { label: "Current CGPA", value: currentActualCgpa.toFixed(2), sub: `Precise: ${currentCgpa.toFixed(4)}`, color: "text-green-600 dark:text-green-400" },
     { label: "New CGPA", value: newActualCgpa.toFixed(2), sub: `Precise: ${newCgpa.toFixed(4)}`, color: "text-purple-600 dark:text-purple-400" },
   ];
