@@ -428,55 +428,52 @@
 }
 
 /* ---------------------------------------------------------------------------
- * Selected course -> a light latte, #F3CDB4. Espresso (#4B3935) and mocha
- * (#6B5652) were both too heavy for a list, and the earlier tan was too pale to
- * read as coffee, so this sits close to the surface with real warmth in it:
- * 1.39:1 against an unselected card, framed by #A0705A (2.9:1) so the selection
- * is unmistakable without a dark slab.
+ * Selected course -> #A7918C: the brand coffee #4B3935's own hue, lifted. It
+ * stands 2.8:1 off an unselected card, and the frame is the espresso itself
+ * (#4B3935, 3.65:1) — fill is the light shade, frame is the brand colour.
+ * Hover lightens to #B5A19C (same hue again), which only gains contrast.
  *
- * Being light, it takes dark ink again — the espresso scope's cream ramp was
- * dropped from these hooks. The theme's own gray/blue steps would fall to
- * 2.2:1-3.2:1 here, so the faint steps are pushed darker (4.9:1+) and the
- * accent text to #8E3719 (5.2:1). Hover *lightens* (#F7DCC7), which only
- * improves every ratio; deepening would have cost AA.
+ * A mid tone this neutral carries neither the cream ramp (2.6:1) nor the
+ * theme's light greys, so every text step collapses to a dark brown at 4.8:1 or
+ * better; inside a selected row, hierarchy comes from weight rather than ink.
  * ------------------------------------------------------------------------- */
 .vanilla .course-selected,
 .vanilla .course-selected-row {
-  background-color: #f3cdb4; /* oklch(0.874 0.055 55.2) */
+  background-color: #a7918c;
   color: #2a211e;
 
-  --color-gray-50: #fbf6ec;   /* pill fills, above the base */
+  --color-gray-50: #fbf6ec;   /* pill fills, 2.8:1 above the base */
   --color-gray-100: #fbf6ec;
-  --color-gray-200: #937a68;  /* dividers 2.7:1 */
-  --color-gray-300: #8a7268;  /* 3.0:1 */
-  --color-gray-400: #625449;  /* 4.9:1 */
-  --color-gray-500: #5b4f47;  /* 5.4:1 */
-  --color-gray-600: #4a3f38;  /* 6.9:1 */
-  --color-gray-700: #38302a;  /* 8.7:1 */
-  --color-gray-800: #2a211e;  /* 10.6:1 */
+  --color-gray-200: #4a3f38;  /* dividers 3.4:1 */
+  --color-gray-300: #332924;  /* 4.8:1 */
+  --color-gray-400: #2a211e;  /* 5.3:1 */
+  --color-gray-500: #2a211e;
+  --color-gray-600: #2a211e;
+  --color-gray-700: #2a211e;
+  --color-gray-800: #2a211e;
   --color-gray-900: #2a211e;
-  --color-gray-950: #1b1412;  /* 12.3:1 */
+  --color-gray-950: #1b1412;  /* 6.1:1 */
 
   --color-blue-50: #fbf6ec;
   --color-blue-100: #fbf6ec;
-  --color-blue-200: #dcc0a8;
-  --color-blue-300: #c9a385;
-  --color-blue-400: #8e3719;  /* 5.2:1 */
-  --color-blue-500: #8e3719;
-  --color-blue-600: #8e3719;
-  --color-blue-700: #7c3120;  /* 6.1:1 */
-  --color-blue-800: #6e2b12;
-  --color-blue-900: #5e271b;
+  --color-blue-200: #5e271b;  /* accent borders 4.0:1 */
+  --color-blue-300: #5e271b;
+  --color-blue-400: #4a1d12;  /* accent text 4.8:1 */
+  --color-blue-500: #4a1d12;
+  --color-blue-600: #4a1d12;
+  --color-blue-700: #3d1810;  /* 5.3:1 */
+  --color-blue-800: #3d1810;
+  --color-blue-900: #3d1810;
   --color-blue-950: #3d1810;
 }
 
 .vanilla .course-selected {
-  border-color: #a0705a; /* oklch(0.589 0.069 45.5) — coffee frame, 2.9:1 */
+  border-color: #4b3935; /* the brand espresso, 3.65:1 on the fill */
 }
 
 .vanilla .course-selected:hover,
 .vanilla .course-selected-row:hover {
-  background-color: #f7dcc7; /* lightens: body 12:1, faintest ink 5.6:1 */
+  background-color: #b5a19c; /* same hue, lighter: text gains contrast */
 }
 
 /* ---------------------------------------------------------------------------
