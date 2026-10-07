@@ -10,6 +10,8 @@ import AcademicTrajectoryChart from "@/components/ui/gradesheet/AcademicTrajecto
 import CourseTable from "@/components/ui/gradesheet/CourseTable";
 import MetricsCard from "@/components/ui/gradesheet/MetricsCard";
 import GraduationPlanner from "@/components/ui/gradesheet/GraduationPlanner";
+import MobileCourseList from "@/components/gradesheet/mobile/MobileCourseList";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const GRADE_POINT_SCALE = [0.0, 0.7, 1.0, 1.3, 1.7, 2.0, 2.3, 2.7, 3.0, 3.3, 3.7, 4.0];
 
@@ -35,6 +37,7 @@ const snapGradePointToScale = (value) => {
 
 export default function GradesheetAnalyzer({ allowSave = false, savedData = null }) {
   const { data: session } = useSession();
+  const isMobile = useIsMobile();
   const [courses, setCourses] = useState([]);
   const [originalCourses, setOriginalCourses] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -304,7 +307,7 @@ export default function GradesheetAnalyzer({ allowSave = false, savedData = null
   const statisticsCards = [
     { label: "Total Courses", value: courses.length, color: "text-blue-600 dark:text-blue-400" },
     { label: "Earned Credits", value: earnedCredits.toFixed(1), sub: `Attempted: ${totalCredits.toFixed(1)}`, color: "text-blue-600 dark:text-blue-400" },
-    { label: "Current CGPA", value: currentActualCgpa.toFixed(2), sub: `Precise: ${currentCgpa.toFixed(4)}`, color: "text-green-600 dark:text-green-400" },
+    { label: "Current CGPA", value: currentActualCgpa.toFixed(2), sub: `Precise: ${currentCgpa.toFixed(4)}`, color: "text-emerald-600 dark:text-emerald-400" },
     { label: "New CGPA", value: newActualCgpa.toFixed(2), sub: `Precise: ${newCgpa.toFixed(4)}`, color: "text-purple-600 dark:text-purple-400" },
   ];
 
@@ -371,7 +374,37 @@ export default function GradesheetAnalyzer({ allowSave = false, savedData = null
           </div>
         )}
 
-        {courses.length > 0 && !loading && (
+        {courses.length > 0 && !loading && isMobile === true && (
+          <div className="flex flex-col gap-6">
+            <MetricsCard statisticsCards={statisticsCards} />
+
+            <MobileCourseList
+              courses={courses}
+              semesterGroups={semesterGroups}
+              onUpdateGradePoints={updateGradePoints}
+              onDeleteCourse={deleteCourse}
+              onResetGrades={resetGrades}
+              onAddCourse={addNewCourse}
+              gradePointScale={GRADE_POINT_SCALE}
+            />
+
+            <GraduationPlanner
+              targetDegreeCredits={targetDegreeCredits}
+              setTargetDegreeCredits={setTargetDegreeCredits}
+              targetCgpaValue={targetCgpaValue}
+              setTargetCgpaValue={setTargetCgpaValue}
+              degreeCreditsNumber={degreeCreditsNumber}
+              targetCgpaNumber={targetCgpaNumber}
+              remainingCredits={remainingCredits}
+              maxReachableCgpa={maxReachableCgpa}
+              requiredAverageGpa={requiredAverageGpa}
+              isTargetImpossible={isTargetImpossible}
+              gpaTolerance={gpaTolerance}
+            />
+          </div>
+        )}
+
+        {courses.length > 0 && !loading && isMobile === false && (
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6 lg:gap-8 items-start">
             <CourseTable
               courses={courses}
