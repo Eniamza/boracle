@@ -1,4 +1,8 @@
+"use client";
+
+import { useTheme } from "next-themes";
 import { ResponsiveContainer, ComposedChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, Bar, Line } from 'recharts';
+import { chartPalette } from "@/lib/chart-palette";
 
 function ChartTooltip({ active, payload, label }) {
   if (active && payload && payload.length) {
@@ -23,6 +27,9 @@ function ChartTooltip({ active, payload, label }) {
 }
 
 export default function AcademicTrajectoryChart({ chartData, targetCgpaNumber }) {
+  const { theme, resolvedTheme } = useTheme();
+  const colors = chartPalette(theme, resolvedTheme);
+
   return (
     <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-sm overflow-hidden mb-8 p-5">
       <div className="mb-4">
@@ -33,18 +40,18 @@ export default function AcademicTrajectoryChart({ chartData, targetCgpaNumber })
       <div className="h-72 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#374151" opacity={0.15} />
-            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#6b7280' }} dy={10} />
-            <YAxis domain={[0, 4.0]} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#6b7280' }} />
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={colors.grid} opacity={0.15} />
+            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: colors.tick }} dy={10} />
+            <YAxis domain={[0, 4.0]} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: colors.tick }} />
             <Tooltip 
               content={<ChartTooltip />}
-              cursor={{ fill: '#3b82f6', opacity: 0.05 }}
+              cursor={{ fill: colors.cursor, opacity: 0.05 }}
             />
             <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} iconType="circle" />
-            <Bar dataKey="semesterGpa" name="Semester GPA" fill="#93c5fd" radius={[4, 4, 0, 0]} maxBarSize={40} />
-            <Line type="monotone" dataKey="cumulativeCgpa" name="Average CGPA" stroke="#2563eb" strokeWidth={3} dot={{ r: 4, strokeWidth: 2, fill: '#fff' }} activeDot={{ r: 6 }} />
+            <Bar dataKey="semesterGpa" name="Semester GPA" fill={colors.bar} radius={[4, 4, 0, 0]} maxBarSize={40} />
+            <Line type="monotone" dataKey="cumulativeCgpa" name="Average CGPA" stroke={colors.line} strokeWidth={3} dot={{ r: 4, strokeWidth: 2, fill: colors.dot }} activeDot={{ r: 6 }} />
             {targetCgpaNumber > 0 && (
-              <Line type="stepAfter" dataKey="projectedCgpa" name="Projected CGPA" stroke="#10b981" strokeWidth={2} strokeDasharray="5 5" dot={false} />
+              <Line type="stepAfter" dataKey="projectedCgpa" name="Projected CGPA" stroke={colors.projected} strokeWidth={2} strokeDasharray="5 5" dot={false} />
             )}
           </ComposedChart>
         </ResponsiveContainer>
