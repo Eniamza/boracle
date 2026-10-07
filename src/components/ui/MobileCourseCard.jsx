@@ -30,7 +30,7 @@ const MobileCourseCard = ({
 
     return (
         <div
-            className={`rounded-xl border p-3.5 transition-all duration-500 active:scale-[0.98] ${seatAnimation === 'decrease'
+            className={`routine-cells rounded-xl border p-3.5 transition-all duration-500 active:scale-[0.98] ${seatAnimation === 'decrease'
                     ? 'bg-green-100 dark:bg-green-900/40 border-green-400 dark:border-green-600'
                     : seatAnimation === 'increase'
                         ? 'bg-red-100 dark:bg-red-900/40 border-red-400 dark:border-red-600'

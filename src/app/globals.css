@@ -361,6 +361,46 @@
   background-color: var(--vanilla-idea-card);
 }
 
+/* ---------------------------------------------------------------------------
+ * Routine grids: Class / Lab / Conflict have to be told apart at a glance, and
+ * the theme's accent ramp alone cannot do it — Lab rides the purple scale, which
+ * the bridge maps onto the same terracotta ramp as Class (identical cells), and
+ * Conflict's default red-50 tint sits ~1.05 from the terracotta tint (also
+ * nearly identical). Inside a routine grid the two scales are therefore re-keyed
+ * to their own hues: purple -> sage, red -> a more saturated crimson
+ * (oklch chroma 0.237 vs Tailwind red-500's 0.208). Separation is by hue:
+ * Class ~43 deg, Lab ~118 deg, Conflict ~359 deg, with 11-13:1 text on each
+ * fill and 3.6-4.0:1 borders. Scoped to .routine-cells so the contributors
+ * badges and every other purple/red usage keep the accent-derived palette.
+ * Hex here on purpose: these are picked colours, not derived tokens.
+ * ------------------------------------------------------------------------- */
+.vanilla .routine-cells {
+  --color-purple-50: #F2F5E9;
+  --color-purple-100: #E6EBD4;
+  --color-purple-200: #CFDAB0;
+  --color-purple-300: #B0C185;
+  --color-purple-400: #8FA661;
+  --color-purple-500: #71884B;
+  --color-purple-600: #576B3A;
+  --color-purple-700: #43532D;
+  --color-purple-800: #334023;
+  --color-purple-900: #26301B;
+  --color-purple-950: #161D10;
+
+  --color-red-50: #FFEDF2;
+  --color-red-100: #FDD9E0;
+  --color-red-200: #FBB4C2;
+  --color-red-300: #F98A9E;
+  --color-red-400: #F75572;
+  --color-red-500: #F5213B;
+  --color-red-600: #DE0F29;
+  --color-red-700: #B3101F;
+  --color-red-800: #8A0E18;
+  --color-red-900: #66111A;
+  --color-red-950: #45080E;
+
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

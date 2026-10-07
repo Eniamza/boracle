@@ -136,7 +136,7 @@ const RoutineTableGrid = ({
   // Mobile: render day-view card layout
   if (isMobile && !forceDesktop) {
     return (
-      <div className={`w-full ${className}`}>
+      <div className={`routine-cells w-full ${className}`}>
         <MobileRoutineView
           selectedCourses={selectedCourses}
           onRemoveCourse={onRemoveCourse}
@@ -152,8 +152,10 @@ const RoutineTableGrid = ({
     );
   }
 
+  // `routine-cells` lets a theme re-key the Lab (purple) and Conflict (red)
+  // scales independently of the accent — see the .routine-cells block in globals.css.
   return (
-    <div className={`w-full ${className}`}>
+    <div className={`routine-cells w-full ${className}`}>
       <div ref={routineRef} className={`bg-gray-50 dark:bg-gray-900 ${compact ? 'p-2' : 'p-4'}`}>
         <table className={`w-full border-collapse ${compact ? '' : 'border border-gray-300 dark:border-gray-700'}`}>
           <thead>
