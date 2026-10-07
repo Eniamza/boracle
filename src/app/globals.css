@@ -430,20 +430,25 @@
 }
 
 /* ---------------------------------------------------------------------------
- * Selected course -> the brand coffee #4B3935 itself (same token as the header
- * bar, see the rule above), with cream ink — a pale coffee wash measured 1.18:1
- * against the surface and read as beige rather than coffee, so the selection is
- * the espresso instead, at 10.2:1 against an unselected card and 9.6:1 for its
- * own text. Hover deepens one step; the card gets a coffee frame because its
- * markup asks for border-green-400.
+ * Selected course -> coffee, but not the header's espresso: #4B3935 read as too
+ * deep in a list, and the pale tan read as beige. #5C4844 sits a third of the
+ * way up from espresso — body text 7.55:1 (AAA), muted sand 4.8-5.4:1 (AA), and
+ * 8.0:1 against an unselected card, so selection is unmistakable without going
+ * black. Only the paint changes: the flipped ink comes from the shared rule
+ * above, which reads this --vanilla-bar override.
  * ------------------------------------------------------------------------- */
+.vanilla .course-selected,
+.vanilla .course-selected-row {
+  --vanilla-bar: #5c4844; /* oklch(0.421 0.028 31.3) */
+}
+
 .vanilla .course-selected {
-  border-color: #6b5652; /* oklch(0.473 0.029 30.7) — 1.6:1 on the coffee, reads as a frame */
+  border-color: #7a6459; /* 1.54:1 off the base — a coffee frame rather than an outline */
 }
 
 .vanilla .course-selected:hover,
 .vanilla .course-selected-row:hover {
-  background-color: #3d2e2b; /* oklch(0.317 0.023 31.4) — one step deeper, cream ink 11:1 */
+  background-color: #4b3935; /* the brand espresso, one step deeper (1.27:1) */
 }
 
 /* ---------------------------------------------------------------------------
