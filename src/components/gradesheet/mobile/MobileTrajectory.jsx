@@ -50,7 +50,7 @@ export default function MobileTrajectory({ chartData, targetCgpaNumber }) {
 
         <polyline points={cgpaLine} fill="none" stroke="#2563eb" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
         {chartData.map((d, i) => (
-          <circle key={i} cx={pad + i * step} cy={y(d.cumulativeCgpa)} r="3" fill="#fff" stroke="#2563eb" strokeWidth="2" />
+          <circle key={i} cx={pad + i * step} cy={y(d.cumulativeCgpa)} r="3" className="fill-white dark:fill-gray-900" stroke="#2563eb" strokeWidth="2" />
         ))}
 
         {chartData.map((d, i) => (

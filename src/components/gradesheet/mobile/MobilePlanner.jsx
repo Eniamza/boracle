@@ -1,5 +1,6 @@
 "use client";
 import { GraduationCap } from "lucide-react";
+import { clampTargetCgpa, clampTargetDegreeCredits } from "@/components/gradesheet/gradesheet-core";
 
 export default function MobilePlanner({
   targetDegreeCredits, setTargetDegreeCredits,
@@ -9,20 +10,6 @@ export default function MobilePlanner({
   requiredAverageGpa, isTargetImpossible,
   gpaTolerance,
 }) {
-  const clampCgpa = (value) => {
-    if (value === "") return "";
-    const n = Number(value);
-    if (Number.isNaN(n)) return value;
-    return String(Math.min(4, Math.max(0, n)));
-  };
-
-  const clampCredits = (value) => {
-    if (value === "") return "";
-    const n = Number(value);
-    if (Number.isNaN(n)) return value;
-    return String(Math.max(0, n));
-  };
-
   const inputCls =
     "mt-1 w-full px-3.5 py-2.5 text-base rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 font-mono focus:outline-none focus:ring-2 focus:ring-blue-500/40";
 
@@ -44,7 +31,7 @@ export default function MobilePlanner({
               inputMode="numeric"
               placeholder="130"
               value={targetDegreeCredits}
-              onChange={(e) => setTargetDegreeCredits(clampCredits(e.target.value))}
+              onChange={(e) => setTargetDegreeCredits(clampTargetDegreeCredits(e.target.value))}
               className={inputCls}
               min="0"
               step="1"
@@ -59,7 +46,7 @@ export default function MobilePlanner({
               inputMode="decimal"
               placeholder="3.50"
               value={targetCgpaValue}
-              onChange={(e) => setTargetCgpaValue(clampCgpa(e.target.value))}
+              onChange={(e) => setTargetCgpaValue(clampTargetCgpa(e.target.value))}
               className={inputCls}
               min="0"
               max="4"

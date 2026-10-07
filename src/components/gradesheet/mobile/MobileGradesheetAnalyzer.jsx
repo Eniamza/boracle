@@ -13,7 +13,7 @@ import {
 } from "@/components/gradesheet/gradesheet-core";
 import { loadLocalGradesheet, saveLocalGradesheet, clearLocalGradesheet } from "@/lib/gradesheetLocal";
 import MobileUploadCard from "./MobileUploadCard";
-import MobileMetrics from "./MobileMetrics";
+import MetricsCard from "@/components/ui/gradesheet/MetricsCard";
 import MobileTrajectory from "./MobileTrajectory";
 import MobileCourseList from "./MobileCourseList";
 import MobilePlanner from "./MobilePlanner";
@@ -67,7 +67,10 @@ export default function MobileGradesheetAnalyzer() {
   }, []);
 
   const handleFileUpload = useCallback(async (file) => {
-    if (!file || !/pdf$/i.test(file.type || "") && !/\.pdf$/i.test(file.name || "")) {
+    // Desktop checks file.type only; mobile browsers often omit the MIME type,
+    // so accept either a PDF type or a .pdf filename.
+    const isPdf = !!file && (file.type === "application/pdf" || /\.pdf$/i.test(file.name || ""));
+    if (!isPdf) {
       showToastMessage("Please select a valid PDF file.", "error");
       return;
     }
@@ -124,12 +127,10 @@ export default function MobileGradesheetAnalyzer() {
   }, []);
 
   const deleteCourse = useCallback((index) => {
-    setCourses((prev) => {
-      const removed = prev[index];
-      showToastMessage(`Deleted ${removed?.courseCode ?? "course"}`);
-      return prev.filter((_, i) => i !== index);
-    });
-  }, [showToastMessage]);
+    const courseCode = courses[index]?.courseCode;
+    setCourses((prev) => prev.filter((_, i) => i !== index));
+    showToastMessage(`Deleted ${courseCode ?? "course"}`);
+  }, [courses, showToastMessage]);
 
   const resetGrades = useCallback(() => {
     if (!originalCourses.length) return;
@@ -245,7 +246,7 @@ export default function MobileGradesheetAnalyzer() {
 
       {courses.length > 0 && !loading && (
         <>
-          <MobileMetrics statisticsCards={statisticsCards} />
+          <MetricsCard statisticsCards={statisticsCards} />
           <MobileTrajectory chartData={chartData} targetCgpaNumber={plan.targetCgpaNumber} />
           <MobileCourseList
             courses={courses}

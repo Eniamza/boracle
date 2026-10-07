@@ -1,10 +1,13 @@
 // Local persistence for the mobile gradesheet view — no login required.
-// Stored in IndexedDB under its own store so it never collides with app caches.
+// Uses its OWN database name: idb.js opens boracle-db at version 1 with a
+// 'cache-store' object store, and IndexedDB only runs an upgrade callback when
+// the version increases — sharing that DB would leave this store uncreated and
+// every read/write silently failing in the catch block.
 import { openDB } from 'idb';
 
-const DB_NAME = process.env.NEXT_PUBLIC_IDB_DB_NAME || 'boracle-db';
-const DB_VERSION = Number(process.env.NEXT_PUBLIC_IDB_DB_VERSION) || 1;
-const STORE_NAME = 'gradesheet-local';
+const DB_NAME = 'boracle-gradesheet-local';
+const DB_VERSION = 1;
+const STORE_NAME = 'gradesheet';
 const KEY = 'current';
 
 /** IndexedDB is browser-only — server renders must no-op. */

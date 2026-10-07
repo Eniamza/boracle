@@ -1,5 +1,6 @@
 // Shared, presentation-free logic for the gradesheet analyzer.
 // Used by both the desktop GradesheetAnalyzer and the mobile view.
+import { formatSemesterName } from "@/components/ui/gradesheet/gradesheet-utils";
 
 export const GRADE_POINT_SCALE = [0.0, 0.7, 1.0, 1.3, 1.7, 2.0, 2.3, 2.7, 3.0, 3.3, 3.7, 4.0];
 
@@ -46,6 +47,22 @@ export const getNextGradePoint = (gradePointScale, currentValue, direction) => {
 };
 
 const roundToTwoDecimals = (value) => Math.round((value + Number.EPSILON) * 100) / 100;
+
+// Shared input clamps for the graduation planner (desktop GraduationPlanner and
+// mobile MobilePlanner). Empty string passes through; non-numeric passes through.
+export const clampTargetCgpa = (value) => {
+  if (value === "") return "";
+  const numericValue = Number(value);
+  if (Number.isNaN(numericValue)) return value;
+  return String(Math.min(4, Math.max(0, numericValue)));
+};
+
+export const clampTargetDegreeCredits = (value) => {
+  if (value === "") return "";
+  const numericValue = Number(value);
+  if (Number.isNaN(numericValue)) return value;
+  return String(Math.max(0, numericValue));
+};
 
 // BRACU truncates CGPA to 2 decimals (banker-ish rounding used by the web app).
 export const truncateCgpa = (value) =>
@@ -159,7 +176,8 @@ export function computeChartData(semesterGroups, targetCgpaNumber) {
     });
     const semGpa = semCredits > 0 ? semQualityPoints / semCredits : 0;
     const cumCgpa = cumCredits > 0 ? cumQualityPoints / cumCredits : 0;
-    const formattedName = group.name;
+    // Desktop parity: the recharts axis label is built from the formatted name.
+    const formattedName = formatSemesterName(group.name);
     const shortName = formattedName.replace("Semester", "Sem").replace(" | ", "\n");
     chartData.push({
       name: shortName,
