@@ -3,6 +3,7 @@
 @plugin "tailwindcss-animate";
 
 @custom-variant dark (&:is(.dark *));
+@custom-variant vanilla (&:is(.vanilla *));
 
 @theme inline {
   --color-background: var(--background);
@@ -116,6 +117,250 @@
   --sidebar-ring: oklch(0.439 0 0);
 }
 
+/* ---------------------------------------------------------------------------
+ * Vanilla Proyas — the third theme. Brand pair: page #F0E7D5, ink #2A211E.
+ * Surfaces are #FCF8EF (no pure white anywhere), the accent is terracotta
+ * #C2512F with amber #E8A046 gradient tails, and the site header is espresso
+ * #4B3935 (see the hook-class block below).
+ *
+ * Surface tones are lighter than the page, so cards lift off the parchment
+ * (1.16:1) and `bg-gray-100` fills, borders and muted text keep their original
+ * steps. Labels that sit on accent fills read from --vk-ink-on-accent (see the
+ * `text-white` rule below), which keeps the -600 accent at the brand #C2512F.
+ * ------------------------------------------------------------------------- */
+.vanilla {
+  /* next-themes only speaks light/dark and pins `color-scheme: dark` (its
+     defaultTheme) onto any theme it does not know. Author !important beats that
+     inline style, and :root/.dark are left untouched. */
+  color-scheme: light !important;
+
+  --background: oklch(0.930 0.026 84.6); /* #F0E7D5 — and gray-50/100 below, so the page never washes out */
+  --foreground: oklch(0.257 0.015 39.3); /* #2A211E — 12.8:1 on the page */
+  --card: oklch(0.980 0.013 86.8); /* #FCF8EF — replaces every pure-white surface */
+  --card-foreground: oklch(0.257 0.015 39.3);
+  --popover: oklch(0.980 0.013 86.8);
+  --popover-foreground: oklch(0.257 0.015 39.3);
+
+  --primary: #C2512F; /* #C2512F */
+  --primary-foreground: oklch(1.000 0.000 89.9);
+  --secondary: oklch(0.930 0.026 84.6);
+  --secondary-foreground: oklch(0.257 0.015 39.3);
+  --muted: oklch(0.930 0.026 84.6);
+  --muted-foreground: oklch(0.503 0.023 54.8); /* #6F6158 — 4.9:1 on the page, 5.6:1 on cards */
+  --accent: oklch(0.946 0.022 42.6); /* #FBE9E2 — terracotta tint for tags and selected fills */
+  --accent-foreground: oklch(0.257 0.015 39.3);
+
+  --destructive: #B4231C;
+  --destructive-foreground: oklch(1.000 0.000 89.9);
+  --border: oklch(0.885 0.032 84.6); /* #E3D8C2 */
+  --input: oklch(0.840 0.038 84.6);
+  --ring: #C2512F;
+
+  --chart-1: #C2512F;
+  --chart-2: #E8A046;
+  --chart-3: oklch(0.257 0.015 39.3);
+  --chart-4: oklch(0.503 0.023 54.8);
+  --chart-5: #6F8B5A;
+
+  --sidebar: oklch(0.891 0.032 84.6); /* its own rail: 1.11 off the page, 1.21 off cards */
+  --sidebar-foreground: oklch(0.257 0.015 39.3);
+  --sidebar-primary: #C2512F;
+  --sidebar-primary-foreground: oklch(0.980 0.013 86.8);
+  --sidebar-accent: oklch(0.946 0.022 42.6);
+  --sidebar-accent-foreground: oklch(0.257 0.015 39.3);
+  --sidebar-border: oklch(0.885 0.032 84.6);
+  --sidebar-ring: #C2512F;
+
+  /* what every `bg-white` / Card / Popover / Dialog / Sheet / Table now paints */
+  --vk-white: oklch(0.980 0.013 86.8); /* #FCF8EF — was #FFFFFF */
+
+  /* ink for text sitting on accent fills — `text-white` reads this, so a button
+     can flip its own label colour without touching the surface token */
+  --vk-ink-on-accent: oklch(1.000 0.000 89.9);
+
+  /* structural neutrals — gray / neutral / zinc / slate */
+  --vk-50: oklch(0.930 0.026 84.6); /* #F0E7D5 — page tone: washes and gradients hold #F0E7D5 */
+  --vk-100: oklch(0.930 0.026 84.6); /* #F0E7D5 — page tone */
+  --vk-200: oklch(0.885 0.032 84.6); /* #E3D8C2 — card border */
+  --vk-300: oklch(0.840 0.038 84.6); /* #D6C9AF */
+  --vk-400: oklch(0.693 0.037 78.5); /* #A99A83 */
+  --vk-500: oklch(0.503 0.023 54.8); /* #6F6158 — muted text */
+  --vk-600: oklch(0.437 0.022 59.0); /* #5B4F46 */
+  --vk-700: oklch(0.359 0.021 52.0); /* #463A33 */
+  --vk-800: oklch(0.291 0.017 48.1); /* #332924 */
+  --vk-900: oklch(0.257 0.015 39.3); /* #2A211E — body text */
+  --vk-950: oklch(0.199 0.012 36.5); /* #1B1412 */
+
+  /* accent — blue / purple */
+  --vk-a50: oklch(0.946 0.022 42.6); /* #FBE9E2 */
+  --vk-a100: oklch(0.900 0.041 42.7); /* #F7D6C9 */
+  --vk-a200: #EFC0AC; /* #EFC0AC */
+  --vk-a300: #E29B7F; /* #E29B7F */
+  --vk-a400: #D4744F; /* #D4744F */
+  --vk-a500: #C85F38; /* #C85F38 */
+  --vk-a600: #C2512F; /* #C2512F — brand terracotta: 4.6:1 with surface ink, 4.5:1 as text on cards */
+  --vk-a700: #9E3F24; /* #9E3F24 */
+  --vk-a800: #7C3120; /* #7C3120 */
+  --vk-a900: #5E271B; /* #5E271B */
+  --vk-a950: #3D1810; /* #3D1810 */
+
+  /* gradient tails — indigo / pink, only ever used as `to-*` */
+  --vk-h50: oklch(0.978 0.019 83.1); /* #FEF7EA */
+  --vk-h100: oklch(0.960 0.032 81.0); /* #FDF0DA */
+  --vk-h200: oklch(0.917 0.061 80.6); /* #F9E0B6 */
+  --vk-h300: oklch(0.8576 0.0971 78.6); /* #F3C986 */
+  --vk-h400: #EEB463; /* #EEB463 */
+  --vk-h500: #EAA851; /* #EAA851 */
+  --vk-h600: #E8A046; /* #E8A046 — amber gradient tail */
+  --vk-h700: #C97F2B; /* #C97F2B */
+  --vk-h800: #9E621F; /* #9E621F */
+  --vk-h900: #6F4616; /* #6F4616 */
+  --vk-h950: oklch(0.310 0.059 63.1); /* #45290C */
+}
+
+/* ---------------------------------------------------------------------------
+ * Palette bridge — Vanilla Proyas only.
+ *
+ * Most screens are styled with literal Tailwind utilities (bg-white,
+ * text-gray-900, bg-blue-600, …) rather than the tokens above, and only the
+ * light-mode half of those pairs ever fires for a theme that isn't `.dark`.
+ * Tailwind v4 compiles the utilities to var(--color-*), so re-declaring the
+ * scales here re-tints the whole app in one place instead of hand-editing 86
+ * files. Status colours (red/green/emerald/amber/orange/…) stay as they are.
+ *
+ * Everything sits under `.vanilla`: :root (Light) and .dark (Dark) keep their
+ * own values.
+ * ------------------------------------------------------------------------- */
+.vanilla {
+  --color-white: var(--vk-white);
+
+  /* gray, neutral, zinc and slate are all structural neutrals: one ramp */
+  --color-gray-50: var(--vk-50); --color-neutral-50: var(--vk-50);
+  --color-zinc-50: var(--vk-50); --color-slate-50: var(--vk-50);
+  --color-gray-100: var(--vk-100); --color-neutral-100: var(--vk-100);
+  --color-zinc-100: var(--vk-100); --color-slate-100: var(--vk-100);
+  --color-gray-200: var(--vk-200); --color-neutral-200: var(--vk-200);
+  --color-zinc-200: var(--vk-200); --color-slate-200: var(--vk-200);
+  --color-gray-300: var(--vk-300); --color-neutral-300: var(--vk-300);
+  --color-zinc-300: var(--vk-300); --color-slate-300: var(--vk-300);
+  --color-gray-400: var(--vk-400); --color-neutral-400: var(--vk-400);
+  --color-zinc-400: var(--vk-400); --color-slate-400: var(--vk-400);
+  --color-gray-500: var(--vk-500); --color-neutral-500: var(--vk-500);
+  --color-zinc-500: var(--vk-500); --color-slate-500: var(--vk-500);
+  --color-gray-600: var(--vk-600); --color-neutral-600: var(--vk-600);
+  --color-zinc-600: var(--vk-600); --color-slate-600: var(--vk-600);
+  --color-gray-700: var(--vk-700); --color-neutral-700: var(--vk-700);
+  --color-zinc-700: var(--vk-700); --color-slate-700: var(--vk-700);
+  --color-gray-800: var(--vk-800); --color-neutral-800: var(--vk-800);
+  --color-zinc-800: var(--vk-800); --color-slate-800: var(--vk-800);
+  --color-gray-900: var(--vk-900); --color-neutral-900: var(--vk-900);
+  --color-zinc-900: var(--vk-900); --color-slate-900: var(--vk-900);
+  --color-gray-950: var(--vk-950); --color-neutral-950: var(--vk-950);
+  --color-zinc-950: var(--vk-950); --color-slate-950: var(--vk-950);
+
+  /* blue and purple are the accent scales (purple carries the contributors
+     badges/headings, so it follows the accent instead of staying violet) … */
+  --color-blue-50: var(--vk-a50); --color-purple-50: var(--vk-a50);
+  --color-blue-100: var(--vk-a100); --color-purple-100: var(--vk-a100);
+  --color-blue-200: var(--vk-a200); --color-purple-200: var(--vk-a200);
+  --color-blue-300: var(--vk-a300); --color-purple-300: var(--vk-a300);
+  --color-blue-400: var(--vk-a400); --color-purple-400: var(--vk-a400);
+  --color-blue-500: var(--vk-a500); --color-purple-500: var(--vk-a500);
+  --color-blue-600: var(--vk-a600); --color-purple-600: var(--vk-a600);
+  --color-blue-700: var(--vk-a700); --color-purple-700: var(--vk-a700);
+  --color-blue-800: var(--vk-a800); --color-purple-800: var(--vk-a800);
+  --color-blue-900: var(--vk-a900); --color-purple-900: var(--vk-a900);
+  --color-blue-950: var(--vk-a950); --color-purple-950: var(--vk-a950);
+
+  /* … and indigo/pink, used only as gradient ends, take the amber tail */
+  --color-indigo-50: var(--vk-h50); --color-pink-50: var(--vk-h50);
+  --color-indigo-100: var(--vk-h100); --color-pink-100: var(--vk-h100);
+  --color-indigo-200: var(--vk-h200); --color-pink-200: var(--vk-h200);
+  --color-indigo-300: var(--vk-h300); --color-pink-300: var(--vk-h300);
+  --color-indigo-400: var(--vk-h400); --color-pink-400: var(--vk-h400);
+  --color-indigo-500: var(--vk-h500); --color-pink-500: var(--vk-h500);
+  --color-indigo-600: var(--vk-h600); --color-pink-600: var(--vk-h600);
+  --color-indigo-700: var(--vk-h700); --color-pink-700: var(--vk-h700);
+  --color-indigo-800: var(--vk-h800); --color-pink-800: var(--vk-h800);
+  --color-indigo-900: var(--vk-h900); --color-pink-900: var(--vk-h900);
+  --color-indigo-950: var(--vk-h950); --color-pink-950: var(--vk-h950);
+}
+
+/* ---------------------------------------------------------------------------
+ * Vanilla Proyas only — the two requested surface overrides, behind opt-in hook
+ * classes (`site-header`, `site-menu`, `header-cta`, `idea-card`) so no other
+ * theme or route is affected.
+ *
+ * The header bar is written light-first (text-gray-900, hover:bg-blue-50,
+ * bg-white panel), so painting it espresso means re-declaring the palette
+ * *inside* the bar: ink flips to cream/sand, hover fills lift above the bar,
+ * accent text moves up the caramel ramp for contrast on brown. Everything from
+ * gray-200 up stays light — the codebase uses those indices both as light-mode
+ * borders and as dark-mode ink, and light is the safe direction for both.
+ * Radix portals the profile menu and the mobile drawer outside this subtree,
+ * so they stay light.
+ * ------------------------------------------------------------------------- */
+.vanilla {
+  --vanilla-bar: oklch(0.363 0.027 32.7); /* #4B3935 — requested header colour */
+  --vanilla-menu: oklch(0.403 0.028 28.2); /* #574340 — lifted panel on the bar */
+  --vanilla-idea-card: oklch(0.980 0.013 86.8); /* #FCF8EF — requested Idea Owners card */
+}
+
+.vanilla .site-header {
+  background-color: var(--vanilla-bar);
+  color: oklch(0.959 0.022 89.8);
+
+  --color-gray-50: oklch(0.395 0.029 34.4); /* #55413C */
+  --color-gray-100: oklch(0.418 0.031 36.5); /* #5C4741 — hover fill */
+  --color-gray-200: oklch(0.747 0.030 58.7); /* #BCA99B — 4.8:1 */
+  --color-gray-300: oklch(0.774 0.030 64.0); /* #C4B2A2 — 5.3:1 */
+  --color-gray-400: oklch(0.816 0.027 67.4); /* #CFC0B1 — 6.1:1 */
+  --color-gray-500: oklch(0.851 0.026 75.2); /* #D8CCBC — 6.9:1 */
+  --color-gray-600: oklch(0.885 0.027 74.7); /* #E4D7C6 — nav text, 7.7:1 */
+  --color-gray-700: oklch(0.911 0.023 75.8); /* #EBE0D1 — 8.3:1 */
+  --color-gray-800: oklch(0.938 0.020 77.3); /* #F2E9DC — 9.0:1 */
+  --color-gray-900: oklch(0.959 0.022 89.8); /* #F7F1E1 — logo, 9.6:1 */
+  --color-gray-950: oklch(0.985 0.014 88.7); /* #FEFAF0 */
+
+  --color-blue-50: oklch(0.418 0.031 36.5); /* #5C4741 */
+  --color-blue-100: oklch(0.435 0.033 35.1); /* #624B45 */
+  --color-blue-200: oklch(0.473 0.029 30.7); /* #6B5652 */
+  --color-blue-300: oklch(0.660 0.090 65.8); /* #B88755 */
+  --color-blue-400: oklch(0.8248 0.0863 74.8); /* #E7BE86 — 6.3:1 */
+  --color-blue-500: oklch(0.790 0.100 71.4); /* #E3B071 */
+  --color-blue-600: #D9A15D; /* #D9A15D — link hover, 4.8:1 */
+  --color-blue-700: #C58E47; /* #C58E47 */
+  --color-blue-800: oklch(0.600 0.098 72.1); /* #A47638 */
+  --color-blue-900: oklch(0.470 0.070 59.3); /* #785131 */
+  --color-blue-950: oklch(0.379 0.050 54.8); /* #573B28 */
+}
+
+/* `text-white` is ink, not a surface: it follows the accent-ink token instead
+   of --vk-white, which is what keeps #C2512F buttons at 4.6:1 (surface tone
+   would only reach 4.4:1) and lets the header CTA below pick its own label. */
+.vanilla .text-white {
+  color: var(--vk-ink-on-accent);
+}
+
+/* the header's Google sign-in CTA: our white alternative as the button, with
+   espresso ink on it — reads as a cream pill against the espresso bar */
+.vanilla .site-header .header-cta {
+  --color-blue-600: oklch(0.980 0.013 86.8);       /* #FCF8EF — button fill */
+  --color-blue-700: oklch(0.930 0.026 84.6);       /* #F0E7D5 — hover, one notch deeper */
+  --vk-ink-on-accent: oklch(0.363 0.027 32.7);      /* #4B3935 — 10.2:1 on the button */
+}
+
+/* the inline Tools panel: lifted espresso menu, not a white card on brown */
+.vanilla .site-header .site-menu {
+  --color-white: var(--vanilla-menu);
+}
+
+/* Note: the Idea Owners cards are now the same colour as every other surface,
+   so this rule only matters if the surface token changes again. */
+.vanilla .idea-card {
+  background-color: var(--vanilla-idea-card);
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -166,4 +411,28 @@
 
 .dark .faculty-dropdown-scroll::-webkit-scrollbar-thumb:hover {
   background: #2563eb;
+}
+
+/* Vanilla Proyas scrollbar — follows the theme's own tokens */
+.vanilla .faculty-dropdown-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--ring) var(--background);
+}
+
+.vanilla .faculty-dropdown-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+
+.vanilla .faculty-dropdown-scroll::-webkit-scrollbar-track {
+  background: var(--background);
+  border-radius: 4px;
+}
+
+.vanilla .faculty-dropdown-scroll::-webkit-scrollbar-thumb {
+  background: var(--ring);
+  border-radius: 4px;
+}
+
+.vanilla .faculty-dropdown-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--foreground);
 }

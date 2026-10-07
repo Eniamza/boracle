@@ -167,7 +167,7 @@ const ContributorsPage = () => {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
                             {ideaOwners.map((owner, idx) => (
-                                <Card key={idx} className="bg-white dark:bg-gray-950/50 border-gray-200 dark:border-gray-800 hover:shadow-md transition-shadow">
+                                <Card key={idx} className="idea-card bg-white dark:bg-gray-950/50 border-gray-200 dark:border-gray-800 hover:shadow-md transition-shadow">
                                     <CardHeader className="pb-3 flex flex-row justify-between items-start gap-4 space-y-0">
                                         <div className="space-y-1">
                                             <CardTitle className="text-xl font-semibold text-gray-900 dark:text-white leading-tight">
