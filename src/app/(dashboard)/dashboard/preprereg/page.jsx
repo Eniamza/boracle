@@ -1245,7 +1245,7 @@ const PreRegistrationPage = () => {
                           : seatAnimations[course.sectionId] === 'increase'
                             ? 'bg-red-100 dark:bg-red-900/40 border-red-300 dark:border-red-700'
                             : isSelected
-                              ? 'bg-green-200 dark:bg-green-500/30 hover:bg-green-300 dark:hover:bg-green-500/40'
+                              ? 'course-selected-row bg-green-200 dark:bg-green-500/30 hover:bg-green-300 dark:hover:bg-green-500/40'
                               : 'hover:bg-gray-100 dark:hover:bg-gray-800/50'
                         }
                       `}

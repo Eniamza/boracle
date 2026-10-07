@@ -426,16 +426,58 @@
 }
 
 /* ---------------------------------------------------------------------------
- * Selected course card: the request was "same lightness, coffee hue", done
- * literally — green-50 (L 0.982) -> #FFF7F0, green-400 (L 0.800) -> #DDB597.
- * Measured honestly: unselected cards already paint the surface tone #FCF8EF
- * (L 0.980, same warm hue), so the fill alone differs by 1.00:1 and selection
- * reads from the border only. Use #FFF0E1 (green-100's lightness, 1.05:1) if it
- * has to show on its own.
+ * Selected course -> coffee, in both the mobile cards (.course-selected) and
+ * the desktop rows (.course-selected-row), replacing the green selection state.
+ * Kept at green-200's lightness rather than the fill's own: the literal
+ * same-lightness translation (#FFF7F0, green-50's L .982) measured 1.00:1
+ * against this theme's surface tone, i.e. invisible — the greens worked in
+ * Light because green-vs-white is a hue jump, and here the page is already
+ * warm. #F5E3D2 sits at 1.18:1, so selection actually shows. Direct
+ * declarations, not scale remaps, so the seat-availability badge inside a
+ * selected card keeps its own green.
  * ------------------------------------------------------------------------- */
 .vanilla .course-selected {
-  --color-green-50: #FFF7F0;
-  --color-green-400: #DDB597;
+  background-color: #F5E3D2;
+  border-color: #DBB695;
+}
+
+.vanilla .course-selected-row {
+  background-color: #F5E3D2;
+}
+
+.vanilla .course-selected-row:hover {
+  background-color: #ECCFB5;
+}
+
+/* ---------------------------------------------------------------------------
+ * Matched cell glows. Each grid cell carries a coloured drop shadow hardcoded
+ * as an rgba() in its utility string, so it does not follow the re-keyed
+ * scales — hovering a sage Lab cell threw a purple glow, and Class threw a
+ * blue one. Re-declared per family in its own hue, composed with the ring
+ * variables so the conflict cells keep their inner ring.
+ * ------------------------------------------------------------------------- */
+.vanilla .cell-glow-class {
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), 0 2px 10px -3px rgba(95, 136, 152, 0.22);
+}
+
+.vanilla .cell-glow-class:hover {
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), 0 4px 12px -2px rgba(95, 136, 152, 0.30);
+}
+
+.vanilla .cell-glow-lab {
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), 0 2px 10px -3px rgba(113, 136, 75, 0.22);
+}
+
+.vanilla .cell-glow-lab:hover {
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), 0 4px 12px -2px rgba(113, 136, 75, 0.30);
+}
+
+.vanilla .cell-glow-conflict {
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), 0 2px 10px -3px rgba(245, 33, 59, 0.25);
+}
+
+.vanilla .cell-glow-conflict:hover {
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), 0 4px 12px -2px rgba(245, 33, 59, 0.32);
 }
 
 @layer base {

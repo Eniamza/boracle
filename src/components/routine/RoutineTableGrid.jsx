@@ -211,12 +211,12 @@ const RoutineTableGrid = ({
                                       ? 'bg-red-50/70 dark:bg-red-900/25 border-l-4 border-dashed border-red-500 text-red-900 dark:text-red-100 ring-1 ring-red-400/60 opacity-90'
                                       : 'bg-emerald-50/80 dark:bg-emerald-900/30 border-l-4 border-dashed border-emerald-500 text-emerald-900 dark:text-emerald-100 ring-1 ring-emerald-400/50 opacity-90'
                                     : isPendingRemove
-                                    ? 'bg-red-100 dark:bg-red-900/60 border-l-4 border-red-600 text-red-900 dark:text-red-50 ring-1 ring-red-500 shadow-[0_2px_10px_-3px_rgba(239,68,68,0.4)]'
+                                    ? 'cell-glow-conflict bg-red-100 dark:bg-red-900/60 border-l-4 border-red-600 text-red-900 dark:text-red-50 ring-1 ring-red-500 shadow-[0_2px_10px_-3px_rgba(239,68,68,0.4)]'
                                     : conflict
-                                      ? 'bg-red-50/90 dark:bg-red-900/30 border-l-4 border-red-500 text-red-900 dark:text-red-100 shadow-[0_2px_10px_-3px_rgba(239,68,68,0.2)] hover:shadow-[0_4px_12px_-2px_rgba(239,68,68,0.3)]'
+                                      ? 'cell-glow-conflict bg-red-50/90 dark:bg-red-900/30 border-l-4 border-red-500 text-red-900 dark:text-red-100 shadow-[0_2px_10px_-3px_rgba(239,68,68,0.2)] hover:shadow-[0_4px_12px_-2px_rgba(239,68,68,0.3)]'
                                       : isLab
-                                        ? 'bg-purple-50/90 dark:bg-purple-900/30 border-l-4 border-purple-500 text-purple-900 dark:text-purple-100 shadow-[0_2px_10px_-3px_rgba(168,85,247,0.2)] hover:shadow-[0_4px_12px_-2px_rgba(168,85,247,0.3)]'
-                                        : 'routine-class bg-blue-50/90 dark:bg-blue-900/30 border-l-4 border-blue-500 text-blue-900 dark:text-blue-100 shadow-[0_2px_10px_-3px_rgba(59,130,246,0.2)] hover:shadow-[0_4px_12px_-2px_rgba(59,130,246,0.3)]'
+                                        ? 'cell-glow-lab bg-purple-50/90 dark:bg-purple-900/30 border-l-4 border-purple-500 text-purple-900 dark:text-purple-100 shadow-[0_2px_10px_-3px_rgba(168,85,247,0.2)] hover:shadow-[0_4px_12px_-2px_rgba(168,85,247,0.3)]'
+                                        : 'routine-class cell-glow-class bg-blue-50/90 dark:bg-blue-900/30 border-l-4 border-blue-500 text-blue-900 dark:text-blue-100 shadow-[0_2px_10px_-3px_rgba(59,130,246,0.2)] hover:shadow-[0_4px_12px_-2px_rgba(59,130,246,0.3)]'
                                     } group relative flex flex-col justify-center ${compact ? 'min-h-[36px]' : 'min-h-[76px]'}`}
                                   onMouseEnter={(e) => {
                                     if (canHoverRemove && !isPreview) startHoverRemove(course);
