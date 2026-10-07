@@ -147,7 +147,7 @@ export default function CourseTable({
                 <td className="px-4 py-3.5"><input type="number" value={newCourseInput.gp} onChange={(e) => setNewCourseInput((prev) => ({ ...prev, gp: e.target.value }))} onPointerDown={handleNewCourseGpaStepper} onKeyDown={handleNewCourseGpaKeyDown} className="w-20 px-2.5 py-1.5 text-sm text-center rounded-lg border border-blue-200/60 dark:border-blue-800/60 bg-blue-50/50 dark:bg-blue-900/20 text-gray-900 dark:text-gray-100 font-mono focus:outline-none focus:ring-2 focus:ring-blue-500/30" min="0" max="4" step="0.1" id="new-gp" /></td>
                 <td className="px-3 py-3.5">
                   <div className="flex gap-1.5">
-                    <button onClick={handleAddCourse} className="p-1.5 text-xs font-medium rounded-md bg-green-600 hover:bg-green-700 text-white transition-colors shadow-sm" id="save-new"><CheckCircle2 className="w-4 h-4" /></button>
+                    <button onClick={handleAddCourse} className="p-1.5 text-xs font-medium rounded-md bg-emerald-600 hover:bg-emerald-700 text-white transition-colors shadow-sm" id="save-new"><CheckCircle2 className="w-4 h-4" /></button>
                     <button onClick={() => setAddingCourse(false)} className="p-1.5 text-xs font-medium rounded-md bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors" id="cancel-new"><X className="w-4 h-4" /></button>
                   </div>
                 </td>

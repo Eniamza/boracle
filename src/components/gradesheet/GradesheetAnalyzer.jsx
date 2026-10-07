@@ -3,38 +3,27 @@ import { useState, useCallback, useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
-import { getPdfjs, extractPageText, parseGradesheet, formatSemesterName } from "@/components/ui/gradesheet/gradesheet-utils";
+import { getPdfjs, extractPageText, parseGradesheet } from "@/components/ui/gradesheet/gradesheet-utils";
 import SignInPrompt from "@/components/shared/SignInPrompt";
 import UploadBar from "@/components/ui/gradesheet/UploadBar";
 import AcademicTrajectoryChart from "@/components/ui/gradesheet/AcademicTrajectoryChart";
 import CourseTable from "@/components/ui/gradesheet/CourseTable";
 import MetricsCard from "@/components/ui/gradesheet/MetricsCard";
 import GraduationPlanner from "@/components/ui/gradesheet/GraduationPlanner";
-
-const GRADE_POINT_SCALE = [0.0, 0.7, 1.0, 1.3, 1.7, 2.0, 2.3, 2.7, 3.0, 3.3, 3.7, 4.0];
-
-const snapGradePointToScale = (value) => {
-  if (value === "") return "";
-
-  const numericValue = Number(value);
-  if (Number.isNaN(numericValue)) return value;
-
-  let nearestGradePoint = GRADE_POINT_SCALE[0];
-  let smallestDistance = Math.abs(numericValue - nearestGradePoint);
-
-  for (const gradePoint of GRADE_POINT_SCALE) {
-    const distance = Math.abs(numericValue - gradePoint);
-    if (distance < smallestDistance) {
-      nearestGradePoint = gradePoint;
-      smallestDistance = distance;
-    }
-  }
-
-  return nearestGradePoint.toFixed(1);
-};
+import MobileCourseList from "@/components/gradesheet/mobile/MobileCourseList";
+import { useIsMobile } from "@/hooks/use-mobile";
+import {
+  GRADE_POINT_SCALE,
+  snapGradePointToScale,
+  groupBySemester,
+  computeMetrics,
+  computeGraduationPlan,
+  computeChartData,
+} from "@/components/gradesheet/gradesheet-core";
 
 export default function GradesheetAnalyzer({ allowSave = false, savedData = null }) {
   const { data: session } = useSession();
+  const isMobile = useIsMobile();
   const [courses, setCourses] = useState([]);
   const [originalCourses, setOriginalCourses] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -247,114 +236,22 @@ export default function GradesheetAnalyzer({ allowSave = false, savedData = null
     }
   }, [showToastMessage, session]);
 
-  // Calculations
-  const totalCredits = courses.reduce((sum, course) => sum + course.credits, 0);
-  const earnedCredits = courses.reduce((sum, course) => course.gradePoints > 0 ? sum + course.credits : sum, 0);
-  const totalQualityPoints = courses.reduce((sum, course) => sum + course.qualityPoints, 0);
-  const newCgpa = totalCredits > 0 ? totalQualityPoints / totalCredits : 0;
+  // Calculations (shared with the mobile view via gradesheet-core)
+  const metrics = computeMetrics(courses, originalCourses);
+  const { totalCredits, earnedCredits, newCgpa, currentCgpa, currentActualCgpa, newActualCgpa } = metrics;
 
-  const roundToTwoDecimals = (value) => Math.round((value + Number.EPSILON) * 100) / 100;
-
-  const originalTotalCredits = originalCourses.reduce((sum, course) => sum + course.credits, 0);
-  const originalTotalQualityPoints = originalCourses.reduce((sum, course) => sum + course.qualityPoints, 0);
-  const currentCgpa = originalTotalCredits > 0 ? originalTotalQualityPoints / originalTotalCredits : 0;
-
-  const currentActualCgpa = currentCgpa >= 0 ? (Math.floor((currentCgpa * 1000) % 10) >= 5 ? Math.ceil(currentCgpa * 100) / 100 : Math.floor(currentCgpa * 100) / 100) : 0;
-  const newActualCgpa = newCgpa >= 0 ? (Math.floor((newCgpa * 1000) % 10) >= 5 ? Math.ceil(newCgpa * 100) / 100 : Math.floor(newCgpa * 100) / 100) : 0;
-
-  // Graduation Planner logic
-  const degreeCreditsNumber = parseFloat(targetDegreeCredits) || 0;
-  const targetCgpaNumber = parseFloat(targetCgpaValue) || 0;
-  let remainingCredits = 0;
-  let maxReachableCgpa = newCgpa;
-  let requiredAverageGpa = 0;
-  let isTargetImpossible = false;
-
-  if (degreeCreditsNumber > 0) {
-    remainingCredits = Math.max(0, degreeCreditsNumber - totalCredits);
-    if (degreeCreditsNumber > totalCredits) {
-      maxReachableCgpa = roundToTwoDecimals((totalQualityPoints + remainingCredits * 4.0) / degreeCreditsNumber);
-      requiredAverageGpa = roundToTwoDecimals(((degreeCreditsNumber * targetCgpaNumber) - totalQualityPoints) / remainingCredits);
-      isTargetImpossible = requiredAverageGpa > 4.0;
-    }
-  }
-
-  // GPA Tolerance
-  const GRADE_SCALE = [3.7, 3.3, 3.0, 2.7, 2.3, 2.0, 1.7, 1.3, 1.0, 0.7, 0.0];
-  const CREDITS_PER_COURSE = 3;
-
-  const gpaTolerance = (() => {
-    if (remainingCredits <= 0 || targetCgpaNumber <= 0 || isTargetImpossible) return [];
-    const remainingCourses = Math.floor(remainingCredits / CREDITS_PER_COURSE);
-    if (remainingCourses <= 0) return [];
-    const neededQualityPoints = degreeCreditsNumber * targetCgpaNumber - totalQualityPoints;
-    const margin = remainingCredits * 4.0 - neededQualityPoints;
-    const results = [];
-    for (const grade of GRADE_SCALE) {
-      if (grade >= 4.0) continue;
-      const gpaDiff = 4.0 - grade;
-      const maxN = Math.floor(margin / (gpaDiff * CREDITS_PER_COURSE));
-      if (maxN > 0 && maxN <= remainingCourses) {
-        results.push({ grade, count: maxN, fourCount: remainingCourses - maxN });
-      }
-    }
-    return results;
-  })();
+  const plan = computeGraduationPlan(metrics, targetDegreeCredits, targetCgpaValue);
+  const { degreeCreditsNumber, targetCgpaNumber, remainingCredits, maxReachableCgpa, requiredAverageGpa, isTargetImpossible, gpaTolerance } = plan;
 
   const statisticsCards = [
     { label: "Total Courses", value: courses.length, color: "text-blue-600 dark:text-blue-400" },
     { label: "Earned Credits", value: earnedCredits.toFixed(1), sub: `Attempted: ${totalCredits.toFixed(1)}`, color: "text-blue-600 dark:text-blue-400" },
-    { label: "Current CGPA", value: currentActualCgpa.toFixed(2), sub: `Precise: ${currentCgpa.toFixed(4)}`, color: "text-green-600 dark:text-green-400" },
+    { label: "Current CGPA", value: currentActualCgpa.toFixed(2), sub: `Precise: ${currentCgpa.toFixed(4)}`, color: "text-emerald-600 dark:text-emerald-400" },
     { label: "New CGPA", value: newActualCgpa.toFixed(2), sub: `Precise: ${newCgpa.toFixed(4)}`, color: "text-purple-600 dark:text-purple-400" },
   ];
 
-  // Group courses by semester
-  const semesterGroups = [];
-  courses.forEach((course, index) => {
-    const sem = course.semester || "Unknown Semester";
-    let group = semesterGroups.find(g => g.name === sem);
-    if (!group) {
-      group = { name: sem, courses: [] };
-      semesterGroups.push(group);
-    }
-    group.courses.push({ ...course, originalIndex: index });
-  });
-
-  semesterGroups.sort((a, b) => {
-    if (a.name === "Planned Courses") return 1;
-    if (b.name === "Planned Courses") return -1;
-    if (a.name === "Unknown Semester") return 1;
-    if (b.name === "Unknown Semester") return -1;
-    const numA = parseInt(a.name.match(/Semester (\d+)/i)?.[1] || "0");
-    const numB = parseInt(b.name.match(/Semester (\d+)/i)?.[1] || "0");
-    return numA - numB;
-  });
-
-  const chartData = [];
-  let cumQualityPoints = 0;
-  let cumCredits = 0;
-
-  semesterGroups.forEach((group) => {
-    if (group.name === "Unknown Semester") return;
-    let semQualityPoints = 0;
-    let semCredits = 0;
-    group.courses.forEach(course => {
-      semQualityPoints += course.qualityPoints;
-      semCredits += course.credits;
-      cumQualityPoints += course.qualityPoints;
-      cumCredits += course.credits;
-    });
-    const semGpa = semCredits > 0 ? semQualityPoints / semCredits : 0;
-    const cumCgpa = cumCredits > 0 ? cumQualityPoints / cumCredits : 0;
-    const formattedName = formatSemesterName(group.name);
-    const shortName = formattedName.replace("Semester", "Sem").replace(" | ", "\n");
-    chartData.push({
-      name: shortName, fullTermName: formattedName,
-      semesterGpa: parseFloat(semGpa.toFixed(2)),
-      cumulativeCgpa: parseFloat(cumCgpa.toFixed(2)),
-      projectedCgpa: targetCgpaNumber > 0 ? parseFloat(targetCgpaNumber.toFixed(2)) : null
-    });
-  });
+  const semesterGroups = groupBySemester(courses);
+  const chartData = computeChartData(semesterGroups, targetCgpaNumber);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900 pb-20">
@@ -371,7 +268,37 @@ export default function GradesheetAnalyzer({ allowSave = false, savedData = null
           </div>
         )}
 
-        {courses.length > 0 && !loading && (
+        {courses.length > 0 && !loading && isMobile === true && (
+          <div className="flex flex-col gap-6">
+            <MetricsCard statisticsCards={statisticsCards} />
+
+            <MobileCourseList
+              courses={courses}
+              semesterGroups={semesterGroups}
+              onUpdateGradePoints={updateGradePoints}
+              onDeleteCourse={deleteCourse}
+              onResetGrades={resetGrades}
+              onAddCourse={addNewCourse}
+              gradePointScale={GRADE_POINT_SCALE}
+            />
+
+            <GraduationPlanner
+              targetDegreeCredits={targetDegreeCredits}
+              setTargetDegreeCredits={setTargetDegreeCredits}
+              targetCgpaValue={targetCgpaValue}
+              setTargetCgpaValue={setTargetCgpaValue}
+              degreeCreditsNumber={degreeCreditsNumber}
+              targetCgpaNumber={targetCgpaNumber}
+              remainingCredits={remainingCredits}
+              maxReachableCgpa={maxReachableCgpa}
+              requiredAverageGpa={requiredAverageGpa}
+              isTargetImpossible={isTargetImpossible}
+              gpaTolerance={gpaTolerance}
+            />
+          </div>
+        )}
+
+        {courses.length > 0 && !loading && isMobile === false && (
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6 lg:gap-8 items-start">
             <CourseTable
               courses={courses}
