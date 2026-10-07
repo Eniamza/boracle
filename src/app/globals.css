@@ -430,25 +430,52 @@
 }
 
 /* ---------------------------------------------------------------------------
- * Selected course -> coffee, but not the header's espresso: #4B3935 read as too
- * deep in a list, and the pale tan read as beige. #5C4844 sits a third of the
- * way up from espresso — body text 7.55:1 (AAA), muted sand 4.8-5.4:1 (AA), and
- * 8.0:1 against an unselected card, so selection is unmistakable without going
- * black. Only the paint changes: the flipped ink comes from the shared rule
- * above, which reads this --vanilla-bar override.
+ * Selected course -> mocha #6B5652. Espresso (#4B3935) read too deep for a list
+ * and the pale tan read as beige, so this sits between them: 6.4:1 against an
+ * unselected card, body text 6.7:1, muted 4.6-5.5:1. The paint comes from
+ * --vanilla-bar and the ink from the shared header rule above, lifted in this
+ * scope because a lighter base needs lighter ink to hold AA.
  * ------------------------------------------------------------------------- */
 .vanilla .course-selected,
 .vanilla .course-selected-row {
-  --vanilla-bar: #5c4844; /* oklch(0.421 0.028 31.3) */
+  --vanilla-bar: #6b5652; /* oklch(0.473 0.029 30.7) — mocha, 6.4:1 off a card */
+
+  /* A lighter base needs a lighter ink, so the header ramp is lifted here:
+     body 6.7:1, muted 4.6-5.5:1, dividers 3.7:1, faint labels 4.0:1. */
+  --color-gray-50: #8a7268;   /* pill fills */
+  --color-gray-100: #7e675d;
+  --color-gray-200: #cdbca8;
+  --color-gray-300: #d8c8b4;
+  --color-gray-400: #d6c4ae;
+  --color-gray-500: #e0d2bf;
+  --color-gray-600: #e8dccc;
+  --color-gray-700: #f0e6d8;
+  --color-gray-800: #f7f1e1;
+  --color-gray-900: #fffcf6;
+  --color-gray-950: #fffdf9;
+
+  /* same lift for the accent: pale caramel clears 4.6:1 on this base, where the
+     header's #D9A15D would only reach 3.0 */
+  --color-blue-50: #8a7268;
+  --color-blue-100: #8a7268;
+  --color-blue-200: #7e675d;
+  --color-blue-300: #a98574;
+  --color-blue-400: #f8cd97;
+  --color-blue-500: #f8cd97;
+  --color-blue-600: #f8cd97;
+  --color-blue-700: #d2a46e;
+  --color-blue-800: #b98a5e;
+  --color-blue-900: #9c7048;
+  --color-blue-950: #7e5a38;
 }
 
 .vanilla .course-selected {
-  border-color: #7a6459; /* 1.54:1 off the base — a coffee frame rather than an outline */
+  border-color: #8a7268; /* 1.5:1 off the base — a coffee frame */
 }
 
 .vanilla .course-selected:hover,
 .vanilla .course-selected-row:hover {
-  background-color: #4b3935; /* the brand espresso, one step deeper (1.27:1) */
+  background-color: #5c4844; /* deepens one step (1.25:1); ink stays >=5:1 */
 }
 
 /* ---------------------------------------------------------------------------
