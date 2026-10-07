@@ -306,7 +306,11 @@
   --vanilla-idea-card: oklch(0.980 0.013 86.8); /* #FCF8EF — requested Idea Owners card */
 }
 
-.vanilla .site-header {
+/* The header and a selected course row/card are the same surface, so they share
+   one rule: espresso paint plus the flipped ink the light-first markup needs. */
+.vanilla .site-header,
+.vanilla .course-selected,
+.vanilla .course-selected-row {
   background-color: var(--vanilla-bar);
   color: oklch(0.959 0.022 89.8);
 
@@ -426,27 +430,20 @@
 }
 
 /* ---------------------------------------------------------------------------
- * Selected course -> coffee, in both the mobile cards (.course-selected) and
- * the desktop rows (.course-selected-row), replacing the green selection state.
- * Kept at green-200's lightness rather than the fill's own: the literal
- * same-lightness translation (#FFF7F0, green-50's L .982) measured 1.00:1
- * against this theme's surface tone, i.e. invisible — the greens worked in
- * Light because green-vs-white is a hue jump, and here the page is already
- * warm. #F5E3D2 sits at 1.18:1, so selection actually shows. Direct
- * declarations, not scale remaps, so the seat-availability badge inside a
- * selected card keeps its own green.
+ * Selected course -> the brand coffee #4B3935 itself (same token as the header
+ * bar, see the rule above), with cream ink — a pale coffee wash measured 1.18:1
+ * against the surface and read as beige rather than coffee, so the selection is
+ * the espresso instead, at 10.2:1 against an unselected card and 9.6:1 for its
+ * own text. Hover deepens one step; the card gets a coffee frame because its
+ * markup asks for border-green-400.
  * ------------------------------------------------------------------------- */
 .vanilla .course-selected {
-  background-color: #F5E3D2;
-  border-color: #DBB695;
+  border-color: #6b5652; /* oklch(0.473 0.029 30.7) — 1.6:1 on the coffee, reads as a frame */
 }
 
-.vanilla .course-selected-row {
-  background-color: #F5E3D2;
-}
-
+.vanilla .course-selected:hover,
 .vanilla .course-selected-row:hover {
-  background-color: #ECCFB5;
+  background-color: #3d2e2b; /* oklch(0.317 0.023 31.4) — one step deeper, cream ink 11:1 */
 }
 
 /* ---------------------------------------------------------------------------
