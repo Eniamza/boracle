@@ -7,7 +7,8 @@ import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/dashboard/app-sidebar";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
-import { ModeToggle } from "@/components/light-toggle";
+import { ThemeSwitcher } from "@/components/theme-switcher";
+import { THEME_IDS } from "@/lib/themes";
 import { FacultyProvider } from "@/app/contexts/FacultyContext";
 
 export function Providers({ children }) {
@@ -16,6 +17,9 @@ export function Providers({ children }) {
       <ThemeProvider
         attribute="class"
         defaultTheme="dark"
+        // next-themes removes the previous theme class using this list, so
+        // "vanilla" has to be in it or dark+vanilla would stack on <html>.
+        themes={THEME_IDS}
         enableSystem
         disableTransitionOnChange
       >
@@ -30,7 +34,7 @@ export function Providers({ children }) {
                   <h1 className="font-semibold text-gray-900 dark:text-white">Dashboard</h1>
                 </div>
                 <div className="ml-auto">
-                  <ModeToggle />
+                  <ThemeSwitcher />
                 </div>
               </header>
               <main className="flex-1 p-6 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900 min-h-[calc(100vh-4rem)]">
