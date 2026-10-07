@@ -401,6 +401,43 @@
 
 }
 
+/* ---------------------------------------------------------------------------
+ * Class cells and markers get their own cool scale (#E9F2F5, as requested)
+ * instead of the terracotta accent. Blue cannot simply be re-keyed across the
+ * grid: bg-blue-600/700 is also the day tab and the Export button sitting in
+ * it, so the remap hangs off a `routine-class` hook on the class markers
+ * themselves (grid cell, legend swatch, mobile card, schedule chip) — children
+ * inherit it. Hue lands at 224deg against the accent's 37deg, text 7-11.6:1 on
+ * the fill, borders 3.4:1; Class now reads apart from Lab (sage) and Conflict
+ * (crimson) as well.
+ * ------------------------------------------------------------------------- */
+.vanilla .routine-class {
+  --color-blue-50: #E9F2F5;
+  --color-blue-100: #DCE9EE;
+  --color-blue-200: #C6DAE2;
+  --color-blue-300: #A6C2CD;
+  --color-blue-400: #86A8B7;
+  --color-blue-500: #5F8898;
+  --color-blue-600: #45697A;
+  --color-blue-700: #345565;
+  --color-blue-800: #28434E;
+  --color-blue-900: #1E333B;
+  --color-blue-950: #13242A;
+}
+
+/* ---------------------------------------------------------------------------
+ * Selected course card: the request was "same lightness, coffee hue", done
+ * literally — green-50 (L 0.982) -> #FFF7F0, green-400 (L 0.800) -> #DDB597.
+ * Measured honestly: unselected cards already paint the surface tone #FCF8EF
+ * (L 0.980, same warm hue), so the fill alone differs by 1.00:1 and selection
+ * reads from the border only. Use #FFF0E1 (green-100's lightness, 1.05:1) if it
+ * has to show on its own.
+ * ------------------------------------------------------------------------- */
+.vanilla .course-selected {
+  --color-green-50: #FFF7F0;
+  --color-green-400: #DDB597;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

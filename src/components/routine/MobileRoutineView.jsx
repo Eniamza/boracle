@@ -185,7 +185,7 @@ const MobileRoutineView = ({
                                     ? 'bg-red-50 dark:bg-red-900/20 border-red-300 dark:border-red-700'
                                     : isLab
                                         ? 'bg-purple-50 dark:bg-purple-900/20 border-purple-300 dark:border-purple-700'
-                                        : 'bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-700'
+                                        : 'routine-class bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-700'
                                     }`}
                                 onClick={() => {
                                     setBottomSheetCourse(course);
