@@ -306,11 +306,9 @@
   --vanilla-idea-card: oklch(0.980 0.013 86.8); /* #FCF8EF — requested Idea Owners card */
 }
 
-/* The header and a selected course row/card are the same surface, so they share
-   one rule: espresso paint plus the flipped ink the light-first markup needs. */
-.vanilla .site-header,
-.vanilla .course-selected,
-.vanilla .course-selected-row {
+/* The bar is written light-first, so it gets its own ink ramp: cream/sand for
+   text, lifted browns for hover fills, caramel for accents. */
+.vanilla .site-header {
   background-color: var(--vanilla-bar);
   color: oklch(0.959 0.022 89.8);
 
@@ -430,52 +428,55 @@
 }
 
 /* ---------------------------------------------------------------------------
- * Selected course -> mocha #6B5652. Espresso (#4B3935) read too deep for a list
- * and the pale tan read as beige, so this sits between them: 6.4:1 against an
- * unselected card, body text 6.7:1, muted 4.6-5.5:1. The paint comes from
- * --vanilla-bar and the ink from the shared header rule above, lifted in this
- * scope because a lighter base needs lighter ink to hold AA.
+ * Selected course -> a light latte, #F3CDB4. Espresso (#4B3935) and mocha
+ * (#6B5652) were both too heavy for a list, and the earlier tan was too pale to
+ * read as coffee, so this sits close to the surface with real warmth in it:
+ * 1.39:1 against an unselected card, framed by #A0705A (2.9:1) so the selection
+ * is unmistakable without a dark slab.
+ *
+ * Being light, it takes dark ink again — the espresso scope's cream ramp was
+ * dropped from these hooks. The theme's own gray/blue steps would fall to
+ * 2.2:1-3.2:1 here, so the faint steps are pushed darker (4.9:1+) and the
+ * accent text to #8E3719 (5.2:1). Hover *lightens* (#F7DCC7), which only
+ * improves every ratio; deepening would have cost AA.
  * ------------------------------------------------------------------------- */
 .vanilla .course-selected,
 .vanilla .course-selected-row {
-  --vanilla-bar: #6b5652; /* oklch(0.473 0.029 30.7) — mocha, 6.4:1 off a card */
+  background-color: #f3cdb4; /* oklch(0.874 0.055 55.2) */
+  color: #2a211e;
 
-  /* A lighter base needs a lighter ink, so the header ramp is lifted here:
-     body 6.7:1, muted 4.6-5.5:1, dividers 3.7:1, faint labels 4.0:1. */
-  --color-gray-50: #8a7268;   /* pill fills */
-  --color-gray-100: #7e675d;
-  --color-gray-200: #cdbca8;
-  --color-gray-300: #d8c8b4;
-  --color-gray-400: #d6c4ae;
-  --color-gray-500: #e0d2bf;
-  --color-gray-600: #e8dccc;
-  --color-gray-700: #f0e6d8;
-  --color-gray-800: #f7f1e1;
-  --color-gray-900: #fffcf6;
-  --color-gray-950: #fffdf9;
+  --color-gray-50: #fbf6ec;   /* pill fills, above the base */
+  --color-gray-100: #fbf6ec;
+  --color-gray-200: #937a68;  /* dividers 2.7:1 */
+  --color-gray-300: #8a7268;  /* 3.0:1 */
+  --color-gray-400: #625449;  /* 4.9:1 */
+  --color-gray-500: #5b4f47;  /* 5.4:1 */
+  --color-gray-600: #4a3f38;  /* 6.9:1 */
+  --color-gray-700: #38302a;  /* 8.7:1 */
+  --color-gray-800: #2a211e;  /* 10.6:1 */
+  --color-gray-900: #2a211e;
+  --color-gray-950: #1b1412;  /* 12.3:1 */
 
-  /* same lift for the accent: pale caramel clears 4.6:1 on this base, where the
-     header's #D9A15D would only reach 3.0 */
-  --color-blue-50: #8a7268;
-  --color-blue-100: #8a7268;
-  --color-blue-200: #7e675d;
-  --color-blue-300: #a98574;
-  --color-blue-400: #f8cd97;
-  --color-blue-500: #f8cd97;
-  --color-blue-600: #f8cd97;
-  --color-blue-700: #d2a46e;
-  --color-blue-800: #b98a5e;
-  --color-blue-900: #9c7048;
-  --color-blue-950: #7e5a38;
+  --color-blue-50: #fbf6ec;
+  --color-blue-100: #fbf6ec;
+  --color-blue-200: #dcc0a8;
+  --color-blue-300: #c9a385;
+  --color-blue-400: #8e3719;  /* 5.2:1 */
+  --color-blue-500: #8e3719;
+  --color-blue-600: #8e3719;
+  --color-blue-700: #7c3120;  /* 6.1:1 */
+  --color-blue-800: #6e2b12;
+  --color-blue-900: #5e271b;
+  --color-blue-950: #3d1810;
 }
 
 .vanilla .course-selected {
-  border-color: #8a7268; /* 1.5:1 off the base — a coffee frame */
+  border-color: #a0705a; /* oklch(0.589 0.069 45.5) — coffee frame, 2.9:1 */
 }
 
 .vanilla .course-selected:hover,
 .vanilla .course-selected-row:hover {
-  background-color: #5c4844; /* deepens one step (1.25:1); ink stays >=5:1 */
+  background-color: #f7dcc7; /* lightens: body 12:1, faintest ink 5.6:1 */
 }
 
 /* ---------------------------------------------------------------------------
