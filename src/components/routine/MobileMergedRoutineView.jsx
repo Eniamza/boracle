@@ -151,7 +151,7 @@ const MobileMergedRoutineView = ({
     };
 
     return (
-        <div className="w-full">
+        <div className="routine-cells w-full">
             {/* Friend Legend */}
             <div className="flex flex-wrap gap-2 px-2 pb-2">
                 {friends.map(friend => (

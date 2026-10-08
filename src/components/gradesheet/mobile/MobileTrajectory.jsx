@@ -1,6 +1,12 @@
 "use client";
 
+import { useTheme } from "next-themes";
+import { chartPalette } from "@/lib/chart-palette";
+
 export default function MobileTrajectory({ chartData, targetCgpaNumber }) {
+  const { theme, resolvedTheme } = useTheme();
+  const colors = chartPalette(theme, resolvedTheme);
+
   if (!chartData.length) return null;
 
   const H = 120; // plot height px
@@ -29,7 +35,7 @@ export default function MobileTrajectory({ chartData, targetCgpaNumber }) {
         ))}
 
         {targetCgpaNumber > 0 && (
-          <line x1={0} x2={W} y1={y(targetCgpaNumber)} y2={y(targetCgpaNumber)} stroke="#10b981" strokeWidth="1.5" strokeDasharray="5 4" />
+          <line x1={0} x2={W} y1={y(targetCgpaNumber)} y2={y(targetCgpaNumber)} stroke={colors.projected} strokeWidth="1.5" strokeDasharray="5 4" />
         )}
 
         {chartData.map((d, i) => {
@@ -43,14 +49,14 @@ export default function MobileTrajectory({ chartData, targetCgpaNumber }) {
               width={barW}
               height={H - by - 2}
               rx="3"
-              fill="#93c5fd"
+              fill={colors.bar}
             />
           );
         })}
 
-        <polyline points={cgpaLine} fill="none" stroke="#2563eb" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+        <polyline points={cgpaLine} fill="none" stroke={colors.line} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
         {chartData.map((d, i) => (
-          <circle key={i} cx={pad + i * step} cy={y(d.cumulativeCgpa)} r="3" className="fill-white dark:fill-gray-900" stroke="#2563eb" strokeWidth="2" />
+          <circle key={i} cx={pad + i * step} cy={y(d.cumulativeCgpa)} r="3" className="fill-white dark:fill-gray-900" stroke={colors.line} strokeWidth="2" />
         ))}
 
         {chartData.map((d, i) => (

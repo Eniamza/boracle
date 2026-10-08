@@ -51,7 +51,7 @@ export default function NavigationBar() {
   };
 
   return (
-    <header className={`sticky top-0 z-50 transition-all duration-300 ${scrolled
+    <header className={`site-header sticky top-0 z-50 transition-all duration-300 ${scrolled
       ? 'bg-white/95 dark:bg-gray-900/95 backdrop-blur-md shadow-md'
       : 'bg-white dark:bg-gray-900'
       }`}>
@@ -153,7 +153,7 @@ export default function NavigationBar() {
                 <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${toolsOpen ? 'rotate-180' : ''}`} />
               </button>
               {toolsOpen && (
-                <div className="absolute top-full left-0 mt-1 w-48 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-xl overflow-hidden z-50">
+                <div className="site-menu absolute top-full left-0 mt-1 w-48 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-xl overflow-hidden z-50">
                   {toolLinks.map((tool, index) => (
                     <Link
                       key={index}
@@ -176,7 +176,7 @@ export default function NavigationBar() {
             ) : (
               <Button
                 onClick={handleSignIn}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-2"
+                className="header-cta bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-2"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
                   <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />

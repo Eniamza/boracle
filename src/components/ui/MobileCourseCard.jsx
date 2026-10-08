@@ -30,7 +30,7 @@ const MobileCourseCard = ({
 
     return (
         <div
-            className={`rounded-xl border p-3.5 transition-all duration-500 active:scale-[0.98] ${seatAnimation === 'decrease'
+            className={`routine-cells ${isSelected ? 'course-selected' : ''} rounded-xl border p-3.5 transition-all duration-500 active:scale-[0.98] ${seatAnimation === 'decrease'
                     ? 'bg-green-100 dark:bg-green-900/40 border-green-400 dark:border-green-600'
                     : seatAnimation === 'increase'
                         ? 'bg-red-100 dark:bg-red-900/40 border-red-400 dark:border-red-600'
@@ -60,7 +60,7 @@ const MobileCourseCard = ({
             {/* Schedule Row */}
             <div className="mt-2.5 flex flex-wrap gap-1.5">
                 {classSchedules.map((s, idx) => (
-                    <span key={`cls-${idx}`} className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-md bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                    <span key={`cls-${idx}`} className="routine-class inline-flex items-center gap-1 text-xs px-2 py-1 rounded-md bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
                         <span className="font-semibold">{s.day?.slice(0, 3)}</span>
                         <span className="text-blue-500 dark:text-blue-400">{formatTime(s.startTime)}-{formatTime(s.endTime)}</span>
                     </span>

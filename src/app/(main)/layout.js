@@ -5,7 +5,8 @@ import "@/app/globals.css";
 import { ThemeProvider } from "@/components/theme-provider"
 import NavigationBar from "@/components/navbar/navigation-bar";
 import { SessionProvider } from "next-auth/react";
-import { ModeToggle } from "@/components/light-toggle";
+import { ThemeSwitcher } from "@/components/theme-switcher";
+import { THEME_IDS } from "@/lib/themes";
 import { Description } from "@radix-ui/react-dialog";
 import { FacultyProvider } from "@/app/contexts/FacultyContext";
 import { Toaster } from 'sonner';
@@ -47,14 +48,17 @@ export default function RootLayout({ children, pageProps = {} }) {
             <ThemeProvider
               attribute="class"
               defaultTheme="dark"
+              // next-themes removes the previous theme class using this list, so
+              // "vanilla" has to be in it or dark+vanilla would stack on <html>.
+              themes={THEME_IDS}
               enableSystem
               disableTransitionOnChange
             >
               <NavigationBar />
               <Toaster position="top-right" richColors duration={3000} closeButton />
               {children}
-              <div className="fixed bottom-4 right-4">
-                <ModeToggle />
+              <div className="fixed bottom-4 right-4 z-50">
+                <ThemeSwitcher />
               </div>
             </ThemeProvider>
           </FacultyProvider>
