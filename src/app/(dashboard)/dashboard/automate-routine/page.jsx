@@ -537,7 +537,7 @@ const AutomateRoutinePage = () => {
 
       {/* Left: selected courses. Right: constraints + generate (stacked below lg). */}
       <div className="grid gap-5 lg:grid-cols-2 items-start">
-      <div className="space-y-3">
+      <div className="space-y-3 min-w-0">
       {loading ? (
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
@@ -575,7 +575,7 @@ const AutomateRoutinePage = () => {
 
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-4 min-w-0">
       {items.length > 0 && (
         <ConstraintPanel
           constraints={activeConstraints}
@@ -732,6 +732,7 @@ const AutomateRoutinePage = () => {
           onSave={() => saveRoutine(preview.routine, preview.routine.signature)}
           isSaving={savingKey === preview.routine.signature}
           showExportButton
+          forceDesktopGrid
         />
       )}
 

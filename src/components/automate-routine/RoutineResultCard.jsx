@@ -36,7 +36,7 @@ const RoutineResultCard = React.memo(({
   const seats = routine.seatsLeft;
 
   return (
-    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+    <div className="min-w-0 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
         {rank != null && (
           <span className="text-sm font-semibold text-gray-900 dark:text-white tabular-nums">#{rank}</span>
