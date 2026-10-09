@@ -405,8 +405,15 @@ const AutomateRoutinePage = () => {
     const onDocClick = (event) => {
       if (searchRef.current && !searchRef.current.contains(event.target)) setSearchOpen(false);
     };
+    const onKey = (event) => {
+      if (event.key === 'Escape') setSearchOpen(false);
+    };
     document.addEventListener('mousedown', onDocClick);
-    return () => document.removeEventListener('mousedown', onDocClick);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDocClick);
+      document.removeEventListener('keydown', onKey);
+    };
   }, [searchOpen]);
 
   const matches = useMemo(() => {
@@ -461,9 +468,12 @@ const AutomateRoutinePage = () => {
             }}
             onFocus={() => setSearchOpen(true)}
             onKeyDown={(e) => {
-              if (e.key === 'Enter' && matches[0]) {
-                e.preventDefault();
+              if (e.key !== 'Enter') return;
+              e.preventDefault();
+              if (matches[0]) {
                 addCourse(matches[0].code);
+              } else if (searchTerm.trim()) {
+                toast.error(`No course matches "${searchTerm.trim()}" in this semester`);
               }
             }}
             placeholder="Add a course by code or title… e.g. CSE101 or Calculus"
