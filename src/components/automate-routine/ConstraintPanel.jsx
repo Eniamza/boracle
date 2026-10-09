@@ -23,8 +23,8 @@ const CHIP_ON =
   'bg-red-600 border-red-600 text-white hover:bg-red-700 dark:hover:bg-red-700';
 
 const DayStepper = ({ label, value, min, max, onChange }) => (
-  <div className="flex items-center justify-between gap-3">
-    <span className="text-sm text-gray-700 dark:text-gray-300">{label}</span>
+  <div className="flex items-center gap-2">
+    <span className="text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap">{label}</span>
     <div className="flex items-center gap-1">
       <button
         type="button"

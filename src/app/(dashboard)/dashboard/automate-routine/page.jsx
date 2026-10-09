@@ -349,6 +349,7 @@ const AutomateRoutinePage = () => {
     [setSelectedCourses]
   );
 
+
   const semesterForSave = useMemo(
     () => (selectedSemester === 'current' ? globalInfo.semester : normalizeSemester(selectedSemester)),
     [selectedSemester]
@@ -398,6 +399,48 @@ const AutomateRoutinePage = () => {
     [session, semesterForSave]
   );
 
+  // Stable card callbacks: the cards are memoised and each one holds a live grid, so
+  // inline arrows here would re-render every visible routine on any keystroke.
+  const handlePreview = useCallback(
+    (routine, rank) => {
+      setPreview({ routine, title: rank ? `Routine #${rank}` : 'Routine', courses: enrich(routine.sections) });
+      setPreviewOpen(true);
+    },
+    [enrich]
+  );
+  const handleSave = useCallback((routine) => saveRoutine(routine, routine.signature), [saveRoutine]);
+
+  const visibleCount = Math.min(displayCount, results?.routines?.length || 0);
+
+  // Rows for the embedded grids, enriched once per visible window rather than per render.
+  const visibleRows = useMemo(() => {
+    const map = new Map();
+    if (!results?.routines) return map;
+    results.routines.slice(0, visibleCount).forEach((routine) => {
+      map.set(routine.signature, enrich(routine.sections));
+    });
+    return map;
+  }, [results, visibleCount, enrich]);
+
+  const sentinelRef = useRef(null);
+  const hasMore = !!results?.routines?.length && displayCount < results.routines.length;
+
+  useEffect(() => {
+    if (!hasMore) return undefined;
+    const el = sentinelRef.current;
+    if (!el || typeof IntersectionObserver === 'undefined') return undefined;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          setDisplayCount((count) => count + RESULT_PAGE);
+        }
+      },
+      { rootMargin: '600px' }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [hasMore]);
+
   // ---------------------------------------------------------------- search box
 
   useEffect(() => {
@@ -416,18 +459,23 @@ const AutomateRoutinePage = () => {
     };
   }, [searchOpen]);
 
+  // "422" must find CSE422, so codes match anywhere, not just as a prefix; prefix hits
+  // and title hits are grouped so the most likely target still surfaces first.
   const matches = useMemo(() => {
     const term = searchTerm.trim().toUpperCase();
     if (!term) return [];
-    const out = [];
+    const prefix = [];
+    const partial = [];
+    const byTitle = [];
     rowsByCode.forEach((rows, code) => {
-      if (out.length >= 10) return;
       const title = (titleByCode.get(code) || '').toUpperCase();
-      if (code.startsWith(term) || title.includes(term)) {
-        out.push({ code, title: titleByCode.get(code) || '', count: rows.length });
-      }
+      const entry = { code, title: titleByCode.get(code) || '', count: rows.length };
+      if (code.startsWith(term)) prefix.push(entry);
+      else if (code.includes(term)) partial.push(entry);
+      else if (title.includes(term)) byTitle.push(entry);
     });
-    return out.sort((a, b) => (a.code < b.code ? -1 : 1));
+    const sortCode = (a, b) => (a.code < b.code ? -1 : 1);
+    return [...prefix.sort(sortCode), ...partial.sort(sortCode), ...byTitle.sort(sortCode)].slice(0, 12);
   }, [searchTerm, rowsByCode, titleByCode]);
 
   // ---------------------------------------------------------------- render
@@ -511,7 +559,9 @@ const AutomateRoutinePage = () => {
         )}
       </div>
 
-      {/* Targets */}
+      {/* Left: selected courses. Right: constraints + generate (stacked below lg). */}
+      <div className="grid gap-5 lg:grid-cols-2 items-start">
+      <div className="space-y-3">
       {loading ? (
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
@@ -548,6 +598,9 @@ const AutomateRoutinePage = () => {
         </div>
       )}
 
+      </div>
+
+      <div className="space-y-4">
       {items.length > 0 && (
         <ConstraintPanel
           constraints={activeConstraints}
@@ -577,6 +630,8 @@ const AutomateRoutinePage = () => {
           )}
         </div>
       )}
+      </div>
+      </div>
 
       {/* Results */}
       {results && (
@@ -635,7 +690,7 @@ const AutomateRoutinePage = () => {
                   <span className="font-semibold text-gray-900 dark:text-white">
                     {results.totalFound} routine{results.totalFound === 1 ? '' : 's'}
                   </span>{' '}
-                  &middot; showing {Math.min(displayCount, results.routines.length)}
+                  &middot; showing {visibleCount}
                   {results.capped && results.cappedReason === 'budget' && (
                     <span className="text-gray-500 dark:text-gray-400">
                       {' '}
@@ -666,32 +721,27 @@ const AutomateRoutinePage = () => {
                 </div>
               </div>
 
-              <div className="space-y-3">
+              <div className="grid gap-5 lg:grid-cols-2 items-start">
                 {sortedResults.slice(0, displayCount).map(({ routine, rank }) => (
                   <RoutineResultCard
                     key={routine.signature}
-                    rank={sortBy === 'days' ? rank : null}
                     routine={routine}
+                    courses={visibleRows.get(routine.signature) || routine.sections}
+                    rank={sortBy === 'days' ? rank : null}
                     showSeats={hasSeatData}
-                    isSaving={savingKey === routine.signature}
-                    onPreview={() => {
-                      setPreview({ routine, title: `Routine #${rank}`, courses: enrich(routine.sections) });
-                      setPreviewOpen(true);
-                    }}
-                    onAdopt={() => adopt(routine)}
-                    onSave={() => saveRoutine(routine, routine.signature)}
+                    saving={savingKey === routine.signature}
+                    onPreview={handlePreview}
+                    onAdopt={adopt}
+                    onSave={handleSave}
                   />
                 ))}
               </div>
 
-              {results.routines.length > displayCount && (
-                <button
-                  type="button"
-                  onClick={() => setDisplayCount((c) => c + RESULT_PAGE)}
-                  className="w-full py-3 rounded-lg text-sm font-medium bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 transition-colors"
-                >
-                  Show {Math.min(RESULT_PAGE, results.routines.length - displayCount)} more
-                </button>
+              {hasMore && (
+                <div ref={sentinelRef} className="py-6 flex items-center justify-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  More routines
+                </div>
               )}
             </>
           )}

@@ -1,27 +1,20 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { X } from 'lucide-react';
+import MultiSelectDropdown from '@/components/automate-routine/MultiSelectDropdown';
 import { seatInfo } from '@/lib/automate-routine/model';
 
 const seatTone = (seatsLeft) => {
-  if (seatsLeft === null) return null;
+  if (seatsLeft === null) return undefined;
   if (seatsLeft === 0) return 'text-red-600 dark:text-red-400';
   if (seatsLeft <= 3) return 'text-amber-600 dark:text-amber-400';
   return 'text-emerald-600 dark:text-emerald-400';
 };
 
-const CHIP_BASE =
-  'px-2.5 py-1 rounded-full text-xs font-medium border transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-blue-500';
-const CHIP_OFF =
-  'bg-gray-50 dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700';
-const CHIP_ON =
-  'course-selected bg-blue-50 dark:bg-blue-900/30 border-blue-500 text-blue-700 dark:text-blue-300';
-
 /**
- * One course the user wants scheduled, with its section and faculty narrowing.
- * "Any section" is the unfiltered default — the solver then considers every
- * section of the course that survives the global constraints.
+ * One course the user wants scheduled. "Any section" is the unfiltered default — the
+ * solver then considers every section of the course that survives the constraints.
  */
 const TargetCourseCard = ({
   courseCode,
@@ -31,12 +24,29 @@ const TargetCourseCard = ({
   facultyPrefs = [],
   candidateCount = 0,
   onToggleSection,
-  onClearSections,
-  onToggleFaculty,
+  onSectionsChange,
+  onFacultiesChange,
   onRemove,
 }) => {
-  const [expanded, setExpanded] = useState(false);
-  const COLLAPSED_COUNT = 10;
+  const hasSeatData = useMemo(() => rows.some((row) => seatInfo(row).seatsLeft !== null), [rows]);
+
+  const sectionOptions = useMemo(
+    () =>
+      rows.map((row) => {
+        const seat = seatInfo(row);
+        const parts = [row.faculties || 'TBA'];
+        if (hasSeatData && seat.seatsLeft !== null) {
+          parts.push(seat.seatsLeft === 0 ? 'full' : `${seat.seatsLeft} left`);
+        }
+        return {
+          value: row.sectionId,
+          label: `${row.sectionName}`,
+          note: parts.join(' · '),
+          tone: hasSeatData && seat.seatsLeft === 0 ? 'text-red-600 dark:text-red-400' : undefined,
+        };
+      }),
+    [rows, hasSeatData]
+  );
 
   const facultyOptions = useMemo(() => {
     const set = new Set();
@@ -47,12 +57,14 @@ const TargetCourseCard = ({
         .filter(Boolean)
         .forEach((f) => set.add(f));
     });
-    return [...set].sort();
+    return [...set].sort().map((code) => ({ value: code, label: code }));
   }, [rows]);
 
-  const hasSeatData = rows.some((row) => seatInfo(row).seatsLeft !== null);
-  const visibleRows = expanded ? rows : rows.slice(0, COLLAPSED_COUNT);
-  const anySection = selectedIds.length === 0;
+  // Selected ids that no longer exist in the catalog (semester switch, section dropped).
+  const liveSelectedIds = useMemo(() => {
+    const known = new Set(rows.map((r) => r.sectionId));
+    return selectedIds.filter((id) => known.has(id));
+  }, [rows, selectedIds]);
 
   return (
     <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
@@ -63,6 +75,7 @@ const TargetCourseCard = ({
             {rows[0]?.courseCredit != null && (
               <span className="text-xs text-gray-500 dark:text-gray-400">{rows[0].courseCredit} cr</span>
             )}
+            <span className="text-xs text-gray-400 dark:text-gray-500">{rows.length} sections</span>
           </div>
           <p className="text-sm text-gray-600 dark:text-gray-400 truncate">{courseName}</p>
         </div>
@@ -76,83 +89,30 @@ const TargetCourseCard = ({
         </button>
       </div>
 
-      <div className="mt-3">
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
-            Sections
-          </span>
-          {rows.length > COLLAPSED_COUNT && (
-            <button
-              type="button"
-              onClick={() => setExpanded((v) => !v)}
-              className="text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium"
-            >
-              {expanded ? 'Show fewer' : `Show all ${rows.length}`}
-            </button>
-          )}
-        </div>
-
-        <div className="mt-2 flex flex-wrap gap-1.5">
-          <button
-            type="button"
-            aria-pressed={anySection}
-            onClick={onClearSections}
-            className={`${CHIP_BASE} ${anySection ? CHIP_ON : CHIP_OFF}`}
-          >
-            Any section
-          </button>
-          {visibleRows.map((row) => {
-            const seat = seatInfo(row);
-            const on = selectedIds.includes(row.sectionId);
-            return (
-              <button
-                key={row.sectionId}
-                type="button"
-                aria-pressed={on}
-                onClick={() => onToggleSection(row.sectionId)}
-                className={`${CHIP_BASE} ${on ? CHIP_ON : CHIP_OFF}`}
-              >
-                {row.sectionName}
-                <span className="ml-1 font-normal text-gray-500 dark:text-gray-400">{row.faculties || 'TBA'}</span>
-                {hasSeatData && seat.seatsLeft !== null && (
-                  <span className={`ml-1 font-normal ${seatTone(seat.seatsLeft)}`}>
-                    {seat.seatsLeft === 0 ? 'full' : `${seat.seatsLeft} left`}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
+      <div className="mt-3 grid gap-2 sm:grid-cols-2">
+        <MultiSelectDropdown
+          label="Sections"
+          placeholder="Any section"
+          anyLabel="Any section"
+          options={sectionOptions}
+          selected={liveSelectedIds}
+          onChange={onSectionsChange}
+        />
+        <MultiSelectDropdown
+          label="Faculty"
+          placeholder="Any faculty"
+          anyLabel="Any faculty"
+          options={facultyOptions}
+          selected={facultyPrefs}
+          onChange={onFacultiesChange}
+          searchableAt={10}
+        />
       </div>
-
-      {facultyOptions.length > 1 && (
-        <div className="mt-3">
-          <span className="text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
-            Preferred faculty
-          </span>
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            {facultyOptions.map((code) => {
-              const on = facultyPrefs.includes(code);
-              return (
-                <button
-                  key={code}
-                  type="button"
-                  aria-pressed={on}
-                  onClick={() => onToggleFaculty(code)}
-                  className={`${CHIP_BASE} ${on ? CHIP_ON : CHIP_OFF}`}
-                >
-                  {code}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
 
       {candidateCount === 0 && (
         <p className="mt-3 text-xs text-red-600 dark:text-red-400 flex items-start gap-1.5">
           <span aria-hidden="true">&#9888;</span>
-          Nothing left to schedule here after these choices and the constraints below.
+          Nothing left to schedule here after these choices and the constraints on the right.
         </p>
       )}
     </div>
