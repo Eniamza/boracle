@@ -3,6 +3,8 @@
 import React, { useMemo, useState } from 'react';
 import { Minus, Plus, X } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
+import MultiSelectDropdown from '@/components/automate-routine/MultiSelectDropdown';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { DAY_ORDER } from '@/lib/automate-routine/model';
 
 const SHORT_DAYS = {
@@ -57,6 +59,12 @@ const DayStepper = ({ label, value, min, max, onChange }) => (
 const ConstraintPanel = ({ constraints, onChange, slotLabels = [], facultyOptions = [], showSeatToggle = false }) => {
   const [facultySearch, setFacultySearch] = useState('');
   const [showAllFaculty, setShowAllFaculty] = useState(false);
+  // Chip grids eat vertical space on a single-column phone; dropdowns carry the same
+  // state there, and desktop keeps the at-a-glance chips.
+  const isMobile = useIsMobile();
+
+  const dayOptions = useMemo(() => DAY_ORDER.map((day) => ({ value: day, label: SHORT_DAYS[day] })), []);
+  const slotOptions = useMemo(() => slotLabels.map((slot) => ({ value: slot, label: slot })), [slotLabels]);
 
   const toggleIn = (key, value) => {
     const list = constraints[key] || [];
@@ -96,6 +104,29 @@ const ConstraintPanel = ({ constraints, onChange, slotLabels = [], facultyOption
         )}
       </div>
 
+      {isMobile ? (
+        <div className="mt-4 grid gap-2">
+          <MultiSelectDropdown
+            label="Avoid days"
+            placeholder="None"
+            anyLabel="Avoid no days"
+            options={dayOptions}
+            selected={constraints.avoidDays || []}
+            onChange={(avoidDays) => onChange({ avoidDays })}
+            searchableAt={99}
+          />
+          <MultiSelectDropdown
+            label="Avoid time slots"
+            placeholder="None"
+            anyLabel="Avoid no slots"
+            options={slotOptions}
+            selected={constraints.avoidSlots || []}
+            onChange={(avoidSlots) => onChange({ avoidSlots })}
+            searchableAt={99}
+          />
+        </div>
+      ) : (
+      <>
       <div className="mt-4">
         <span className="text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
           Avoid days
@@ -139,6 +170,9 @@ const ConstraintPanel = ({ constraints, onChange, slotLabels = [], facultyOption
           })}
         </div>
       </div>
+
+      </>
+      )}
 
       {facultyOptions.length > 0 && (
         <div className="mt-4">

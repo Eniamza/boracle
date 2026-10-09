@@ -264,30 +264,6 @@ const AutomateRoutinePage = () => {
     [items, patchInputs]
   );
 
-  const toggleSection = useCallback(
-    (courseCode, sectionId) => {
-      const item = items.find((i) => i.courseCode === courseCode);
-      if (!item) return;
-      const list = item.sections || [];
-      patchItem(courseCode, {
-        sections: list.includes(sectionId) ? list.filter((id) => id !== sectionId) : [...list, sectionId],
-      });
-    },
-    [items, patchItem]
-  );
-
-  const toggleFaculty = useCallback(
-    (courseCode, code) => {
-      const item = items.find((i) => i.courseCode === courseCode);
-      if (!item) return;
-      const list = item.faculties || [];
-      patchItem(courseCode, {
-        faculties: list.includes(code) ? list.filter((f) => f !== code) : [...list, code],
-      });
-    },
-    [items, patchItem]
-  );
-
   const seedFromPreprereg = useCallback(() => {
     const grouped = new Map();
     selectedCourses.forEach((row) => {
@@ -588,9 +564,8 @@ const AutomateRoutinePage = () => {
                 selectedIds={item.sections || []}
                 facultyPrefs={item.faculties || []}
                 candidateCount={pool?.sections?.length ?? 0}
-                onToggleSection={(sectionId) => toggleSection(item.courseCode, sectionId)}
-                onClearSections={() => patchItem(item.courseCode, { sections: [] })}
-                onToggleFaculty={(code) => toggleFaculty(item.courseCode, code)}
+                onSectionsChange={(sections) => patchItem(item.courseCode, { sections })}
+                onFacultiesChange={(faculties) => patchItem(item.courseCode, { faculties })}
                 onRemove={() => removeCourse(item.courseCode)}
               />
             );
