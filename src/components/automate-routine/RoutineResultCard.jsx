@@ -3,8 +3,6 @@
 import React from 'react';
 import { Download, Eye, Save } from 'lucide-react';
 import RoutineTableGrid from '@/components/routine/RoutineTableGrid';
-import { useIsMobile } from '@/hooks/use-mobile';
-import { meetingsOf } from '@/lib/automate-routine/model';
 
 export const formatMinutes = (minutes) => {
   const h = Math.floor(minutes / 60);
@@ -18,47 +16,6 @@ const Metric = ({ children, tone }) => (
 );
 
 const Dot = () => <span className="text-xs text-gray-400 dark:text-gray-500">&middot;</span>;
-
-const SHORT_DAYS = {
-  SUNDAY: 'Sun',
-  MONDAY: 'Mon',
-  TUESDAY: 'Tue',
-  WEDNESDAY: 'Wed',
-  THURSDAY: 'Thu',
-  FRIDAY: 'Fri',
-  SATURDAY: 'Sat',
-};
-
-const clock = (minutes) => {
-  const h24 = Math.floor(minutes / 60);
-  const suffix = h24 >= 12 ? 'PM' : 'AM';
-  const hour = h24 % 12 || 12;
-  return `${hour}:${String(minutes % 60).padStart(2, '0')} ${suffix}`;
-};
-
-/**
- * Phone fallback: a routine grid is too tall to scan in a single column, so results
- * list their sections and meeting times instead. Desktop keeps the real grid.
- */
-const SectionList = ({ sections }) => (
-  <ul className="divide-y divide-gray-200 dark:divide-gray-700 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-    {sections.map((section) => (
-      <li key={section.sectionId} className="px-3 py-2 bg-white dark:bg-gray-900">
-        <div className="flex items-baseline justify-between gap-2">
-          <span className="text-sm font-medium text-gray-900 dark:text-white">
-            {section.courseCode}-[{section.sectionName}]
-          </span>
-          <span className="text-xs text-gray-500 dark:text-gray-400 shrink-0">{section.faculties || 'TBA'}</span>
-        </div>
-        <p className="mt-0.5 text-xs text-gray-600 dark:text-gray-400">
-          {meetingsOf(section)
-            .map((m) => `${SHORT_DAYS[m.day] || m.day} ${clock(m.start)}-${clock(m.end)}${m.kind === 'lab' ? ' lab' : ''}`)
-            .join(', ') || 'No scheduled meetings'}
-        </p>
-      </li>
-    ))}
-  </ul>
-);
 
 /**
  * One generated routine, drawn with the same grid as the rest of the app
@@ -77,7 +34,6 @@ const RoutineResultCard = React.memo(({
   onSave,
 }) => {
   const seats = routine.seatsLeft;
-  const isMobile = useIsMobile();
 
   return (
     <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
@@ -104,12 +60,13 @@ const RoutineResultCard = React.memo(({
         )}
       </div>
 
-      <div className="mt-3 overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
-        {isMobile ? (
-          <SectionList sections={routine.sections} />
-        ) : (
-          <RoutineTableGrid selectedCourses={courses} compact showRemoveButtons={false} />
-        )}
+      {/* Same grid at every breakpoint (forceDesktop is how RoutinePeek/RoutineView ask
+          for this). On a phone the table is wider than the screen, so it pans instead of
+          crushing seven day columns into 340px. */}
+      <div className="mt-3 rounded-lg border border-gray-200 dark:border-gray-700 overflow-x-auto">
+        <div className="min-w-[560px]">
+          <RoutineTableGrid selectedCourses={courses} compact showRemoveButtons={false} forceDesktop />
+        </div>
       </div>
 
       <div className="mt-3 flex flex-wrap gap-2">
