@@ -57,8 +57,8 @@ export default function RootLayout({ children, pageProps = {} }) {
               <NavigationBar />
               <Toaster position="top-right" richColors duration={3000} closeButton />
               {children}
-              <div className="fixed bottom-4 right-4 z-50">
-                <ThemeSwitcher />
+              <div className="fixed bottom-4 left-4 z-50">
+                <ThemeSwitcher grow="right" />
               </div>
             </ThemeProvider>
           </FacultyProvider>

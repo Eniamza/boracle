@@ -36,5 +36,11 @@ export const ideaOwners = [
         description: "TThe OG Free Labs Finder that solved the insomnia of thousands of students.",
         originalProjectLink: "https://chicken-coop.vercel.app/" // Optional   
 
-    }
+    },
+    {
+        featureTitle: "Automate Routine",
+        githubLink: "https://github.com/MHThe1",
+        description: "Mehedi's automate-routine proved that a semester of section-hunting could collapse into one search: name your courses, blacklist the days and slots you hate, and get back every conflict-free routine worth having. We read how it works rather than just what it looks like — the subtraction-only candidate filtering, the same-day overlap test that keeps back-to-back classes legal, the rank by fewest days on campus — and rebuilt that engine on Connect's structured schedule data so it runs entirely in the browser inside Oracle's own routine grid. The idea and the mechanics are his; the port and the trims are ours.",
+        originalProjectLink: "https://github.com/MHThe1/automate-routine-frontend" // Optional
+    },
 ];
