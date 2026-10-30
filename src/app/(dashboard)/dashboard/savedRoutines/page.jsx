@@ -1,6 +1,6 @@
 'use client';
-import React, { useState, useEffect, useRef } from 'react';
-import { Calendar, Clock, Trash2, Eye, Download, RefreshCw, AlertCircle, X, Users, Share2, Copy, Check, Link, Plus, Cable, Hammer, Pencil, Save, Info } from 'lucide-react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { Calendar, Clock, Trash2, Eye, Download, RefreshCw, AlertCircle, X, Users, Share2, Copy, Check, Link, Plus, Cable, Hammer, Pencil, Save, Info, ChevronDown } from 'lucide-react';
 import CourseHoverTooltip from '@/components/ui/CourseHoverTooltip';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
@@ -14,6 +14,7 @@ import { toast } from 'sonner';
 import { exportRoutineToPNG } from '@/components/routine/ExportRoutinePNG';
 import { getRoutineTimings, REGULAR_TIMINGS } from '@/constants/routineTimings';
 import { fetchCourses } from '@/lib/api/courseFetcher';
+import globalInfo from '@/constants/globalInfo';
 import { decodeAndEnrichRoutine, decodeAndFetchRoutineCourses, decodeRoutineSections, mergedRoutineCacheKey, readRoutineCache, routineCacheKey, routineListCacheKey, ROUTINE_CACHE_TTL, ROUTINE_LIST_TTL } from '@/lib/routineUtils';
 import { deleteCache, getStaleCache, setCache } from '@/lib/idb';
 import ShareModal from '@/components/savedRoutine/ShareModal';
@@ -463,6 +464,17 @@ const SavedRoutinesPage = () => {
   const [sharingRoutineType, setSharingRoutineType] = useState('routine');
   const { getFacultyDetails } = useFaculty();
 
+  // Collapse state for semester groups — past semesters default to collapsed
+  const [collapsedSemesters, setCollapsedSemesters] = useState({});
+  const [collapsedMergedSemesters, setCollapsedMergedSemesters] = useState({});
+
+  const isSemesterCollapsed = (semester, state) => {
+    if (semester in state) return state[semester];
+    return semester !== globalInfo.semester;
+  };
+  const toggleSemester = (key) => setCollapsedSemesters(prev => ({ ...prev, [key]: !isSemesterCollapsed(key, prev) }));
+  const toggleMergedSemester = (key) => setCollapsedMergedSemesters(prev => ({ ...prev, [key]: !isSemesterCollapsed(key, prev) }));
+
   // Editing state
   const [editingRoutineId, setEditingRoutineId] = useState(null);
   const [editNameInput, setEditNameInput] = useState('');
@@ -506,6 +518,37 @@ const SavedRoutinesPage = () => {
     .sort((a, b) => Number(a.createdAt || 0) - Number(b.createdAt || 0))
     .map((routine, idx) => ({ ...routine, routineNumber: idx + 1 }))
     .sort((a, b) => Number(b.createdAt || 0) - Number(a.createdAt || 0));
+
+  // Group routines by semester, current semester first, then reverse-chronological
+  const groupedRoutines = useMemo(() => {
+    const groups = {};
+    routines.forEach(r => {
+      const key = r.semester || 'Unknown';
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(r);
+    });
+    const currentSemester = globalInfo.semester;
+    return Object.entries(groups).sort(([a], [b]) => {
+      if (a === currentSemester) return -1;
+      if (b === currentSemester) return 1;
+      return b.localeCompare(a);
+    });
+  }, [routines]);
+
+  const groupedMergedRoutines = useMemo(() => {
+    const groups = {};
+    mergedRoutines.forEach(r => {
+      const key = r.semester || 'Unknown';
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(r);
+    });
+    const currentSemester = globalInfo.semester;
+    return Object.entries(groups).sort(([a], [b]) => {
+      if (a === currentSemester) return -1;
+      if (b === currentSemester) return 1;
+      return b.localeCompare(a);
+    });
+  }, [mergedRoutines]);
 
   // Fetch saved routines (painted from IDB first, then revalidated)
   const fetchRoutines = async () => {
@@ -1057,185 +1100,209 @@ const SavedRoutinesPage = () => {
           </a>
         </div>
       ) : (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {routines.map((routine, index) => (
-            <div
-              key={routine.id}
-              className="bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl p-6 hover:border-blue-300 dark:hover:border-blue-600/50 transition-colors shadow-sm"
-            >
-              {/* Routine Header */}
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-start gap-3 w-full min-w-0">
-                  <div className="p-2 bg-blue-100 dark:bg-blue-600/20 rounded-lg shrink-0">
-                    <Calendar className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+        <div className="space-y-6">
+          {groupedRoutines.map(([semester, semesterRoutines]) => {
+            const isCurrent = semester === globalInfo.semester;
+            const isCollapsed = isSemesterCollapsed(semester, collapsedSemesters);
+            return (
+              <div key={semester}>
+                {/* Semester divider header */}
+                <button
+                  onClick={() => toggleSemester(semester)}
+                  className="w-full flex items-center gap-3 mb-4 group cursor-pointer"
+                >
+                  <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700" />
+                  <div className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold transition-colors ${isCurrent
+                    ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                    : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
+                    }`}>
+                    {isCurrent && <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />}
+                    {semester.replace(/([A-Z])(\d)/, '$1 $2')}
+                    <span className="text-xs font-normal opacity-70">({semesterRoutines.length})</span>
+                    <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isCollapsed ? '-rotate-90' : ''}`} />
                   </div>
-                  <div className="flex flex-col w-full min-w-0">
-                    {/* User's First name with routine number */}
-                    <div className="flex items-center gap-2 min-w-0 w-full mb-1">
-                      {editingRoutineId === routine.id ? (
-                        <div className="flex flex-col gap-1 w-full min-w-0">
-                          <div className="flex items-center gap-2 w-full min-w-0">
-                            <Input
-                              value={editNameInput}
-                              onChange={(e) => setEditNameInput(e.target.value)}
-                              className={`h-8 w-full min-w-0 text-sm bg-gray-50 dark:bg-gray-800 ${editNameInput.length === 40 ? 'border-red-500 focus:border-red-500' : 'border-gray-300 dark:border-gray-700 focus:border-blue-500'} focus:ring-blue-500 text-gray-900 dark:text-white`}
-                              placeholder="Enter routine name"
-                              maxLength={40}
-                              autoFocus
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter') updateRoutineName(routine.id);
-                                if (e.key === 'Escape') setEditingRoutineId(null);
-                              }}
-                            />
-                            <div className="flex items-center gap-1 shrink-0">
-                              <button
-                                onClick={() => updateRoutineName(routine.id)}
-                                disabled={isSavingName}
-                                className="p-1.5 hover:bg-green-500/20 rounded-lg text-green-400 transition-colors"
-                              >
-                                {isSavingName ? (
-                                  <RefreshCw className="w-4 h-4 animate-spin" />
-                                ) : (
-                                  <Save className="w-4 h-4" />
-                                )}
-                              </button>
-                              <button
-                                onClick={() => setEditingRoutineId(null)}
-                                disabled={isSavingName}
-                                className="p-1.5 hover:bg-red-500/20 rounded-lg text-red-400 transition-colors"
-                              >
-                                <X className="w-4 h-4" />
-                              </button>
-                            </div>
+                  <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700" />
+                </button>
+
+                {/* Collapsible grid */}
+                <div className={`grid gap-6 md:grid-cols-2 lg:grid-cols-3 transition-all duration-300 overflow-hidden ${isCollapsed ? 'max-h-0 opacity-0' : 'max-h-[5000px] opacity-100'}`}>
+                  {semesterRoutines.map((routine) => (
+                    <div
+                      key={routine.id}
+                      className="bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl p-6 hover:border-blue-300 dark:hover:border-blue-600/50 transition-colors shadow-sm"
+                    >
+                      {/* Routine Header */}
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-start gap-3 w-full min-w-0">
+                          <div className="p-2 bg-blue-100 dark:bg-blue-600/20 rounded-lg shrink-0">
+                            <Calendar className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                           </div>
-                          <span className={`text-[10px] ml-1 ${editNameInput.length === 40 ? 'text-red-500 font-medium' : 'text-gray-500'}`}>
-                            {editNameInput.length === 40 ? '40 characters max (limit reached)' : '40 characters max'}
-                          </span>
+                          <div className="flex flex-col w-full min-w-0">
+                            {/* User's First name with routine number */}
+                            <div className="flex items-center gap-2 min-w-0 w-full mb-1">
+                              {editingRoutineId === routine.id ? (
+                                <div className="flex flex-col gap-1 w-full min-w-0">
+                                  <div className="flex items-center gap-2 w-full min-w-0">
+                                    <Input
+                                      value={editNameInput}
+                                      onChange={(e) => setEditNameInput(e.target.value)}
+                                      className={`h-8 w-full min-w-0 text-sm bg-gray-50 dark:bg-gray-800 ${editNameInput.length === 40 ? 'border-red-500 focus:border-red-500' : 'border-gray-300 dark:border-gray-700 focus:border-blue-500'} focus:ring-blue-500 text-gray-900 dark:text-white`}
+                                      placeholder="Enter routine name"
+                                      maxLength={40}
+                                      autoFocus
+                                      onKeyDown={(e) => {
+                                        if (e.key === 'Enter') updateRoutineName(routine.id);
+                                        if (e.key === 'Escape') setEditingRoutineId(null);
+                                      }}
+                                    />
+                                    <div className="flex items-center gap-1 shrink-0">
+                                      <button
+                                        onClick={() => updateRoutineName(routine.id)}
+                                        disabled={isSavingName}
+                                        className="p-1.5 hover:bg-green-500/20 rounded-lg text-green-400 transition-colors"
+                                      >
+                                        {isSavingName ? (
+                                          <RefreshCw className="w-4 h-4 animate-spin" />
+                                        ) : (
+                                          <Save className="w-4 h-4" />
+                                        )}
+                                      </button>
+                                      <button
+                                        onClick={() => setEditingRoutineId(null)}
+                                        disabled={isSavingName}
+                                        className="p-1.5 hover:bg-red-500/20 rounded-lg text-red-400 transition-colors"
+                                      >
+                                        <X className="w-4 h-4" />
+                                      </button>
+                                    </div>
+                                  </div>
+                                  <span className={`text-[10px] ml-1 ${editNameInput.length === 40 ? 'text-red-500 font-medium' : 'text-gray-500'}`}>
+                                    {editNameInput.length === 40 ? '40 characters max (limit reached)' : '40 characters max'}
+                                  </span>
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-2 group/name">
+                                  <h3 className="font-semibold text-lg">
+                                    {routine.routineName || (session?.user?.name
+                                      ? `${session.user.name.split(' ')[0].charAt(0).toUpperCase() + session.user.name.split(' ')[0].slice(1).toLowerCase()}'s Routine #${routine.routineNumber}`
+                                      : `Routine #${routine.routineNumber}`)}
+                                  </h3>
+                                  <button
+                                    onClick={() => {
+                                      setEditingRoutineId(routine.id);
+                                      setEditNameInput(routine.routineName || (session?.user?.name
+                                        ? `${session.user.name.split(' ')[0].charAt(0).toUpperCase() + session.user.name.split(' ')[0].slice(1).toLowerCase()}'s Routine #${routine.routineNumber}`
+                                        : `Routine #${routine.routineNumber}`));
+                                    }}
+                                    className="p-1 group-hover/name:opacity-100 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg text-gray-500 dark:text-gray-400 transition-all duration-200"
+                                  >
+                                    <Pencil className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                            {/* Routine ID as copyable code subtitle */}
+                            <div className="flex items-center">
+                              <TooltipProvider delayDuration={100}>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <button
+                                      onClick={async () => {
+                                        const success = await copyToClipboard(routine.id.toString());
+                                        if (success) {
+                                          setCopiedRoutineId(routine.id);
+                                          setTimeout(() => setCopiedRoutineId(null), 3000);
+                                        } else {
+                                          toast.error('Failed to copy ID');
+                                        }
+                                      }}
+                                      className={`flex items-center gap-1.5 mt-1 text-xs transition-colors ${copiedRoutineId === routine.id
+                                        ? 'text-green-600 dark:text-green-400'
+                                        : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400'
+                                        }`}
+                                    >
+                                      <code className={`px-2 py-0.5 rounded font-mono text-left ${copiedRoutineId === routine.id
+                                        ? 'bg-green-100 dark:bg-green-900/50 text-green-600 dark:text-green-400'
+                                        : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
+                                        }`}>{routine.id.substring(0, 4)}...{routine.id.substring(32, 36)}</code>
+                                      <span className="flex items-center gap-1">
+                                        {copiedRoutineId === routine.id ? 'Copied' : 'Copy'}
+                                        {copiedRoutineId === routine.id ? (
+                                          <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                          </svg>
+                                        ) : (
+                                          <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                            <rect x="9" y="9" width="13" height="13" rx="2" />
+                                            <rect x="3" y="3" width="13" height="13" rx="2" />
+                                          </svg>
+                                        )}
+                                      </span>
+                                    </button>
+                                  </TooltipTrigger>
+                                  <TooltipContent className="max-w-xs text-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white shadow-xl">
+                                    Share this Routine ID with your friends. They can use it to Import and View your routine as well as use it in the Merge Routine Page!
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                              <TooltipProvider delayDuration={100}>
+                                <Tooltip open={infoTooltipId === `routine-${routine.id}`} onOpenChange={(open) => { if (!open) setInfoTooltipId(null); }}>
+                                  <TooltipTrigger asChild>
+                                    <button
+                                      onClick={() => setInfoTooltipId(infoTooltipId === `routine-${routine.id}` ? null : `routine-${routine.id}`)}
+                                      className="ml-2.5 mt-1 text-blue-400 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+                                    >
+                                      <Info className="w-3.5 h-3.5" />
+                                    </button>
+                                  </TooltipTrigger>
+                                  <TooltipContent className="max-w-xs text-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white shadow-xl">
+                                    Share this Routine ID with your friends. They can use it to Import and View your routine as well as use it in the Merge Routine Page!
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            </div>
+                            <div className="flex items-center gap-2 mt-1.5">
+                              <p className="text-xs text-gray-500">
+                                {routine.createdAt ? new Date(Number(routine.createdAt) * 1000).toLocaleString() : 'N/A'}
+                              </p>
+                            </div>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                              {parseRoutineString(routine.routineStr)} courses
+                            </p>
+                          </div>
                         </div>
-                      ) : (
-                        <div className="flex items-center gap-2 group/name">
-                          <h3 className="font-semibold text-lg">
-                            {routine.routineName || (session?.user?.name
-                              ? `${session.user.name.split(' ')[0].charAt(0).toUpperCase() + session.user.name.split(' ')[0].slice(1).toLowerCase()}'s Routine #${routine.routineNumber}`
-                              : `Routine #${routine.routineNumber}`)}
-                          </h3>
-                          <button
-                            onClick={() => {
-                              setEditingRoutineId(routine.id);
-                              setEditNameInput(routine.routineName || (session?.user?.name
-                                ? `${session.user.name.split(' ')[0].charAt(0).toUpperCase() + session.user.name.split(' ')[0].slice(1).toLowerCase()}'s Routine #${routine.routineNumber}`
-                                : `Routine #${routine.routineNumber}`));
-                            }}
-                            className="p-1 group-hover/name:opacity-100 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg text-gray-500 dark:text-gray-400 transition-all duration-200"
-                          >
-                            <Pencil className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      )}
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => viewRoutine(routine)}
+                          disabled={loadingRoutine}
+                          className="flex-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center justify-center gap-2 text-sm transition-colors"
+                        >
+                          <Eye className="w-4 h-4" />
+                          {loadingRoutine && viewingRoutine?.id === routine.id ? 'Loading...' : 'View'}
+                        </button>
+                        <button
+                          onClick={() => { setSharingRoutineId(routine.id); setSharingRoutineType('routine'); }}
+                          className="px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg flex items-center justify-center gap-2 text-sm transition-colors text-gray-600 dark:text-gray-300"
+                          title="Share routine"
+                        >
+                          <Share2 className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => deleteRoutine(routine.id)}
+                          className="px-3 py-2 hover:bg-red-100 dark:hover:bg-red-700 text-red-600 dark:text-red-400 rounded-lg flex items-center justify-center gap-2 text-sm transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
-                    {/* Routine ID as copyable code subtitle */}
-                    <div className="flex items-center">
-                      <TooltipProvider delayDuration={100}>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <button
-                              onClick={async () => {
-                                const success = await copyToClipboard(routine.id.toString());
-                                if (success) {
-                                  setCopiedRoutineId(routine.id);
-                                  setTimeout(() => setCopiedRoutineId(null), 3000);
-                                } else {
-                                  toast.error('Failed to copy ID');
-                                }
-                              }}
-                              className={`flex items-center gap-1.5 mt-1 text-xs transition-colors ${copiedRoutineId === routine.id
-                                ? 'text-green-600 dark:text-green-400'
-                                : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400'
-                                }`}
-                            >
-                              <code className={`px-2 py-0.5 rounded font-mono text-left ${copiedRoutineId === routine.id
-                                ? 'bg-green-100 dark:bg-green-900/50 text-green-600 dark:text-green-400'
-                                : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
-                                }`}>{routine.id.substring(0, 4)}...{routine.id.substring(32, 36)}</code>
-                              <span className="flex items-center gap-1">
-                                {copiedRoutineId === routine.id ? 'Copied' : 'Copy'}
-                                {copiedRoutineId === routine.id ? (
-                                  <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                  </svg>
-                                ) : (
-                                  <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                                    <rect x="9" y="9" width="13" height="13" rx="2" />
-                                    <rect x="3" y="3" width="13" height="13" rx="2" />
-                                  </svg>
-                                )}
-                              </span>
-                            </button>
-                          </TooltipTrigger>
-                          <TooltipContent className="max-w-xs text-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white shadow-xl">
-                            Share this Routine ID with your friends. They can use it to Import and View your routine as well as use it in the Merge Routine Page!
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                      <TooltipProvider delayDuration={100}>
-                        <Tooltip open={infoTooltipId === `routine-${routine.id}`} onOpenChange={(open) => { if (!open) setInfoTooltipId(null); }}>
-                          <TooltipTrigger asChild>
-                            <button
-                              onClick={() => setInfoTooltipId(infoTooltipId === `routine-${routine.id}` ? null : `routine-${routine.id}`)}
-                              className="ml-2.5 mt-1 text-blue-400 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
-                            >
-                              <Info className="w-3.5 h-3.5" />
-                            </button>
-                          </TooltipTrigger>
-                          <TooltipContent className="max-w-xs text-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white shadow-xl">
-                            Share this Routine ID with your friends. They can use it to Import and View your routine as well as use it in the Merge Routine Page!
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    </div>
-                    <div className="flex items-center gap-2 mt-1.5">
-                      <p className="text-xs text-gray-500">
-                        {routine.createdAt ? new Date(Number(routine.createdAt) * 1000).toLocaleString() : 'N/A'}
-                      </p>
-                      {routine.semester && (
-                        <span className="inline-block bg-blue-100 dark:bg-blue-800/80 text-blue-700 dark:text-blue-100 text-[10px] font-semibold px-2 py-0.5 rounded">
-                          {routine.semester}
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      {parseRoutineString(routine.routineStr)} courses
-                    </p>
-                  </div>
+                  ))}
                 </div>
               </div>
-
-              {/* Actions */}
-              <div className="flex gap-2">
-                <button
-                  onClick={() => viewRoutine(routine)}
-                  disabled={loadingRoutine}
-                  className="flex-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center justify-center gap-2 text-sm transition-colors"
-                >
-                  <Eye className="w-4 h-4" />
-                  {loadingRoutine && viewingRoutine?.id === routine.id ? 'Loading...' : 'View'}
-                </button>
-                <button
-                  onClick={() => { setSharingRoutineId(routine.id); setSharingRoutineType('routine'); }}
-                  className="px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg flex items-center justify-center gap-2 text-sm transition-colors text-gray-600 dark:text-gray-300"
-                  title="Share routine"
-                >
-                  <Share2 className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => deleteRoutine(routine.id)}
-                  className="px-3 py-2 hover:bg-red-100 dark:hover:bg-red-700 text-red-600 dark:text-red-400 rounded-lg flex items-center justify-center gap-2 text-sm transition-colors"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -1286,140 +1353,164 @@ const SavedRoutinesPage = () => {
             </a>
           </div>
         ) : (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {mergedRoutines.map((routine, index) => {
-              const { friendNames, totalCourses } = parseMergedRoutineData(routine.routineData);
+          <div className="space-y-6">
+            {groupedMergedRoutines.map(([semester, semesterRoutines]) => {
+              const isCurrent = semester === globalInfo.semester;
+              const isCollapsed = isSemesterCollapsed(semester, collapsedMergedSemesters);
               return (
-                <div
-                  key={routine.id}
-                  className="bg-white dark:bg-gray-800/50 border border-purple-200 dark:border-purple-700/50 rounded-xl p-6 hover:border-purple-300 dark:hover:border-purple-600/50 transition-colors shadow-sm"
-                >
-                  {/* Routine Header */}
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-purple-100 dark:bg-purple-600/20 rounded-lg">
-                        <Users className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-                      </div>
-                      <div className="flex flex-col">
-                        {/* Merged Routine title with number */}
-                        <h3 className="font-semibold text-lg text-purple-700 dark:text-purple-100">
-                          {session?.user?.name
-                            ? `${session.user.name.split(' ')[0].charAt(0).toUpperCase() + session.user.name.split(' ')[0].slice(1).toLowerCase()}'s Merged Routine #${routine.routineNumber}`
-                            : `Merged Routine #${routine.routineNumber}`}
-                        </h3>
-                        {/* Routine ID as copyable code subtitle */}
-                        <div className="flex items-center">
-                          <TooltipProvider delayDuration={100}>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <button
-                                  onClick={async () => {
-                                    const success = await copyToClipboard(routine.id.toString());
-                                    if (success) {
-                                      setCopiedMergedRoutineId(routine.id);
-                                      setTimeout(() => setCopiedMergedRoutineId(null), 3000);
-                                    } else {
-                                      toast.error('Failed to copy ID');
-                                    }
-                                  }}
-                                  className={`flex items-center gap-1.5 mt-1 text-xs transition-colors ${copiedMergedRoutineId === routine.id
-                                    ? 'text-green-600 dark:text-green-400'
-                                    : 'text-gray-600 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400'
-                                    }`}
-                                >
-                                  <code className={`px-2 py-0.5 rounded font-mono text-left ${copiedMergedRoutineId === routine.id
-                                    ? 'bg-green-100 dark:bg-green-900/50 text-green-600 dark:text-green-400'
-                                    : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
-                                    }`}>{routine.id.substring(0, 4)}...{routine.id.substring(32, 36)}</code>
-                                  <span className="flex items-center gap-1">
-                                    {copiedMergedRoutineId === routine.id ? 'Copied' : 'Copy'}
-                                    {copiedMergedRoutineId === routine.id ? (
-                                      <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                      </svg>
-                                    ) : (
-                                      <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                                        <rect x="9" y="9" width="13" height="13" rx="2" />
-                                        <rect x="3" y="3" width="13" height="13" rx="2" />
-                                      </svg>
-                                    )}
-                                  </span>
-                                </button>
-                              </TooltipTrigger>
-                              <TooltipContent className="max-w-xs text-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white shadow-xl">
-                                The routine ID can be shared with friends for them to use this in the merge routine page to import their routine.
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                          <TooltipProvider delayDuration={100}>
-                            <Tooltip open={infoTooltipId === `merged-${routine.id}`} onOpenChange={(open) => { if (!open) setInfoTooltipId(null); }}>
-                              <TooltipTrigger asChild>
-                                <button
-                                  onClick={() => setInfoTooltipId(infoTooltipId === `merged-${routine.id}` ? null : `merged-${routine.id}`)}
-                                  className="ml-2.5 mt-1 text-blue-400 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
-                                >
-                                  <Info className="w-3.5 h-3.5" />
-                                </button>
-                              </TooltipTrigger>
-                              <TooltipContent className="max-w-xs text-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white shadow-xl">
-                                The routine ID can be shared with friends for them to use this in the merge routine page to import their routine.
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        </div>
-                        <div className="flex items-center gap-2 mt-1.5">
-                          <p className="text-xs text-gray-500">
-                            {routine.createdAt ? new Date(Number(routine.createdAt) * 1000).toLocaleString() : 'N/A'}
-                          </p>
-                          {routine.semester && (
-                            <span className="inline-block bg-purple-100 dark:bg-purple-800/80 text-purple-700 dark:text-purple-100 text-[10px] font-semibold px-2 py-0.5 rounded">
-                              {routine.semester}
-                            </span>
-                          )}
-                        </div>
-                        {/* Friend Names */}
-                        {friendNames.length > 0 && (
-                          <div className="mt-2 flex flex-wrap gap-1">
-                            {friendNames.map((name, idx) => (
-                              <span
-                                key={idx}
-                                className="inline-block bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-200 text-xs px-2 py-0.5 rounded"
-                              >
-                                {name}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                          {totalCourses} courses • {friendNames.length} {friendNames.length === 1 ? 'friend' : 'friends'}
-                        </p>
-                      </div>
+                <div key={semester}>
+                  {/* Semester divider header */}
+                  <button
+                    onClick={() => toggleMergedSemester(semester)}
+                    className="w-full flex items-center gap-3 mb-4 group cursor-pointer"
+                  >
+                    <div className="h-px flex-1 bg-purple-200 dark:bg-purple-800/50" />
+                    <div className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold transition-colors ${isCurrent
+                      ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'
+                      : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
+                      }`}>
+                      {isCurrent && <span className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" />}
+                      {semester.replace(/([A-Z])(\d)/, '$1 $2')}
+                      <span className="text-xs font-normal opacity-70">({semesterRoutines.length})</span>
+                      <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isCollapsed ? '-rotate-90' : ''}`} />
                     </div>
-                  </div>
+                    <div className="h-px flex-1 bg-purple-200 dark:bg-purple-800/50" />
+                  </button>
 
-                  {/* Actions */}
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => viewMergedRoutine(routine)}
-                      disabled={loadingRoutine}
-                      className="flex-1 px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg flex items-center justify-center gap-2 text-sm transition-colors"
-                    >
-                      <Eye className="w-4 h-4" />
-                      {loadingRoutine && viewingMergedRoutine?.id === routine.id ? 'Loading...' : 'View'}
-                    </button>
-                    <button
-                      onClick={() => { setSharingRoutineId(routine.id); setSharingRoutineType('merged-routine'); }}
-                      className="px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg flex items-center justify-center gap-2 text-sm transition-colors text-gray-600 dark:text-gray-300"
-                      title="Share routine"
-                    >
-                      <Share2 className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => deleteMergedRoutine(routine.id)}
-                      className="px-3 py-2 hover:bg-red-100 dark:hover:bg-red-700 text-red-600 dark:text-red-400 rounded-lg flex items-center justify-center gap-2 text-sm transition-colors"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                  {/* Collapsible grid */}
+                  <div className={`grid gap-6 md:grid-cols-2 lg:grid-cols-3 transition-all duration-300 overflow-hidden ${isCollapsed ? 'max-h-0 opacity-0' : 'max-h-[5000px] opacity-100'}`}>
+                    {semesterRoutines.map((routine) => {
+                      const { friendNames, totalCourses } = parseMergedRoutineData(routine.routineData);
+                      return (
+                        <div
+                          key={routine.id}
+                          className="bg-white dark:bg-gray-800/50 border border-purple-200 dark:border-purple-700/50 rounded-xl p-6 hover:border-purple-300 dark:hover:border-purple-600/50 transition-colors shadow-sm"
+                        >
+                          {/* Routine Header */}
+                          <div className="flex items-start justify-between mb-4">
+                            <div className="flex items-center gap-3">
+                              <div className="p-2 bg-purple-100 dark:bg-purple-600/20 rounded-lg">
+                                <Users className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                              </div>
+                              <div className="flex flex-col">
+                                {/* Merged Routine title with number */}
+                                <h3 className="font-semibold text-lg text-purple-700 dark:text-purple-100">
+                                  {session?.user?.name
+                                    ? `${session.user.name.split(' ')[0].charAt(0).toUpperCase() + session.user.name.split(' ')[0].slice(1).toLowerCase()}'s Merged Routine #${routine.routineNumber}`
+                                    : `Merged Routine #${routine.routineNumber}`}
+                                </h3>
+                                {/* Routine ID as copyable code subtitle */}
+                                <div className="flex items-center">
+                                  <TooltipProvider delayDuration={100}>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <button
+                                          onClick={async () => {
+                                            const success = await copyToClipboard(routine.id.toString());
+                                            if (success) {
+                                              setCopiedMergedRoutineId(routine.id);
+                                              setTimeout(() => setCopiedMergedRoutineId(null), 3000);
+                                            } else {
+                                              toast.error('Failed to copy ID');
+                                            }
+                                          }}
+                                          className={`flex items-center gap-1.5 mt-1 text-xs transition-colors ${copiedMergedRoutineId === routine.id
+                                            ? 'text-green-600 dark:text-green-400'
+                                            : 'text-gray-600 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400'
+                                            }`}
+                                        >
+                                          <code className={`px-2 py-0.5 rounded font-mono text-left ${copiedMergedRoutineId === routine.id
+                                            ? 'bg-green-100 dark:bg-green-900/50 text-green-600 dark:text-green-400'
+                                            : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
+                                            }`}>{routine.id.substring(0, 4)}...{routine.id.substring(32, 36)}</code>
+                                          <span className="flex items-center gap-1">
+                                            {copiedMergedRoutineId === routine.id ? 'Copied' : 'Copy'}
+                                            {copiedMergedRoutineId === routine.id ? (
+                                              <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                              </svg>
+                                            ) : (
+                                              <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                                <rect x="9" y="9" width="13" height="13" rx="2" />
+                                                <rect x="3" y="3" width="13" height="13" rx="2" />
+                                              </svg>
+                                            )}
+                                          </span>
+                                        </button>
+                                      </TooltipTrigger>
+                                      <TooltipContent className="max-w-xs text-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white shadow-xl">
+                                        The routine ID can be shared with friends for them to use this in the merge routine page to import their routine.
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                  <TooltipProvider delayDuration={100}>
+                                    <Tooltip open={infoTooltipId === `merged-${routine.id}`} onOpenChange={(open) => { if (!open) setInfoTooltipId(null); }}>
+                                      <TooltipTrigger asChild>
+                                        <button
+                                          onClick={() => setInfoTooltipId(infoTooltipId === `merged-${routine.id}` ? null : `merged-${routine.id}`)}
+                                          className="ml-2.5 mt-1 text-blue-400 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+                                        >
+                                          <Info className="w-3.5 h-3.5" />
+                                        </button>
+                                      </TooltipTrigger>
+                                      <TooltipContent className="max-w-xs text-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white shadow-xl">
+                                        The routine ID can be shared with friends for them to use this in the merge routine page to import their routine.
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                </div>
+                                <div className="flex items-center gap-2 mt-1.5">
+                                  <p className="text-xs text-gray-500">
+                                    {routine.createdAt ? new Date(Number(routine.createdAt) * 1000).toLocaleString() : 'N/A'}
+                                  </p>
+                                </div>
+                                {/* Friend Names */}
+                                {friendNames.length > 0 && (
+                                  <div className="mt-2 flex flex-wrap gap-1">
+                                    {friendNames.map((name, idx) => (
+                                      <span
+                                        key={idx}
+                                        className="inline-block bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-200 text-xs px-2 py-0.5 rounded"
+                                      >
+                                        {name}
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
+                                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                  {totalCourses} courses • {friendNames.length} {friendNames.length === 1 ? 'friend' : 'friends'}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Actions */}
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => viewMergedRoutine(routine)}
+                              disabled={loadingRoutine}
+                              className="flex-1 px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg flex items-center justify-center gap-2 text-sm transition-colors"
+                            >
+                              <Eye className="w-4 h-4" />
+                              {loadingRoutine && viewingMergedRoutine?.id === routine.id ? 'Loading...' : 'View'}
+                            </button>
+                            <button
+                              onClick={() => { setSharingRoutineId(routine.id); setSharingRoutineType('merged-routine'); }}
+                              className="px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg flex items-center justify-center gap-2 text-sm transition-colors text-gray-600 dark:text-gray-300"
+                              title="Share routine"
+                            >
+                              <Share2 className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => deleteMergedRoutine(routine.id)}
+                              className="px-3 py-2 hover:bg-red-100 dark:hover:bg-red-700 text-red-600 dark:text-red-400 rounded-lg flex items-center justify-center gap-2 text-sm transition-colors"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               );
