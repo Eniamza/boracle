@@ -163,7 +163,7 @@ const PreRegistrationPage = () => {
 
   // Sync selectedCourses with the latest catalog data so pills and the routine
   // modal always reflect the freshest schedules, faculties, prereqs, etc.
-  const syncSelectedWithCatalog = useCallback((freshCourses) => {
+  const syncSelectedWithCatalog = (freshCourses) => {
     setSelectedCourses(prev => {
       if (prev.length === 0) return prev;
       const lookup = new Map(freshCourses.map(c => [c.sectionId, c]));
@@ -171,7 +171,6 @@ const PreRegistrationPage = () => {
       const next = prev.map(sel => {
         const fresh = lookup.get(sel.sectionId);
         if (!fresh) return sel;
-        // Preserve live seat counts from Mercure — only refresh non-seat fields
         const merged = { ...fresh, consumedSeat: sel.consumedSeat ?? fresh.consumedSeat, capacity: sel.capacity ?? fresh.capacity };
         if (merged.faculties !== sel.faculties || merged.sectionSchedule !== sel.sectionSchedule || merged.labSchedules !== sel.labSchedules) {
           changed = true;
@@ -180,7 +179,7 @@ const PreRegistrationPage = () => {
       });
       return changed ? next : prev;
     });
-  }, [setSelectedCourses]);
+  };
 
   // Fetch courses based on selected semester
   useEffect(() => {
@@ -218,26 +217,27 @@ const PreRegistrationPage = () => {
       }
     };
     fetchCourses();
-  }, [selectedSemester, pastSemesters, syncSelectedWithCatalog]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedSemester, pastSemesters]);
 
 
   // Refetch catalog on a timer and when the tab regains focus, so long-lived
   // tabs don't serve a 10-hour-old snapshot.
-  const refreshCatalog = useCallback(async () => {
-    if (selectedSemester !== 'current') return;
-    try {
-      const response = await fetch('https://usis-cdn.eniamza.com/connect.json');
-      const data = await response.json();
-      const sorted = sortCourseData(data);
-      setCourses(sorted);
-      syncSelectedWithCatalog(sorted);
-    } catch (err) {
-      console.error('Background catalog refresh failed:', err);
-    }
-  }, [selectedSemester, syncSelectedWithCatalog]);
-
   useEffect(() => {
     if (selectedSemester !== 'current') return;
+
+    const refreshCatalog = async () => {
+      try {
+        const response = await fetch('https://usis-cdn.eniamza.com/connect.json');
+        const data = await response.json();
+        const sorted = sortCourseData(data);
+        setCourses(sorted);
+        syncSelectedWithCatalog(sorted);
+      } catch (err) {
+        console.error('Background catalog refresh failed:', err);
+      }
+    };
+
     const REFETCH_INTERVAL = 60 * 60 * 1000; // 1 hour
     const id = setInterval(refreshCatalog, REFETCH_INTERVAL);
 
@@ -254,7 +254,8 @@ const PreRegistrationPage = () => {
       clearInterval(id);
       document.removeEventListener('visibilitychange', onVisible);
     };
-  }, [selectedSemester, refreshCatalog]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedSemester]);
 
   // Handle Mercure Real-time Seat Updates
   useEffect(() => {
