@@ -17,20 +17,22 @@ const MobileRoutineView = ({
     const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const dayAbbr = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-    // Default to first day that has courses, otherwise Sunday
-    const firstDayWithCourses = useMemo(() => {
+    // Default to today if it has courses, otherwise first day with courses
+    const defaultDay = useMemo(() => {
+        const today = days[new Date().getDay()];
+        const hasCourseOn = (day) => selectedCourses.some(course => {
+            const classMatch = course.sectionSchedule?.classSchedules?.some(s => s.day === day.toUpperCase());
+            const labMatch = course.labSchedules?.some(s => s.day === day.toUpperCase());
+            return classMatch || labMatch;
+        });
+        if (hasCourseOn(today)) return today;
         for (const day of days) {
-            const hasCourse = selectedCourses.some(course => {
-                const classMatch = course.sectionSchedule?.classSchedules?.some(s => s.day === day.toUpperCase());
-                const labMatch = course.labSchedules?.some(s => s.day === day.toUpperCase());
-                return classMatch || labMatch;
-            });
-            if (hasCourse) return day;
+            if (hasCourseOn(day)) return day;
         }
         return 'Sunday';
     }, [selectedCourses]);
 
-    const [selectedDay, setSelectedDay] = useState(firstDayWithCourses);
+    const [selectedDay, setSelectedDay] = useState(defaultDay);
     const [bottomSheetCourse, setBottomSheetCourse] = useState(null);
     const [bottomSheetTitle, setBottomSheetTitle] = useState(null);
 
