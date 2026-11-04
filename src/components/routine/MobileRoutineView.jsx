@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { X } from 'lucide-react';
 import CourseBottomSheet from '@/components/ui/CourseBottomSheet';
 import { getRoutineTimings, REGULAR_TIMINGS, getAdjustedTime } from '@/constants/routineTimings';
@@ -35,6 +35,10 @@ const MobileRoutineView = ({
     const [selectedDay, setSelectedDay] = useState(defaultDay);
     const [bottomSheetCourse, setBottomSheetCourse] = useState(null);
     const [bottomSheetTitle, setBottomSheetTitle] = useState(null);
+
+    useEffect(() => {
+        setSelectedDay(defaultDay);
+    }, [defaultDay]);
 
     const timeSlots = getRoutineTimings();
 

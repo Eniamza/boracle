@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import CourseBottomSheet from '@/components/ui/CourseBottomSheet';
 import { getAdjustedTime } from '@/constants/routineTimings';
 
@@ -33,6 +33,10 @@ const MobileMergedRoutineView = ({
     const [selectedDay, setSelectedDay] = useState(defaultDay);
     const [bottomSheetCourse, setBottomSheetCourse] = useState(null);
     const [bottomSheetTitle, setBottomSheetTitle] = useState(null);
+
+    useEffect(() => {
+        setSelectedDay(defaultDay);
+    }, [defaultDay]);
 
     const formatTime = (time) => {
         if (!time) return '';

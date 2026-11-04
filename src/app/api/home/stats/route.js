@@ -4,6 +4,8 @@ import { db, sql } from "@/lib/db";
 import { courseSwap, reviews, courseMaterials, userinfo, faculty } from "@/lib/db/schema";
 import { NextResponse } from "next/server";
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req) {
     try {
         const [totalSwaps, totalReviews, totalMaterials, totalUsers, totalFaculties] = await Promise.all([
