@@ -24,7 +24,12 @@ function swatchStyle([surface, accent]) {
 const TRIGGER_CLASS =
   "bg-white dark:bg-blue-900 hover:bg-gray-100 dark:hover:bg-blue-800 transition-all duration-300";
 
-export function ThemeSwitcher() {
+/**
+ * @param {{grow?: "left" | "right"}} [props] which way the spread row opens.
+ * "left" (default) suits a control near the right edge — the dashboard header.
+ * "right" suits the bottom-left floating dock on the public site.
+ */
+export function ThemeSwitcher({ grow = "left" }) {
   const { theme, resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = React.useState(false);
   const [open, setOpen] = React.useState(false);
@@ -79,15 +84,16 @@ export function ThemeSwitcher() {
 
   return (
     <div ref={rootRef} className="relative">
-      {/* Anchored to the button's bottom-right corner, so the row grows leftwards
-          and stays on screen from either placement (header / floating). */}
+      {/* Anchored to the button's far corner for the chosen direction, so the row
+          always spreads back across the screen instead of off the edge. */}
       <div
         role="group"
         aria-label="Colour themes"
         className={cn(
-          "absolute right-0 bottom-0 z-50 flex items-center gap-1.5 rounded-full border bg-white p-1 shadow-sm",
+          "absolute bottom-0 z-50 flex items-center gap-1.5 rounded-full border bg-white p-1 shadow-sm",
           "border-neutral-200 dark:border-neutral-800 dark:bg-blue-900",
-          "origin-bottom-right transition-all duration-300 ease-out",
+          grow === "right" ? "left-0 origin-bottom-left" : "right-0 origin-bottom-right",
+          "transition-all duration-300 ease-out",
           "motion-reduce:transition-none",
           open ? "scale-100 opacity-100" : "pointer-events-none scale-75 opacity-0",
         )}

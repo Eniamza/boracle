@@ -18,9 +18,13 @@ const RoutineView = ({
     isOpen = true, // When false, animate out then call onClose
     isOwner = false,
     mobileAction,
+    // Opt-in: render the week table inside the phone bottom sheet instead of the
+    // day-card mobile view. Off by default so existing consumers are unaffected.
+    forceDesktopGrid = false,
     routineRefProp, // Allow parent to access ref
     showExportButton = true,
     onEdit,
+    showDailySpan = false,
 }) => {
     const internalRoutineRef = useRef(null);
     // Use prop ref if available, otherwise internal
@@ -199,6 +203,7 @@ const RoutineView = ({
                     onRemoveCourse={onRemoveCourse}
                     className="h-full"
                     mobileAction={mobileAction}
+                    showDailySpan={showDailySpan}
                 />
             </div>
         </div>
@@ -272,13 +277,28 @@ const RoutineView = ({
                 </div>
 
                 {/* Grid — scrollable */}
-                <div className="flex-1 overflow-auto px-3 pt-3 pb-4" ref={routineRef}>
-                    <RoutineTableGrid
-                        selectedCourses={courses}
-                        showRemoveButtons={showRemoveButtons}
-                        onRemoveCourse={onRemoveCourse}
-                        className="h-full"
-                    />
+                <div className="flex-1 overflow-auto px-3 pt-3 pb-4 min-w-0" ref={routineRef}>
+                    {forceDesktopGrid ? (
+                        <div className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-x-auto">
+                            <div className="min-w-[560px]">
+                                <RoutineTableGrid
+                                    selectedCourses={courses}
+                                    showRemoveButtons={showRemoveButtons}
+                                    onRemoveCourse={onRemoveCourse}
+                                    forceDesktop
+                                    showDailySpan={showDailySpan}
+                                />
+                            </div>
+                        </div>
+                    ) : (
+                        <RoutineTableGrid
+                            selectedCourses={courses}
+                            showRemoveButtons={showRemoveButtons}
+                            onRemoveCourse={onRemoveCourse}
+                            className="h-full"
+                            showDailySpan={showDailySpan}
+                        />
+                    )}
                 </div>
             </div>
 
@@ -303,6 +323,7 @@ const RoutineView = ({
                             showRemoveButtons={false}
                             forceDesktop={true}
                             className=""
+                            showDailySpan={showDailySpan}
                         />
                     </div>
                 </div>

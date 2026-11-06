@@ -5,6 +5,7 @@ import CourseHoverTooltip from '@/components/ui/CourseHoverTooltip';
 import { getRoutineTimings, REGULAR_TIMINGS } from '@/constants/routineTimings';
 import { useIsMobile } from '@/hooks/use-mobile';
 import MobileRoutineView from '@/components/routine/MobileRoutineView';
+import { computeDailySpans, formatMinutes } from '@/lib/automate-routine/model';
 
 // Trash cursor shown once a course has been hovered long enough to be removable
 const TRASH_CURSOR = "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 24 24' fill='none' stroke-linecap='round' stroke-linejoin='round'%3E%3Cg stroke='%23ffffff' stroke-width='4.5'%3E%3Cpath d='M3 6h18'/%3E%3Cpath d='M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2'/%3E%3Cpath d='M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6'/%3E%3Cpath d='M10 11v6'/%3E%3Cpath d='M14 11v6'/%3E%3C/g%3E%3Cg stroke='%23dc2626' stroke-width='2.25'%3E%3Cpath d='M3 6h18'/%3E%3Cpath d='M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2'/%3E%3Cpath d='M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6'/%3E%3Cpath d='M10 11v6'/%3E%3Cpath d='M14 11v6'/%3E%3C/g%3E%3C/svg%3E\") 14 14, pointer";
@@ -23,6 +24,7 @@ const RoutineTableGrid = ({
   compact = false,
   hoverRemove = false,
   previewCourses = [],
+  showDailySpan = false,
 }) => {
   const routineRef = useRef(null);
   const [hoveredCourse, setHoveredCourse] = useState(null);
@@ -71,6 +73,11 @@ const RoutineTableGrid = ({
   const timeSlots = getRoutineTimings();
 
   const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+  const dailySpans = useMemo(
+    () => (showDailySpan ? computeDailySpans(selectedCourses) : {}),
+    [showDailySpan, selectedCourses]
+  );
 
   // Parse time to minutes for comparison
   const timeToMinutes = (timeStr) => {
@@ -159,6 +166,35 @@ const RoutineTableGrid = ({
       <div ref={routineRef} className={`bg-gray-50 dark:bg-gray-900 ${compact ? 'p-2' : 'p-4'}`}>
         <table className={`w-full border-collapse ${compact ? '' : 'border border-gray-300 dark:border-gray-700'}`}>
           <thead>
+            {showDailySpan && (
+              <tr className="border-b border-gray-200 dark:border-gray-700/80 bg-[#6F3E1B]/5 dark:bg-[#D48B55]/10 text-[#6F3E1B] dark:text-[#D48B55]">
+                <th
+                  className={`border-r border-gray-300 dark:border-gray-700 ${
+                    compact ? 'py-1.5 px-2 text-[11px] w-32' : 'py-2 px-4 text-xs w-44'
+                  }`}
+                  aria-label="Daily Span"
+                />
+                {days.map((day) => {
+                  const span = dailySpans[day.toUpperCase()] || 0;
+                  return (
+                    <th
+                      key={day}
+                      className={`text-center font-semibold border-r border-gray-300 dark:border-gray-700 last:border-r-0 ${
+                        compact ? 'py-1.5 px-2 text-[11px]' : 'py-2 px-3 text-xs'
+                      }`}
+                    >
+                      {span > 0 ? (
+                        <span className="inline-block px-1.5 py-0.5 rounded bg-[#6F3E1B]/10 dark:bg-[#D48B55]/15 tabular-nums">
+                          {formatMinutes(span)}
+                        </span>
+                      ) : (
+                        <span className="text-gray-400 dark:text-gray-500 font-normal">&mdash;</span>
+                      )}
+                    </th>
+                  );
+                })}
+              </tr>
+            )}
             <tr className="border-b border-gray-300 dark:border-gray-700">
               <th className={`text-left font-medium text-gray-600 dark:text-gray-400 border-r border-gray-300 dark:border-gray-700 ${compact ? 'py-1.5 px-2 text-xs w-32' : 'py-4 px-4 text-base w-44'}`}>Time/Day</th>
               {days.map(day => (
@@ -220,7 +256,6 @@ const RoutineTableGrid = ({
                                     } group relative flex flex-col justify-center ${compact ? 'min-h-[36px]' : 'min-h-[76px]'}`}
                                   onMouseEnter={(e) => {
                                     if (canHoverRemove && !isPreview) startHoverRemove(course);
-                                    if (compact) return;
                                     setHoveredCourse(course);
                                     setHoveredCourseTitle(`${course.courseCode}${isLab ? 'L' : ''}`);
                                     const rect = e.currentTarget.getBoundingClientRect();
@@ -238,7 +273,6 @@ const RoutineTableGrid = ({
                                   }}
                                   onMouseLeave={() => {
                                     if (canHoverRemove && !isPreview) cancelHoverRemove();
-                                    if (compact) return;
                                     setHoveredCourse(null);
                                     setHoveredCourseTitle(null);
                                   }}
